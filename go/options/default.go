@@ -32,7 +32,7 @@ func Default() PulseOptions {
 			Log: LogOptions{
 				ReportCaller:    true,
 				ReportTimestamp: true,
-				CallerOffset:    1,
+				CallerOffset:    3,
 			},
 		},
 		Foxglove: FoxgloveOptions{

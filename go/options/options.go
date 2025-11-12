@@ -1,6 +1,6 @@
 package options
 
-// Package options provides configuration options for the pulse service.
+// Package options provides configuration options for the Pulse service.
 // It includes options for logging, metrics, tracing, and network settings.
 // The options are structured in a way that allows for easy customization
 // and extension, making it suitable for various deployment scenarios.

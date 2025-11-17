@@ -36,12 +36,12 @@ go get github.com/machanirobotics/pulse/go
 import (
     "context"
     pulse "github.com/machanirobotics/pulse/go"
-    "github.com/machanirobotics/pulse/go/options"
+    "github.com/machanirobotics/pulse-go/options"
 )
 
 func main() {
     ctx := context.Background()
-    
+
     // Initialize Pulse
     p, err := pulse.New(ctx, options.ServiceOptions{
         Name:        "my-service",
@@ -58,7 +58,7 @@ func main() {
         panic(err)
     }
     defer p.Close(ctx)
-    
+
     // Use it!
     p.Logger.Info("Service started", nil)
 }
@@ -94,14 +94,14 @@ Access Grafana at `http://localhost:3000` with all datasources pre-configured.
 graph TB
     App[Your Application]
     SDK[Pulse SDK]
-    
+
     subgraph "Telemetry Signals"
         Logs[Logs]
         Metrics[Metrics]
         Traces[Traces]
         Profiles[Profiles]
     end
-    
+
     subgraph "Collection & Storage"
         OTLP[OTLP Collector]
         Loki[Loki]
@@ -109,24 +109,24 @@ graph TB
         Tempo[Tempo]
         Pyroscope[Pyroscope]
     end
-    
+
     Grafana[Grafana Dashboards]
-    
+
     App --> SDK
     SDK --> Logs
     SDK --> Metrics
     SDK --> Traces
     SDK --> Profiles
-    
+
     Logs --> OTLP
     Metrics --> OTLP
     Traces --> OTLP
     Profiles --> Pyroscope
-    
+
     OTLP --> Loki
     OTLP --> Prometheus
     OTLP --> Tempo
-    
+
     Loki --> Grafana
     Prometheus --> Grafana
     Tempo --> Grafana
@@ -135,11 +135,11 @@ graph TB
 
 ## Language Support
 
-| Language | Status | Documentation |
-|----------|--------|---------------|
-| Go       | ✅ Stable | [Go/README.md](go/README.md) |
-| Python   | 🚧 Coming Soon | - |
-| Rust     | 🚧 Coming Soon | - |
+| Language | Status         | Documentation                |
+| -------- | -------------- | ---------------------------- |
+| Go       | ✅ Stable      | [Go/README.md](go/README.md) |
+| Python   | 🚧 Coming Soon | -                            |
+| Rust     | 🚧 Coming Soon | -                            |
 
 ## Use Cases
 
@@ -165,5 +165,6 @@ Copyright © 2025 Machani Robotics
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
 ---
+
 <strong>Built with ❤️ by Machani Robotics</strong>
 | Open Source Observability for Everyone

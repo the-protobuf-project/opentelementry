@@ -1,7 +1,0 @@
-global:
-  scrape_interval: 1s
-
-scrape_configs:
-  - job_name: pulse-rust
-    static_configs:
-      - targets: ["otelcol:13123"]

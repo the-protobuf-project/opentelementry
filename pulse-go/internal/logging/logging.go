@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
-	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
-	"github.com/machanirobotics/pulse/pulse-go/options"
+	"github.com/machanirobotics/pulse/internal/foxglove"
+	"github.com/machanirobotics/pulse/options"
 
 	otellog "go.opentelemetry.io/otel/log"
 )

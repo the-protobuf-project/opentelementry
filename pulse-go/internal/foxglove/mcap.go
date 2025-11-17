@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/foxglove/mcap/go/mcap"
-	"github.com/machanirobotics/pulse/pulse-go/options"
+	"github.com/machanirobotics/pulse/options"
 )
 
 // UnifiedMcapWriter manages a single MCAP file with multiple schemas and channels
@@ -62,7 +62,7 @@ func NewUnifiedMcapWriter(serviceOpts options.ServiceOptions, foxgloveOpts optio
 	// Write header
 	if err := writer.WriteHeader(&mcap.Header{
 		Profile: serviceOpts.Name,
-		Library: "github.com/machanirobotics/pulse-go/",
+		Library: "github.com/machanirobotics/",
 	}); err != nil {
 		_ = file.Close()
 		return nil, fmt.Errorf("failed to write header: %w", err)

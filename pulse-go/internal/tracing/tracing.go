@@ -4,9 +4,9 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
-	"github.com/machanirobotics/pulse/pulse-go/internal/telemetry"
-	"github.com/machanirobotics/pulse/pulse-go/options"
+	"github.com/machanirobotics/pulse/internal/foxglove"
+	"github.com/machanirobotics/pulse/internal/telemetry"
+	"github.com/machanirobotics/pulse/options"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"

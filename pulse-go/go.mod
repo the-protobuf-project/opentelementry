@@ -1,4 +1,4 @@
-module github.com/machanirobotics/pulse
+module github.com/machanirobotics/pulse/pulse-go
 
 go 1.25.0
 

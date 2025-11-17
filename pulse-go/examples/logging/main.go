@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
+	"github.com/machanirobotics/pulse"
+	"github.com/machanirobotics/pulse/options"
 )
 
 // ChatMessage represents a message in an LLM chat room

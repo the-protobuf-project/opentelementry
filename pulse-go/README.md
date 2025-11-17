@@ -22,7 +22,7 @@ A comprehensive observability framework for Go applications, providing unified l
 Install the Pulse SDK using Go modules:
 
 ```bash
-go get github.com/machanirobotics/pulse-go/
+go get github.com/machanirobotics/
 ```
 
 **Requirements:**
@@ -37,7 +37,7 @@ package main
 
 import (
     "context"
-    "github.com/machanirobotics/pulse-go/"
+    "github.com/machanirobotics/"
     "github.com/machanirobotics/pulse/gooptions"
 )
 
@@ -579,7 +579,7 @@ package main
 import (
     "context"
     "time"
-    "github.com/machanirobotics/pulse-go/"
+    "github.com/machanirobotics/"
     "github.com/machanirobotics/pulse/gooptions"
 )
 
@@ -719,7 +719,7 @@ package main
 import (
     "context"
     "time"
-    "github.com/machanirobotics/pulse-go/"
+    "github.com/machanirobotics/"
     "github.com/machanirobotics/pulse/gooptions"
     "go.opentelemetry.io/otel/attribute"
     "go.opentelemetry.io/otel/metric"

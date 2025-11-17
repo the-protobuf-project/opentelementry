@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
+	"github.com/machanirobotics/pulse"
+	"github.com/machanirobotics/pulse/options"
 )
 
 // Malenia Conversation Pipeline - AI Assistant Tracing Example

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Go SDK
+
 - Complete Go SDK implementation with OpenTelemetry integration
 - Structured logging with automatic trace correlation
 - Metrics collection (counters, histograms, gauges)
@@ -20,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Full API documentation in `go/README.md`
 
 #### Rust SDK
+
 - Production-ready Rust implementation by @shyamant and @MrSingletonDude
 - OTLP logging and stdout support
 - Distributed tracing capabilities
@@ -30,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive examples
 
 #### Observability Stack
+
 - Complete Docker Compose stack with:
   - Loki (log aggregation) - port 3100
   - Tempo (distributed tracing) - port 3200
@@ -45,12 +48,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic datasource configuration
 
 #### CI/CD
+
 - GitHub Actions workflow for Go SDK testing (Ubuntu, macOS)
 - Code coverage reporting with Codecov
 - Linting for Go, Markdown, and YAML
 - Docker Compose stack validation
 
 #### Documentation
+
 - Comprehensive main README with architecture diagrams
 - Detailed Go SDK documentation with examples
 - OpenTelemetry stack setup guide
@@ -59,6 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Apache 2.0 license
 
 ### Changed
+
 - Migrated from Bazel to Go modules for simpler dependency management
 - Rebranded from Kodo to Pulse
 - Updated all documentation with Pulse branding
@@ -66,6 +72,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated LICENSE to 2025
 
 ### Removed
+
 - Bazel build system configuration
 - BuildKite CI/CD (replaced with GitHub Actions)
 - Old Python/C++ implementation attempts
@@ -73,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Outdated linting configurations
 
 ### Contributors
+
 - @shyamant (Shyamant Achar) - Rust SDK foundation
 - @MrSingletonDude (Aditya Jindal) - Rust SDK enhancements
 - @oh-tarnished (Srikanth Kandarpa) - Go SDK, migration, open source preparation
@@ -81,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Release Links
 
-- [1.0.0] - https://github.com/machanirobotics/pulse/releases/tag/v1.0.0
+- [1.0.0] - https://github.com/machanirobotics/pulse/pulse-go/releases/tag/v1.0.0
 
 ---
 

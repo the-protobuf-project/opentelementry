@@ -29,14 +29,14 @@ Pulse is now open-sourced by **Machani Robotics** to help teams build observable
 Get started with Pulse in your Go applications:
 
 ```bash
-go get github.com/machanirobotics/pulse/go
+go get github.com/machanirobotics/pulse/pulse-go/go
 ```
 
 ```go
 import (
     "context"
-    pulse "github.com/machanirobotics/pulse/go"
-    "github.com/machanirobotics/pulse-go/options"
+    "github.com/machanirobotics/pulse/pulse-go"
+    "github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 func main() {

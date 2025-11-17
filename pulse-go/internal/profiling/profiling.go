@@ -6,8 +6,8 @@ import (
 	"runtime"
 
 	"github.com/grafana/pyroscope-go"
-	"github.com/machanirobotics/pulse/internal/foxglove"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // Profiler wraps the Pyroscope profiler for continuous profiling

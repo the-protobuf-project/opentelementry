@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/machanirobotics/pulse/internal/foxglove"
-	"github.com/machanirobotics/pulse/internal/telemetry"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
+	"github.com/machanirobotics/pulse/pulse-go/internal/telemetry"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 	"go.opentelemetry.io/otel/metric"
 )
 

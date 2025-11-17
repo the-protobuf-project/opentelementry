@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"

@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/machanirobotics/pulse/internal/foxglove"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // MetricMcapWriter writes metrics to MCAP for Foxglove visualization

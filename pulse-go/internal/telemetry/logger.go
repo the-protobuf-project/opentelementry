@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 	"go.opentelemetry.io/otel/log"
 )
 

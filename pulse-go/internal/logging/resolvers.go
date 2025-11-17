@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/log"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 	otellog "go.opentelemetry.io/otel/log"
 )
 

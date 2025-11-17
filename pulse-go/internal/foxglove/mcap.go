@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/foxglove/mcap/go/mcap"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // UnifiedMcapWriter manages a single MCAP file with multiple schemas and channels

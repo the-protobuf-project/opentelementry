@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/machanirobotics/pulse/internal/foxglove"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // LogMcapWriter wraps the unified MCAP writer with Foxglove Log schema support

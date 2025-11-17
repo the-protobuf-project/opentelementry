@@ -38,7 +38,7 @@ package main
 import (
     "context"
     "github.com/machanirobotics/"
-    "github.com/machanirobotics/pulse/gooptions"
+    "github.com/machanirobotics/pulse/pulse-go/gooptions"
 )
 
 func main() {
@@ -580,7 +580,7 @@ import (
     "context"
     "time"
     "github.com/machanirobotics/"
-    "github.com/machanirobotics/pulse/gooptions"
+    "github.com/machanirobotics/pulse/pulse-go/gooptions"
 )
 
 type ConversationRequest struct {
@@ -720,7 +720,7 @@ import (
     "context"
     "time"
     "github.com/machanirobotics/"
-    "github.com/machanirobotics/pulse/gooptions"
+    "github.com/machanirobotics/pulse/pulse-go/gooptions"
     "go.opentelemetry.io/otel/attribute"
     "go.opentelemetry.io/otel/metric"
 )

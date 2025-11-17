@@ -3,13 +3,13 @@ package pulse
 import (
 	"context"
 
-	"github.com/machanirobotics/pulse/internal/foxglove"
-	"github.com/machanirobotics/pulse/internal/logging"
-	"github.com/machanirobotics/pulse/internal/metrics"
-	"github.com/machanirobotics/pulse/internal/profiling"
-	"github.com/machanirobotics/pulse/internal/telemetry"
-	"github.com/machanirobotics/pulse/internal/tracing"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
+	"github.com/machanirobotics/pulse/pulse-go/internal/logging"
+	"github.com/machanirobotics/pulse/pulse-go/internal/metrics"
+	"github.com/machanirobotics/pulse/pulse-go/internal/profiling"
+	"github.com/machanirobotics/pulse/pulse-go/internal/telemetry"
+	"github.com/machanirobotics/pulse/pulse-go/internal/tracing"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // Span is a type alias for tracing.Span to avoid exposing internal packages

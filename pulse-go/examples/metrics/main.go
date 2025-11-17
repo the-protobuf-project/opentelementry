@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/machanirobotics/pulse"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // LLMMetrics demonstrates automatic metric recording with struct tags

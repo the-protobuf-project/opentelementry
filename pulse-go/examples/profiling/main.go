@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/machanirobotics/pulse"
-	"github.com/machanirobotics/pulse/options"
+	"github.com/machanirobotics/pulse/pulse-go"
+	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // LLMConfig represents configuration for LLM inference

@@ -1,6 +1,6 @@
 name: "pulse-env"
 include:
-  - ../otel/docker-compose.yaml
+  - ../opentelemetry/compose.yaml
   
 services:
   devcontainer:

@@ -877,6 +877,6 @@ metric.WithAttributes(
 
 ## License
 
-Copyright © 2025 Machani Robotics
+Copyright © 2026 Machani Robotics
 
 Licensed under the Apache License, Version 2.0.

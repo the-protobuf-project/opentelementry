@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Log",
+  "description": "A log message with timestamp, level, and structured data",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "object",
+      "properties": {
+        "sec": {"type": "integer"},
+        "nsec": {"type": "integer"}
+      },
+      "required": ["sec", "nsec"]
+    },
+    "level": {
+      "type": "integer",
+      "description": "Log level (1=DEBUG, 2=INFO, 3=WARN, 4=ERROR, 5=FATAL)"
+    },
+    "message": {
+      "type": "string",
+      "description": "Log message"
+    },
+    "name": {
+      "type": "string",
+      "description": "Logger name"
+    },
+    "file": {
+      "type": "string",
+      "description": "Source file"
+    },
+    "line": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Line number"
+    },
+    "service_version": {
+      "type": "string",
+      "description": "Service version"
+    },
+    "service_environment": {
+      "type": "string",
+      "description": "Service environment"
+    },
+    "data": {
+      "type": "object",
+      "description": "Additional structured data"
+    }
+  },
+  "required": [
+    "timestamp",
+    "level",
+    "message",
+    "name",
+    "file",
+    "line",
+    "service_version",
+    "service_environment"
+  ]
+}

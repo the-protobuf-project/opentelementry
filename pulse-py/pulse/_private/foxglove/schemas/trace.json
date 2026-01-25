@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "mahcanirobotics.trace",
+  "description": "A distributed trace span with timing and context",
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "object",
+      "properties": {
+        "sec": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "nsec": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 999999999
+        }
+      },
+      "required": ["sec", "nsec"],
+      "description": "Span start timestamp"
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Unique trace identifier"
+    },
+    "span_id": {
+      "type": "string",
+      "description": "Unique span identifier"
+    },
+    "parent_span_id": {
+      "type": "string",
+      "description": "Parent span identifier (empty for root spans)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Span name/operation"
+    },
+    "attributes": {
+      "type": "object",
+      "description": "Span attributes/tags"
+    }
+  },
+  "required": [
+    "timestamp",
+    "trace_id",
+    "span_id",
+    "name"
+  ]
+}

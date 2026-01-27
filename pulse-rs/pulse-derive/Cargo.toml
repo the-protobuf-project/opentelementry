@@ -1,0 +1,13 @@
+[package]
+name = "pulse-derive"
+version.workspace = true
+edition.workspace = true
+description = "Derive macros for pulse-rs"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn.workspace = true
+quote.workspace = true
+proc-macro2.workspace = true

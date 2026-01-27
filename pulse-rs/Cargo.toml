@@ -1,64 +1,30 @@
-[package]
-name = "pulse-rs"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["pulse", "pulse-derive"]
+resolver = "2"
 
-[dependencies]
-opentelemetry = { version = "0.27.1", default-features = false }
-opentelemetry_sdk = { version = "0.27.1", default-features = false, features = [
-    "rt-tokio",
-] }
-opentelemetry-otlp = { version = "0.27.0", default-features = false, features = [
-    "reqwest-client",
-    "http-proto",
-    "grpc-tonic",
-] }
-opentelemetry-semantic-conventions = "0.27.0"
-serde = { version = "1", features = ["derive"] }
-thiserror = "1"
-once_cell = "1.20.2"
-url = "2.5.4"
-log = { version = "0.4.21", optional = true }
-env_logger = { version = "0.11.5", optional = true }
-opentelemetry-appender-log = { version = "0.27.0", optional = true }
-tracing = { version = "0.1.41", optional = true }
-tracing-attributes = { version = "0.1", optional = true }
-tracing-subscriber = { version = "0.3.19", optional = true, default-features = false }
-tracing-opentelemetry = { version = "0.28.0", optional = true, default-features = false }
-duration-str = "0.11.3"
+[workspace.package]
+version = "1.0.0"
+edition = "2024"
 
-[dev-dependencies]
-rand = "0.8.5"
-tokio = { version = "1", features = ["full"] }
-toml = "0.8.19"
-
-[features]
-default = ["logs", "trace", "metrics"]
-logs = [
-    "dep:log",
-    "dep:env_logger",
-    "dep:opentelemetry-appender-log",
-    "opentelemetry/logs",
-    "opentelemetry_sdk/logs",
-    "opentelemetry-otlp/logs",
-]
-trace = [
-    "dep:tracing",
-    "dep:tracing-attributes",
-    "dep:tracing-subscriber",
-    "dep:tracing-opentelemetry",
-    "opentelemetry/trace",
-    "opentelemetry_sdk/trace",
-    "opentelemetry-otlp/trace",
-]
-metrics = [
-    "dep:tracing",
-    "dep:tracing-subscriber",
-    "dep:tracing-opentelemetry",
-    "tracing-opentelemetry/metrics",
-    "tracing-opentelemetry/metrics_gauge_unstable",
-    "opentelemetry/metrics",
-    "opentelemetry_sdk/metrics",
-    "opentelemetry-otlp/metrics",
-]
-otel-api = []
+[workspace.dependencies]
+pulse-derive = { path = "pulse-derive" }
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+log4rs = "1.4.0"
+mcap = "0.24.0"
+opentelemetry = { version = "0.31.0", features = ["logs", "metrics", "trace"] }
+opentelemetry_sdk = { version = "0.31.0", features = ["logs", "trace", "rt-tokio"] }
+opentelemetry-otlp = { version = "0.31.0", features = ["logs", "trace", "grpc-tonic"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-opentelemetry = "0.32"
+opentelemetry-prometheus = "0.31.0"
+prometheus = "0.13"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+chrono = "0.4"
+colored = "2.1"
+syn = { version = "2", features = ["full"] }
+quote = "1"
+proc-macro2 = "1"

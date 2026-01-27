@@ -114,7 +114,7 @@ use pulse::{Pulse, Environment, logger};
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Initialize Pulse with builder pattern
-    let pulse = Pulse::builder("my-service", "1.0.0")
+    let _pulse = Pulse::builder("my-service", "1.0.0")
         .environment(Environment::Production)
         .with_otlp("localhost", 4317)
         .build()?;
@@ -122,7 +122,7 @@ async fn main() -> anyhow::Result<()> {
     // Use it!
     logger::info!("Service started");
     
-    pulse.close()?;
+    // Resources are automatically cleaned up when pulse goes out of scope
     Ok(())
 }
 ```

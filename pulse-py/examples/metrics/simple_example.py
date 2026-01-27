@@ -18,16 +18,16 @@ Then run this script and check:
 import pulse
 from pulse import (
     Pulse, ServiceOptions, PulseOptions, Environment,
-    TelemetryOptions, OTLPOptions, FoxgloveOptions, PulseMetricsModel
+    TelemetryOptions, OTLPOptions, FoxgloveOptions, MetricsModel
 )
-from pydantic import BaseModel
 import time
 import random
 
 
-# LLMMetrics demonstrates automatic metric recording with @pulse.PulseMetricsModel
-@PulseMetricsModel(prefix="llm")
-class LLMMetrics(BaseModel):
+# LLMMetrics demonstrates automatic metric recording with MetricsModel
+# By default, metrics will be prefixed with the service name ("metrics-example")
+# You can override by specifying: class LLMMetrics(pulse.MetricsModel, prefix="llm")
+class LLMMetrics(MetricsModel, prefix="llm"):
     """LLM processing metrics"""
     tokens_processed: int = pulse.Counter(description="Total tokens processed by LLM")
     response_time: float = pulse.Histogram(description="LLM response time in milliseconds")
@@ -36,8 +36,7 @@ class LLMMetrics(BaseModel):
 
 
 # TranscriptionMetrics for speech-to-text
-@PulseMetricsModel(prefix="transcription")
-class TranscriptionMetrics(BaseModel):
+class TranscriptionMetrics(MetricsModel, prefix="transcription"):
     """Speech-to-text transcription metrics"""
     audio_duration: float = pulse.Histogram(description="Audio duration in seconds")
     confidence: float = pulse.Gauge(description="Transcription confidence score (0.0-1.0)")

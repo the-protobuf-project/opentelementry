@@ -22,7 +22,7 @@ Typical usage example:
         return "processed"
 """
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from typing import Any, Callable, Optional, Dict
 import functools
 import time
@@ -339,31 +339,47 @@ def Gauge(name: Optional[str] = None, description: str = "") -> Any:
     )
 
 
-def PulseMetricsModel(prefix: str = None):
-    """Class decorator to mark a Pydantic model as a metric model.
+class MetricsModel(BaseModel):
+    """Base class for metric models with automatic name inference.
     
-    This decorator automatically infers metric names from field names
-    if not explicitly provided, with an optional prefix.
+    Inherit from this class instead of BaseModel to create metric models.
+    The prefix will be automatically set to the service name when recording,
+    but can be overridden by passing a custom prefix.
     
-    Args:
-        prefix: Optional prefix for all metric names (e.g., "llm", "api").
-        
-    Returns:
-        A decorator function that processes the class.
-        
     Example:
         import pulse
-        from pydantic import BaseModel
         
-        @pulse.PulseMetricsModel(prefix="llm")
-        class LLMMetrics(BaseModel):
-            tokens: int = Counter(description="Total tokens")
-            # Generates metric name: "llm.tokens"
+        class LLMMetrics(pulse.MetricsModel):
+            tokens: int = pulse.Counter(description="Total tokens")
+            latency: float = pulse.Histogram(description="Response time")
+            # With service name "my-service", generates:
+            # - "my-service.tokens"
+            # - "my-service.latency"
+        
+        # Override prefix:
+        class CustomMetrics(pulse.MetricsModel, prefix="custom"):
+            count: int = pulse.Counter()
+            # Generates: "custom.count"
     """
-    def decorator(cls):
-        """Process the class and set metric names."""
-        # Iterate through model fields and set metric names if not provided
-        for field_name, field_info in cls.model_fields.items():
+    
+    _metric_prefix: Optional[str] = None
+    
+    def __init_subclass__(cls, prefix: Optional[str] = None, **kwargs):
+        """Called when a class inherits from MetricsModel."""
+        super().__init_subclass__(**kwargs)
+        cls._metric_prefix = prefix
+    
+    def _resolve_metric_names(self, service_name: Optional[str] = None):
+        """Resolve metric names with appropriate prefix.
+        
+        Args:
+            service_name: Service name to use as default prefix if no custom prefix set.
+        """
+        # Determine the prefix to use
+        prefix = self._metric_prefix if self._metric_prefix is not None else service_name
+        
+        # Process each field and set metric names if not provided
+        for field_name, field_info in self.model_fields.items():
             if hasattr(field_info, 'json_schema_extra') and field_info.json_schema_extra:
                 extra = field_info.json_schema_extra
                 if 'metric_type' in extra and extra.get('metric_name') is None:
@@ -373,14 +389,3 @@ def PulseMetricsModel(prefix: str = None):
                         extra['metric_name'] = f"{prefix}.{base_name}"
                     else:
                         extra['metric_name'] = base_name
-        
-        return cls
-    
-    # Support both @PulseMetricsModel and @PulseMetricsModel(prefix="...")
-    if prefix is None or isinstance(prefix, str):
-        return decorator
-    else:
-        # Called as @PulseMetricsModel without parentheses
-        cls = prefix
-        prefix = None
-        return decorator(cls)

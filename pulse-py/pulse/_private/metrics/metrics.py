@@ -85,6 +85,10 @@ class PulseMetrics:
         if not isinstance(model, BaseModel):
             raise ValueError("record() requires a Pydantic BaseModel instance")
         
+        # If model is a MetricsModel, resolve metric names with service name prefix
+        if hasattr(model, '_resolve_metric_names'):
+            model._resolve_metric_names(service_name=self.service_opts.name)
+        
         # Extract metrics from model fields
         for field_name, field_info in model.model_fields.items():
             # Check json_schema_extra for metric metadata

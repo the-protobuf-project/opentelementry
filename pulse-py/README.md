@@ -72,7 +72,7 @@ cd pulse-py
 uv sync
 ```
 
-### Requirements
+**Requirements:**
 
 - Python 3.10 or higher
 - OpenTelemetry Collector (optional, for production deployments)
@@ -625,3 +625,6 @@ All channels use JSON schema encoding for easy inspection and visualization in F
 ## License
 
 Copyright © 2026 Machani Robotics
+
+Licensed under the Apache License, Version 2.0.
+

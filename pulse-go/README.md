@@ -22,13 +22,14 @@ A comprehensive observability framework for Go applications, providing unified l
 Install the Pulse SDK using Go modules:
 
 ```bash
-go get github.com/machanirobotics/
+go get github.com/machanirobotics/pulse/pulse-go
 ```
 
 **Requirements:**
 
 - Go 1.25.0 or higher
 - OpenTelemetry Collector (optional, for production deployments)
+- Foxglove Studio (optional, for MCAP visualization)
 
 ## Quick Start
 

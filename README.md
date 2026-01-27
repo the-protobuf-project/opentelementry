@@ -64,7 +64,73 @@ func main() {
 }
 ```
 
-**[📖 Full Go SDK Documentation →](go/README.md)**
+**[📖 Full Go SDK Documentation →](pulse-go/README.md)**
+
+### Python SDK
+
+Get started with Pulse in your Python applications:
+
+```bash
+pip install pulse-py
+```
+
+```python
+import pulse
+from pulse import Pulse, ServiceOptions, PulseOptions, Environment
+
+# Initialize Pulse
+service_opts = ServiceOptions(
+    name="my-service",
+    version="1.0.0",
+    environment=Environment.PRODUCTION,
+)
+
+pulse_opts = PulseOptions()
+
+with Pulse(service_opts, pulse_opts) as p:
+    # Use it!
+    p.logger.info("Service started")
+    
+    # Record metrics
+    class MyMetrics(pulse.MetricsModel):
+        requests: int = pulse.Counter(description="Total requests")
+    
+    p.metrics.record(MyMetrics(requests=1))
+```
+
+**[📖 Full Python SDK Documentation →](pulse-py/README.md)**
+
+### Rust SDK
+
+Get started with Pulse in your Rust applications:
+
+```bash
+cargo add pulse
+```
+
+```rust
+use pulse::{Pulse, logger};
+use pulse::options::{ServiceOptions, PulseOptions, Environment};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    // Initialize Pulse
+    let service_opts = ServiceOptions::new("my-service", "1.0.0")
+        .with_environment(Environment::Production);
+    
+    let pulse_opts = PulseOptions::new();
+    
+    let pulse = Pulse::new(service_opts, pulse_opts)?;
+    
+    // Use it!
+    logger::info!("Service started");
+    
+    pulse.close()?;
+    Ok(())
+}
+```
+
+**[📖 Full Rust SDK Documentation →](pulse-rs/README.md)**
 
 ## Observability Stack
 
@@ -135,11 +201,11 @@ graph TB
 
 ## Language Support
 
-| Language | Status         | Documentation                |
-| -------- | -------------- | ---------------------------- |
-| Go       | ✅ Stable      | [Go/README.md](go/README.md) |
-| Python   | 🚧 Coming Soon | -                            |
-| Rust     | 🚧 Coming Soon | -                            |
+| Language | Status    | Documentation                            |
+| -------- | --------- | ---------------------------------------- |
+| Go       | ✅ Stable | [pulse-go/README.md](pulse-go/README.md) |
+| Python   | ✅ Stable | [pulse-py/README.md](pulse-py/README.md) |
+| Rust     | ✅ Stable | [pulse-rs/README.md](pulse-rs/README.md) |
 
 ## Use Cases
 

@@ -1,5 +1,4 @@
-use pulse::logger;
-use pulse::options::{ServiceOptions, PulseOptions, Environment, TelemetryOptions, OtelOptions};
+use pulse::{Pulse, Environment, logger};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -14,15 +13,11 @@ struct ChatMessage {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let service_opts = ServiceOptions::new("chat-service", "1.0.0")
-        .with_description("Simple chat service with logging")
-        .with_environment(Environment::Development);
-
-    let pulse_opts = PulseOptions::new().with_telemetry(
-        TelemetryOptions::default().with_otlp(OtelOptions::new("localhost", 4317)),
-    );
-
-    let pulse = pulse::Pulse::new(service_opts, pulse_opts)?;
+    let _pulse = Pulse::builder("chat-service", "1.0.0")
+        .description("Simple chat service with logging")
+        .environment(Environment::Development)
+        .with_otlp("localhost", 4317)
+        .build()?;
 
     logger::info!("Chat service started");
     logger::debug!("Debug mode enabled");
@@ -84,6 +79,5 @@ async fn main() -> anyhow::Result<()> {
     logger::info!("Processed {} messages in {:.2}ms", total_messages, processing_time_ms);
     logger::info!("Chat service shutting down");
 
-    pulse.close()?;
     Ok(())
 }

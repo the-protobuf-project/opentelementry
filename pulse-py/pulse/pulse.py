@@ -110,14 +110,6 @@ class Pulse:
             otlp_opts=pulse_opts.telemetry.otlp if pulse_opts.telemetry.otlp.enabled else None,
             mcap_writer=self.mcap_writer,
         )
-        
-        self.logger.info("Pulse initialized", {
-            "service": service_opts.name,
-            "version": service_opts.version,
-            "environment": service_opts.environment.value,
-            "mcap_enabled": pulse_opts.foxglove.enabled,
-            "otlp_enabled": pulse_opts.telemetry.otlp.enabled,
-        })
     
     def __enter__(self):
         """Enter context manager"""
@@ -134,8 +126,6 @@ class Pulse:
     
     def close(self):
         """Close all Pulse components and flush pending data"""
-        self.logger.info("Shutting down Pulse")
-        
         # Close components in order
         self.tracing.close()
         self.metrics.close()

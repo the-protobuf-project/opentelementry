@@ -1,5 +1,4 @@
-use pulse::logger;
-use pulse::options::{ServiceOptions, PulseOptions, Environment, FoxgloveOptions, TelemetryOptions, OtelOptions};
+use pulse::{Pulse, Environment, logger};
 use pulse::derive::Metrics;
 
 #[derive(Debug, Metrics)]
@@ -16,18 +15,12 @@ pub struct LlmMetrics {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let service_opts = ServiceOptions::new("metrics-example", "1.0.0")
-        .with_description("Metrics example service")
-        .with_environment(Environment::Development);
-
-    let pulse_opts = PulseOptions::new()
-        .with_foxglove(FoxgloveOptions::new("pulse/examples/metrics.mcap"))
-        .with_telemetry(
-            TelemetryOptions::default()
-                .with_otlp(OtelOptions::new("localhost", 4317))
-        );
-
-    let mut pulse = pulse::Pulse::new(service_opts.clone(), pulse_opts)?;
+    let mut pulse = Pulse::builder("metrics-example", "1.0.0")
+        .description("Metrics example service")
+        .environment(Environment::Development)
+        .with_mcap("pulse/examples/metrics.mcap")
+        .with_otlp("localhost", 4317)
+        .build()?;
 
     logger::info!("Metrics Example Started");
     logger::info!("Sending metrics to OTEL collector at localhost:4317");
@@ -60,11 +53,7 @@ async fn main() -> anyhow::Result<()> {
     }
 
     logger::info!("Metrics recording completed");
-    logger::info!("Closing MCAP file...");
+    logger::info!("MCAP file will be finalized automatically");
     
-    // Properly close to finalize MCAP file
-    pulse.close()?;
-    
-    logger::info!("MCAP file finalized: examples/metrics.mcap");
     Ok(())
 }

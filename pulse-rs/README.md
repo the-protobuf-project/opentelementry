@@ -59,18 +59,14 @@ cargo build --release
 ### Basic Usage
 
 ```rust
-use pulse::{Pulse, logger};
-use pulse::options::{ServiceOptions, PulseOptions, Environment};
+use pulse::{Pulse, Environment, logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize Pulse
-    let service_opts = ServiceOptions::new("my-service", "1.0.0")
-        .with_environment(Environment::Production);
-    
-    let pulse_opts = PulseOptions::new();
-    
-    let pulse = Pulse::new(service_opts, pulse_opts)?;
+    // Initialize Pulse with builder pattern
+    let pulse = Pulse::builder("my-service", "1.0.0")
+        .environment(Environment::Production)
+        .build()?;
     
     // Use structured logging
     logger::info!("Service started");
@@ -163,14 +159,9 @@ async fn process_request(request_id: String) -> Result<String> {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let service_opts = ServiceOptions::new("my-service", "1.0.0");
-    let pulse_opts = PulseOptions::new()
-        .with_telemetry(
-            TelemetryOptions::default()
-                .with_otlp(OtelOptions::new("localhost", 4317))
-        );
-    
-    let pulse = Pulse::new(service_opts, pulse_opts)?;
+    let pulse = Pulse::builder("my-service", "1.0.0")
+        .with_otlp("localhost", 4317)
+        .build()?;
     
     // Traced function calls
     process_request("req-123".to_string()).await?;
@@ -182,30 +173,44 @@ async fn main() -> anyhow::Result<()> {
 
 ## Configuration
 
-### Service Options
+### Builder API (Recommended)
+
+The builder pattern provides a clean, fluent API for configuring Pulse:
 
 ```rust
-use pulse::options::{ServiceOptions, Environment};
+use pulse::{Pulse, Environment};
+
+let pulse = Pulse::builder("my-service", "1.0.0")
+    .description("My awesome service")
+    .environment(Environment::Production)
+    .with_otlp("localhost", 4317)
+    .with_mcap("output.mcap")
+    .build()?;
+```
+
+**Available Builder Methods:**
+- `.description(desc)` - Set service description
+- `.environment(env)` - Set deployment environment (Development, Staging, Production, Jetson)
+- `.with_otlp(host, port)` - Enable OpenTelemetry OTLP export
+- `.with_mcap(path)` - Enable MCAP recording to file
+
+### Legacy API
+
+The original API is still supported for backward compatibility:
+
+```rust
+use pulse::options::{
+    ServiceOptions,
+    PulseOptions, 
+    TelemetryOptions, 
+    OtelOptions, 
+    FoxgloveOptions,
+    Environment
+};
 
 let service_opts = ServiceOptions::new("my-service", "1.0.0")
     .with_description("My awesome service")
     .with_environment(Environment::Production);
-```
-
-**Environments:**
-- `Environment::Development`
-- `Environment::Staging`
-- `Environment::Production`
-
-### Pulse Options
-
-```rust
-use pulse::options::{
-    PulseOptions, 
-    TelemetryOptions, 
-    OtelOptions, 
-    FoxgloveOptions
-};
 
 let pulse_opts = PulseOptions::new()
     .with_telemetry(
@@ -213,23 +218,8 @@ let pulse_opts = PulseOptions::new()
             .with_otlp(OtelOptions::new("localhost", 4317))
     )
     .with_foxglove(FoxgloveOptions::new("output.mcap"));
-```
 
-### OpenTelemetry Configuration
-
-```rust
-use pulse::options::{TelemetryOptions, OtelOptions};
-
-let telemetry_opts = TelemetryOptions::default()
-    .with_otlp(OtelOptions::new("otel-collector", 4317));
-```
-
-### MCAP Recording
-
-```rust
-use pulse::options::FoxgloveOptions;
-
-let foxglove_opts = FoxgloveOptions::new("telemetry.mcap");
+let pulse = Pulse::new(service_opts, pulse_opts)?;
 ```
 
 MCAP files can be opened in [Foxglove Studio](https://foxglove.dev/) for offline analysis and visualization.

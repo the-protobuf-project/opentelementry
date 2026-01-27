@@ -1,6 +1,5 @@
 // Simple tracing example to verify OTLP export
-use pulse::logger;
-use pulse::options::{Environment, OtelOptions, PulseOptions, ServiceOptions, TelemetryOptions};
+use pulse::{Pulse, Environment, logger};
 use pulse::tracing::instrument;
 
 #[instrument]
@@ -11,13 +10,10 @@ fn simple_operation() {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let service_opts = ServiceOptions::new("simple-trace-test", "1.0.0")
-        .with_environment(Environment::Development);
-
-    let pulse_opts = PulseOptions::new()
-        .with_telemetry(TelemetryOptions::default().with_otlp(OtelOptions::new("localhost", 4317)));
-
-    let pulse = pulse::Pulse::new(service_opts.clone(), pulse_opts)?;
+    let _pulse = Pulse::builder("simple-trace-test", "1.0.0")
+        .environment(Environment::Development)
+        .with_otlp("localhost", 4317)
+        .build()?;
 
     logger::info!("=== SIMPLE TRACE TEST ===");
     logger::info!("Service: simple-trace-test");
@@ -32,6 +28,5 @@ async fn main() -> anyhow::Result<()> {
     logger::info!("Done! Check Tempo for service: simple-trace-test");
     logger::info!("Look for span: simple_operation");
 
-    pulse.close()?;
     Ok(())
 }

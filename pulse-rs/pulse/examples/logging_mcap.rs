@@ -1,5 +1,4 @@
-use pulse::logger;
-use pulse::options::{ServiceOptions, PulseOptions, Environment, FoxgloveOptions};
+use pulse::{Pulse, Environment, logger};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -14,14 +13,11 @@ struct ChatMessage {
 }
 
 fn main() -> anyhow::Result<()> {
-    let service_opts = ServiceOptions::new("chat-service-mcap", "1.0.0")
-        .with_description("Chat service with MCAP logging")
-        .with_environment(Environment::Development);
-
-    let pulse_opts = PulseOptions::new()
-        .with_foxglove(FoxgloveOptions::new("examples/chat-logs.mcap"));
-
-    let pulse = pulse::Pulse::new(service_opts, pulse_opts)?;
+    let _pulse = Pulse::builder("chat-service-mcap", "1.0.0")
+        .description("Chat service with MCAP logging")
+        .environment(Environment::Development)
+        .with_mcap("examples/chat-logs.mcap")
+        .build()?;
 
     logger::info!("MCAP + Logging Example Started");
     logger::info!("Logs will be written to examples/chat-logs.mcap");
@@ -57,6 +53,5 @@ fn main() -> anyhow::Result<()> {
     logger::info!("MCAP example completed!");
     logger::info!("Check MCAP file: examples/chat-logs.mcap");
 
-    pulse.close()?;
     Ok(())
 }

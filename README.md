@@ -109,18 +109,15 @@ cargo add pulse
 ```
 
 ```rust
-use pulse::{Pulse, logger};
-use pulse::options::{ServiceOptions, PulseOptions, Environment};
+use pulse::{Pulse, Environment, logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize Pulse
-    let service_opts = ServiceOptions::new("my-service", "1.0.0")
-        .with_environment(Environment::Production);
-    
-    let pulse_opts = PulseOptions::new();
-    
-    let pulse = Pulse::new(service_opts, pulse_opts)?;
+    // Initialize Pulse with builder pattern
+    let pulse = Pulse::builder("my-service", "1.0.0")
+        .environment(Environment::Production)
+        .with_otlp("localhost", 4317)
+        .build()?;
     
     // Use it!
     logger::info!("Service started");

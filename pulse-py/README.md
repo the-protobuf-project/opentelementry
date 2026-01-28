@@ -109,7 +109,7 @@ with Pulse(
     p.logger.info("Service started", {"version": "1.0.0"})
     
     # Metrics
-    @pulse.PulseMetricsModel(prefix="api")
+    @pulse.PulseMetricsBaseModel(prefix="api")
     class APIMetrics(BaseModel):
         requests: int = pulse.Counter(description="Total requests")
         latency: float = pulse.Histogram(description="Request latency")
@@ -157,14 +157,14 @@ with Pulse(service_opts=ServiceOptions(name="my-service")) as p:
 
 ### Metrics
 
-Define metrics using the `@pulse.PulseMetricsModel` decorator with automatic name inference:
+Define metrics using the `@pulse.PulseMetricsBaseModel` decorator with automatic name inference:
 
 ```python
 import pulse
 from pydantic import BaseModel
 
 # Define metrics with automatic name generation
-@pulse.PulseMetricsModel(prefix="llm")
+@pulse.PulseMetricsBaseModel(prefix="llm")
 class LLMMetrics(BaseModel):
     """LLM processing metrics"""
     tokens_processed: int = pulse.Counter(description="Total tokens processed")
@@ -308,14 +308,14 @@ Demonstrates logging with MCAP recording for Foxglove Studio visualization.
 import pulse
 from pydantic import BaseModel
 
-@pulse.PulseMetricsModel(prefix="llm")
+@pulse.PulseMetricsBaseModel(prefix="llm")
 class LLMMetrics(BaseModel):
     tokens_processed: int = pulse.Counter(description="Total tokens")
     response_time: float = pulse.Histogram(description="Response time in ms")
     active_requests: int = pulse.Gauge(description="Active requests")
     cache_hit_rate: float = pulse.Gauge(description="Cache hit rate")
 
-@pulse.PulseMetricsModel(prefix="transcription")
+@pulse.PulseMetricsBaseModel(prefix="transcription")
 class TranscriptionMetrics(BaseModel):
     audio_duration: float = pulse.Histogram(description="Audio duration in seconds")
     confidence: float = pulse.Gauge(description="Confidence score")
@@ -467,7 +467,7 @@ Pulse SDK
 │   └── MCAP recording
 │
 ├── Metrics (Pydantic integration)
-│   ├── @PulseMetricsModel decorator
+│   ├── @PulseMetricsBaseModel decorator
 │   ├── Automatic name inference
 │   ├── OTLP export (OpenTelemetry)
 │   └── MCAP recording
@@ -529,9 +529,9 @@ p.logger.info(f"User {user_id} performed login")
 Use meaningful prefixes for metric organization:
 
 ```python
-@pulse.PulseMetricsModel(prefix="api")  # api.requests.total
-@pulse.PulseMetricsModel(prefix="db")   # db.queries.total
-@pulse.PulseMetricsModel(prefix="cache") # cache.hits.total
+@pulse.PulseMetricsBaseModel(prefix="api")  # api.requests.total
+@pulse.PulseMetricsBaseModel(prefix="db")   # db.queries.total
+@pulse.PulseMetricsBaseModel(prefix="cache") # cache.hits.total
 ```
 
 ### 4. Trace Decorators
@@ -585,7 +585,7 @@ Follow Prometheus naming conventions:
 
 While maintaining feature parity, the Python implementation has Pythonic adaptations:
 
-1. **Decorators instead of struct tags**: Python uses `@pulse.trace()` and `@pulse.PulseMetricsModel()` decorators
+1. **Decorators instead of struct tags**: Python uses `@pulse.trace()` and `@pulse.PulseMetricsBaseModel()` decorators
 2. **Pydantic models**: Metrics use Pydantic with field helpers instead of Go struct tags
 3. **Context variables**: Trace propagation uses Python's `contextvars` instead of Go's context
 4. **No explicit context passing**: Python decorators handle context automatically

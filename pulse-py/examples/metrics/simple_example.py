@@ -18,16 +18,16 @@ Then run this script and check:
 import pulse
 from pulse import (
     Pulse, ServiceOptions, PulseOptions, Environment,
-    TelemetryOptions, OTLPOptions, FoxgloveOptions, MetricsModel
+    TelemetryOptions, OTLPOptions, FoxgloveOptions, MetricsBaseModel
 )
 import time
 import random
 
 
-# LLMMetrics demonstrates automatic metric recording with MetricsModel
+# LLMMetrics demonstrates automatic metric recording with MetricsBaseModel
 # By default, metrics will be prefixed with the service name ("metrics-example")
-# You can override by specifying: class LLMMetrics(pulse.MetricsModel, prefix="llm")
-class LLMMetrics(MetricsModel, prefix="llm"):
+# You can override by specifying: class LLMMetrics(pulse.MetricsBaseModel, prefix="llm")
+class LLMMetrics(MetricsBaseModel, prefix="llm"):
     """LLM processing metrics"""
     tokens_processed: int = pulse.Counter(description="Total tokens processed by LLM")
     response_time: float = pulse.Histogram(description="LLM response time in milliseconds")
@@ -36,7 +36,7 @@ class LLMMetrics(MetricsModel, prefix="llm"):
 
 
 # TranscriptionMetrics for speech-to-text
-class TranscriptionMetrics(MetricsModel, prefix="transcription"):
+class TranscriptionMetrics(MetricsBaseModel, prefix="transcription"):
     """Speech-to-text transcription metrics"""
     audio_duration: float = pulse.Histogram(description="Audio duration in seconds")
     confidence: float = pulse.Gauge(description="Transcription confidence score (0.0-1.0)")

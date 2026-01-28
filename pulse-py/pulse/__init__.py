@@ -11,7 +11,7 @@ from .options import (
     OTLPOptions,
     from_env,
 )
-from ._private.metrics import counter, histogram, gauge, metric, Counter, Histogram, Gauge, MetricsModel
+from ._private.metrics import counter, histogram, gauge, metric, Counter, Histogram, Gauge, MetricsBaseModel
 from ._private.tracing import trace, traced, trace_step, TracedOperation
 
 __all__ = [
@@ -35,7 +35,7 @@ __all__ = [
     "Counter",
     "Histogram",
     "Gauge",
-    "MetricsModel",
+    "MetricsBaseModel",
     # Tracing
     "trace",
     "traced",

@@ -92,7 +92,7 @@ with Pulse(service_opts, pulse_opts) as p:
     p.logger.info("Service started")
     
     # Record metrics
-    class MyMetrics(pulse.MetricsModel):
+    class MyMetrics(pulse.MetricsBaseModel):
         requests: int = pulse.Counter(description="Total requests")
     
     p.metrics.record(MyMetrics(requests=1))

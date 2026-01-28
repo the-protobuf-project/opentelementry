@@ -339,7 +339,7 @@ def Gauge(name: Optional[str] = None, description: str = "") -> Any:
     )
 
 
-class MetricsModel(BaseModel):
+class MetricsBaseModel(BaseModel):
     """Base class for metric models with automatic name inference.
     
     Inherit from this class instead of BaseModel to create metric models.
@@ -349,7 +349,7 @@ class MetricsModel(BaseModel):
     Example:
         import pulse
         
-        class LLMMetrics(pulse.MetricsModel):
+        class LLMMetrics(pulse.MetricsBaseModel):
             tokens: int = pulse.Counter(description="Total tokens")
             latency: float = pulse.Histogram(description="Response time")
             # With service name "my-service", generates:
@@ -357,7 +357,7 @@ class MetricsModel(BaseModel):
             # - "my-service.latency"
         
         # Override prefix:
-        class CustomMetrics(pulse.MetricsModel, prefix="custom"):
+        class CustomMetrics(pulse.MetricsBaseModel, prefix="custom"):
             count: int = pulse.Counter()
             # Generates: "custom.count"
     """
@@ -365,7 +365,7 @@ class MetricsModel(BaseModel):
     _metric_prefix: Optional[str] = None
     
     def __init_subclass__(cls, prefix: Optional[str] = None, **kwargs):
-        """Called when a class inherits from MetricsModel."""
+        """Called when a class inherits from MetricsBaseModel."""
         super().__init_subclass__(**kwargs)
         cls._metric_prefix = prefix
     

@@ -53,7 +53,6 @@ class PulseLogger:
                 service_environment=service_opts.environment.value,
                 otlp_host=otlp_opts.host,
                 otlp_port=otlp_opts.port,
-                log_level=logging_opts.level,
             )
         
         # Initialize MCAP logging if enabled
@@ -67,24 +66,16 @@ class PulseLogger:
             )
     
     def _get_log_level(self, environment, configured_level: str):
-        """Determine log level based on environment and configuration"""
-        from logbook import DEBUG, INFO, WARNING, ERROR, CRITICAL
+        """Determine log level based on SERVICE_ENVIRONMENT.
         
-        level_map = {
-            "DEBUG": DEBUG,
-            "INFO": INFO,
-            "WARNING": WARNING,
-            "ERROR": ERROR,
-            "CRITICAL": CRITICAL,
-        }
+        Log levels by environment:
+        - development: DEBUG
+        - staging: INFO
+        - production: INFO
+        """
+        from logbook import DEBUG, INFO
         
-        if configured_level and configured_level.upper() in level_map:
-            return level_map[configured_level.upper()]
-        
-        # Environment-based defaults
-        if environment == Environment.PRODUCTION:
-            return INFO
-        elif environment == Environment.DEVELOPMENT:
+        if environment == Environment.DEVELOPMENT:
             return DEBUG
         else:
             return INFO

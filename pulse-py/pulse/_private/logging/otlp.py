@@ -45,19 +45,21 @@ class OTLPLogger:
     """
     
     def __init__(self, service_name: str, service_version: str, service_environment: str,
-                 otlp_host: str, otlp_port: int, log_level: str):
+                 otlp_host: str, otlp_port: int):
         """Initialize the OTLP logger.
         
         Sets up OpenTelemetry logging with OTLP exporter and attaches a handler
-        to Python's root logger.
+        to Python's root logger. Log level is determined by service_environment:
+        - development: DEBUG
+        - staging: INFO  
+        - production: WARNING
         
         Args:
             service_name: Name of the service for resource attributes.
             service_version: Version of the service.
-            service_environment: Deployment environment (e.g., "production").
+            service_environment: Deployment environment (e.g., "production", "development", "staging").
             otlp_host: Hostname or IP of the OTLP collector.
             otlp_port: Port number of the OTLP collector (typically 4317).
-            log_level: Minimum log level to export (DEBUG, INFO, WARNING, ERROR, CRITICAL).
         """
         resource = Resource.create({
             "service.name": service_name,
@@ -78,17 +80,38 @@ class OTLPLogger:
         
         set_logger_provider(logger_provider)
         
+        # Determine log level based on service environment
+        log_level = self._get_log_level_for_environment(service_environment)
+        
         # Setup Python logging bridge to OTEL
         handler = LoggingHandler(
-            level=getattr(logging, log_level),
+            level=log_level,
             logger_provider=logger_provider,
         )
         
-        logging.getLogger().addHandler(handler)
+        # Ensure root logger level allows all logs to pass through to handler
+        root_logger = logging.getLogger()
+        root_logger.setLevel(logging.DEBUG)
+        root_logger.addHandler(handler)
         self.logger = logger_provider.get_logger(service_name)
         self.service_name = service_name
         self.service_version = service_version
         self.service_environment = service_environment
+    
+    def _get_log_level_for_environment(self, environment: str) -> int:
+        """Determine log level based on service environment.
+        
+        Args:
+            environment: Service environment string (development, staging, production).
+            
+        Returns:
+            Python logging level integer.
+        """
+        env_lower = environment.lower()
+        if env_lower == "development":
+            return logging.DEBUG
+        else:
+            return logging.INFO
     
     def write_log(self, level: str, message: str, data: Optional[Dict[str, Any]],
                   caller_file: str = "", caller_line: int = 0):

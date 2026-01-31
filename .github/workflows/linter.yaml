@@ -15,17 +15,17 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25.0'
-      
+
       - name: Lint Go SDK
         uses: golangci/golangci-lint-action@v6
         with:
           version: latest
-          working-directory: ./go
+          working-directory: ./pulse-go
           args: --timeout=5m
 
   lint-markdown:
@@ -34,7 +34,7 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      
+
       - name: Lint Markdown files
         uses: DavidAnson/markdownlint-cli2-action@v16
         with:
@@ -46,7 +46,7 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      
+
       - name: Lint YAML files
         uses: ibiqlik/action-yamllint@v3
         with:

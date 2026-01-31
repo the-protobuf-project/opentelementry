@@ -304,7 +304,9 @@ type OrderRequest struct {
 func processOrder(
     ctx context.Context, p *pulse.Pulse, req OrderRequest,
 ) error {
-    return p.Tracing.Trace(ctx, "ProcessOrder", req, func(ctx context.Context, span *pulse.Span) error {
+    return p.Tracing.Trace(
+        ctx, "ProcessOrder", req,
+        func(ctx context.Context, span *pulse.Span) error {
         // Attributes are automatically added from struct tags
         span.AddEvent("Processing started")
 
@@ -329,7 +331,9 @@ Create hierarchical traces to understand complex workflows:
 func handleCheckout(
     ctx context.Context, p *pulse.Pulse,
 ) error {
-    return p.Tracing.Trace(ctx, "Checkout", nil, func(ctx context.Context, span *pulse.Span) error {
+    return p.Tracing.Trace(
+        ctx, "Checkout", nil,
+        func(ctx context.Context, span *pulse.Span) error {
         // Child span 1: Validate cart
         ctx, err := validateCart(ctx, p)
         if err != nil {

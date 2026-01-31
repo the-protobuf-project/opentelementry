@@ -20,7 +20,7 @@ MCAP recording for offline analysis.
 ```text
 pulse.New() → Pulse struct with:
 ├── Logger (*logging.Logger)           # Structured logging with trace correlation
-├── Metrics (*metrics.Metrics)         # OpenTelemetry metrics (counters, histograms, gauges)
+├── Metrics (*metrics.Metrics)         # OTel metrics
 ├── Tracing (*tracing.Tracing)         # Distributed tracing spans
 ├── Profiler (*profiling.Profiler)     # Pyroscope continuous profiling
 ├── telemetry (*telemetry.Telemetry)   # Unified OpenTelemetry client

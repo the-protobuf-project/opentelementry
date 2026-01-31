@@ -229,7 +229,8 @@ let pulse_opts = PulseOptions::new()
 let pulse = Pulse::new(service_opts, pulse_opts)?;
 ```
 
-MCAP files can be opened in [Foxglove Studio](https://foxglove.dev/) for offline analysis and visualization.
+MCAP files can be opened in [Foxglove Studio](https://foxglove.dev/) for
+offline analysis and visualization.
 
 ## Environment Variables
 
@@ -533,7 +534,8 @@ export RUST_LOG=debug,my_service=trace
 
 ## Contributing
 
-Contributions are welcome! Please see the main [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
+Contributions are welcome! Please see the main
+[CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 
 ## Resources
 

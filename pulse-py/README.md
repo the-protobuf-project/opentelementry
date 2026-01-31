@@ -298,6 +298,7 @@ The `examples/` directory contains complete working examples:
 ### Logging Examples
 
 **Simple Logging** (`examples/logging/simple_example.py`):
+
 ```python
 from pulse import Pulse, ServiceOptions
 
@@ -346,7 +347,8 @@ p.metrics.record(llm_metrics)
 
 **Distributed Tracing** (`examples/tracing/simple_example.py`):
 
-Complete example demonstrating a multi-component AI assistant pipeline with 7 traced components:
+Complete example demonstrating a multi-component AI assistant pipeline
+with 7 traced components:
 
 1. Input Processing
 2. Context Retrieval

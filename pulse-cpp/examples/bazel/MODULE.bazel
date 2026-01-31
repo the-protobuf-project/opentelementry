@@ -1,0 +1,14 @@
+module(
+    name = "pulse-example",
+    version = "1.0.0",
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.16")
+
+# Local dependency on pulse.cpp
+local_path_override(
+    module_name = "pulse.cpp",
+    path = "../pulse-cpp",
+)
+
+bazel_dep(name = "pulse.cpp", version = "1.0.0")

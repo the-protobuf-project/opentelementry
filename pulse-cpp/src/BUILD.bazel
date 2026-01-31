@@ -1,0 +1,15 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "pulse",
+    srcs = ["pulse.cpp"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//include/pulse",
+        "//src/logging",
+        "//src/mcap",
+        "//src/metrics",
+        "//src/otel",
+        "//src/tracing",
+    ],
+)

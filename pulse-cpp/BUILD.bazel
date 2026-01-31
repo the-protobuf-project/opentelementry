@@ -1,0 +1,17 @@
+# gazelle:exclude build
+# gazelle:cc_strip_include_prefix /include
+
+load("@gazelle//:def.bzl", "gazelle", "gazelle_binary")
+
+# Define a gazelle binary with a list of enabled extensions
+gazelle_binary(
+    name = "gazelle_cc",
+    languages = [
+        "@gazelle_cc//language/cc",
+    ],
+)
+
+gazelle(
+    name = "gazelle",
+    gazelle = ":gazelle_cc",
+)

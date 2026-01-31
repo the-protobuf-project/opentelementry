@@ -1,6 +1,8 @@
 # Pulse - Python SDK
 
-A comprehensive observability framework for Python applications, providing unified logging, metrics, and distributed tracing capabilities with OpenTelemetry integration and MCAP recording for Foxglove Studio.
+A comprehensive observability framework for Python applications, providing
+unified logging, metrics, and distributed tracing capabilities with
+OpenTelemetry integration and MCAP recording for Foxglove Studio.
 
 ## Table of Contents
 
@@ -20,6 +22,7 @@ A comprehensive observability framework for Python applications, providing unifi
 ## Features
 
 ### Logging
+
 - Structured logging with logbook integration
 - Automatic export to OpenTelemetry Protocol (OTLP) collectors
 - MCAP file recording for offline analysis in Foxglove Studio
@@ -27,6 +30,7 @@ A comprehensive observability framework for Python applications, providing unifi
 - Support for all standard log levels (debug, info, warning, error, critical)
 
 ### Metrics
+
 - Decorator-based metric definitions using Pydantic models
 - Automatic metric name inference from field names
 - Support for counters, histograms, and gauges
@@ -35,6 +39,7 @@ A comprehensive observability framework for Python applications, providing unifi
 - Type-safe metric definitions with validation
 
 ### Distributed Tracing
+
 - Decorator-based automatic span creation
 - Manual span management with context managers
 - Automatic trace context propagation
@@ -44,6 +49,7 @@ A comprehensive observability framework for Python applications, providing unifi
 - MCAP recording for trace visualization
 
 ### MCAP Recording
+
 - Unified MCAP file containing logs, metrics, and traces
 - Compatible with Foxglove Studio for visualization
 - JSON schema encoding for easy inspection
@@ -130,7 +136,7 @@ with Pulse(
 
 ## Core Concepts
 
-### Logging
+### Logging Details
 
 Pulse provides structured logging with automatic export to multiple backends:
 
@@ -149,15 +155,17 @@ with Pulse(service_opts=ServiceOptions(name="my-service")) as p:
 ```
 
 **Features:**
+
 - Structured data as dictionaries
 - Automatic caller file and line number detection
 - Colorized console output
 - Simultaneous export to OTLP and MCAP
 - Service context automatically included
 
-### Metrics
+### Metrics Details
 
-Define metrics using the `@pulse.PulseMetricsBaseModel` decorator with automatic name inference:
+Define metrics using the `@pulse.PulseMetricsBaseModel` decorator with
+automatic name inference:
 
 ```python
 import pulse
@@ -189,6 +197,7 @@ p.metrics.record(metrics)
 - **Gauge**: Point-in-time values (memory, connections, queue depth)
 
 **Metric Names:**
+
 - Field `tokens_processed` with prefix `llm` becomes `llm.tokens.processed`
 - Exported to Prometheus as `llm_tokens_processed_total`
 - Underscores in field names converted to dots
@@ -206,7 +215,7 @@ def slow_operation():
     return "done"
 ```
 
-### Distributed Tracing
+### Distributed Tracing Details
 
 Automatic span creation and context propagation:
 
@@ -246,11 +255,12 @@ with p.tracing.start_span("complex_operation", {"user_id": "123"}) as span:
 ```
 
 **Trace Context Propagation:**
+
 - Trace IDs automatically propagated across decorated functions
 - Parent-child span relationships maintained automatically
 - No manual context passing required
 
-### MCAP Recording
+### MCAP Recording Details
 
 All telemetry data can be recorded to a single MCAP file:
 
@@ -273,7 +283,7 @@ with Pulse(
 
 **Viewing MCAP Files:**
 
-1. Install Foxglove Studio: https://foxglove.dev/download
+1. Install Foxglove Studio: <https://foxglove.dev/download>
 2. Open the MCAP file in Foxglove
 3. Add panels to visualize:
    - **Log Panel**: View structured logs
@@ -304,6 +314,7 @@ Demonstrates logging with MCAP recording for Foxglove Studio visualization.
 ### Metrics Examples
 
 **Metrics with Pydantic Models** (`examples/metrics/simple_example.py`):
+
 ```python
 import pulse
 from pydantic import BaseModel
@@ -345,7 +356,8 @@ Complete example demonstrating a multi-component AI assistant pipeline with 7 tr
 6. Response Validation
 7. Output Formatting
 
-Each component uses `@pulse.trace()` decorator with `TracedOperation` for detailed step tracking.
+Each component uses `@pulse.trace()` decorator with `TracedOperation` for
+detailed step tracking.
 
 ### Running Examples
 
@@ -459,7 +471,7 @@ with Pulse(*from_env()) as p:
 
 ## Architecture
 
-```
+```text
 Pulse SDK
 ├── Logger (logbook wrapper)
 │   ├── Console output (logbook)
@@ -485,7 +497,7 @@ Pulse SDK
 
 ### Data Flow
 
-```
+```text
 Application Code
        │
        ├──> Logger ──┬──> Console (logbook)
@@ -585,9 +597,12 @@ Follow Prometheus naming conventions:
 
 While maintaining feature parity, the Python implementation has Pythonic adaptations:
 
-1. **Decorators instead of struct tags**: Python uses `@pulse.trace()` and `@pulse.PulseMetricsBaseModel()` decorators
-2. **Pydantic models**: Metrics use Pydantic with field helpers instead of Go struct tags
-3. **Context variables**: Trace propagation uses Python's `contextvars` instead of Go's context
+1. **Decorators instead of struct tags**: Python uses `@pulse.trace()` and
+   `@pulse.PulseMetricsBaseModel()` decorators
+2. **Pydantic models**: Metrics use Pydantic with field helpers instead of
+   Go struct tags
+3. **Context variables**: Trace propagation uses Python's `contextvars`
+   instead of Go's context
 4. **No explicit context passing**: Python decorators handle context automatically
 5. **Type hints**: Full type hint support for IDE autocomplete and type checking
 
@@ -599,7 +614,8 @@ The MCAP file contains three channels:
 2. `/pulse/metrics`: Metric values with labels and timestamps
 3. `/pulse/traces`: Trace spans with attributes and events
 
-All channels use JSON schema encoding for easy inspection and visualization in Foxglove Studio.
+All channels use JSON schema encoding for easy inspection and visualization
+in Foxglove Studio.
 
 ## Troubleshooting
 
@@ -607,13 +623,13 @@ All channels use JSON schema encoding for easy inspection and visualization in F
 
 1. Wait 30-60 seconds for metric export and Prometheus scrape
 2. Check OTLP collector is running: `docker ps | grep otel`
-3. Verify Prometheus targets: http://localhost:9090/targets
-4. Check metric names in Prometheus: http://localhost:9090/graph
+3. Verify Prometheus targets: <http://localhost:9090/targets>
+4. Check metric names in Prometheus: <http://localhost:9090/graph>
 
 ### Traces not appearing in Jaeger
 
 1. Ensure OTLP collector is configured for trace export
-2. Check Jaeger UI: http://localhost:16686
+2. Check Jaeger UI: <http://localhost:16686>
 3. Verify trace context is being propagated (use `@pulse.trace()` decorator)
 
 ### MCAP file not created
@@ -627,4 +643,3 @@ All channels use JSON schema encoding for easy inspection and visualization in F
 Copyright © 2026 Machani Robotics
 
 Licensed under the Apache License, Version 2.0.
-

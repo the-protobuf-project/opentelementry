@@ -1,7 +1,7 @@
 name: "pulse-env"
 include:
   - ../opentelemetry/compose.yaml
-  
+
 services:
   devcontainer:
     build:

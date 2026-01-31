@@ -2,7 +2,10 @@
 
 ## Project Overview
 
-**Pulse** is a unified observability framework providing multi-language SDKs (Go, Rust, Python) for OpenTelemetry-based logging, metrics, tracing, and profiling. Built by Machani Robotics for production robotics systems with MCAP recording for offline analysis.
+**Pulse** is a unified observability framework providing multi-language SDKs
+(Go, Rust, Python) for OpenTelemetry-based logging, metrics, tracing, and
+profiling. Built by Machani Robotics for production robotics systems with
+MCAP recording for offline analysis.
 
 ## Architecture Patterns
 
@@ -14,7 +17,7 @@
 
 ### 2. Core Components Architecture
 
-```
+```text
 pulse.New() → Pulse struct with:
 ├── Logger (*logging.Logger)           # Structured logging with trace correlation
 ├── Metrics (*metrics.Metrics)         # OpenTelemetry metrics (counters, histograms, gauges)
@@ -71,7 +74,8 @@ defer p.Close(ctx)
 
 ### 2. Structured Logging with Attributes
 
-Use struct tags `pulse:"attribute:key.name"` for automatic OpenTelemetry attribute extraction:
+Use struct tags `pulse:"attribute:key.name"` for automatic OpenTelemetry
+attribute extraction:
 
 ```go
 type ChatMessage struct {
@@ -114,7 +118,8 @@ Default endpoints:
 
 - `pulse.go`: Main SDK interface
 - `options/`: Configuration structs and defaults
-- `internal/`: Implementation packages (logging, metrics, tracing, telemetry, profiling, foxglove)
+- `internal/`: Implementation packages (logging, metrics, tracing, telemetry,
+  profiling, foxglove)
 - `examples/`: Runnable examples for each telemetry type
 
 ### Internal Package Boundaries
@@ -154,4 +159,5 @@ When extending Pulse:
 4. Add example in `examples/`
 5. Update unified telemetry integration if needed
 
-Focus on maintaining the unified telemetry approach while supporting the diverse needs of robotics applications.
+Focus on maintaining the unified telemetry approach while supporting the
+diverse needs of robotics applications.

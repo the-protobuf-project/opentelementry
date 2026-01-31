@@ -1,17 +1,19 @@
 # Pulse - Rust SDK
 
-A comprehensive observability framework for Rust applications, providing unified logging, metrics, and distributed tracing capabilities with OpenTelemetry integration and MCAP recording for Foxglove Studio.
+A comprehensive observability framework for Rust applications, providing
+unified logging, metrics, and distributed tracing capabilities with
+OpenTelemetry integration and MCAP recording for Foxglove Studio.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Core Concepts](#core-concepts)
+- [Core Concepts](#quick-start)
   - [Logging](#logging-with-structured-data)
   - [Metrics](#metrics-with-derive-macro)
   - [Distributed Tracing](#distributed-tracing)
-  - [MCAP Recording](#mcap-recording)
+  - [MCAP Recording](#configuration)
 - [Configuration](#configuration)
 - [Examples](#examples)
 - [API Reference](#api-reference)
@@ -35,7 +37,8 @@ Add Pulse to your Rust project using Git:
 
 ```toml
 [dependencies]
-pulse = { git = "https://github.com/machanirobotics/pulse.git", subdirectory = "pulse-rs/pulse" }
+pulse = { git = "https://github.com/machanirobotics/pulse.git",
+         subdirectory = "pulse-rs/pulse" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 anyhow = "1.0"
 ```
@@ -116,10 +119,12 @@ pub struct ApiMetrics {
     #[metric(name = "api.requests.total", description = "Total API requests", counter)]
     pub request_count: u64,
 
-    #[metric(name = "api.latency_ms", description = "API latency in milliseconds", histogram)]
+    #[metric(name = "api.latency_ms",
+         description = "API latency in milliseconds", histogram)]
     pub latency_ms: f64,
 
-    #[metric(name = "api.active_connections", description = "Active connections", gauge)]
+    #[metric(name = "api.active_connections",
+         description = "Active connections", gauge)]
     pub active_connections: f64,
 }
 
@@ -189,8 +194,10 @@ let pulse = Pulse::builder("my-service", "1.0.0")
 ```
 
 **Available Builder Methods:**
+
 - `.description(desc)` - Set service description
-- `.environment(env)` - Set deployment environment (Development, Staging, Production, Jetson)
+- `.environment(env)` - Set deployment environment (Development, Staging,
+  Production, Jetson)
 - `.with_otlp(host, port)` - Enable OpenTelemetry OTLP export
 - `.with_mcap(path)` - Enable MCAP recording to file
 
@@ -267,6 +274,7 @@ cargo run --example logging
 ```
 
 Demonstrates:
+
 - Basic logging with format specifiers
 - Structured data logging
 - OpenTelemetry integration
@@ -279,6 +287,7 @@ cargo run --example metrics
 ```
 
 Demonstrates:
+
 - Derive macro for metrics
 - Direct metrics recording
 - MCAP file generation
@@ -291,6 +300,7 @@ cargo run --example logging_mcap
 ```
 
 Demonstrates:
+
 - Recording logs to MCAP files
 - Foxglove Studio integration
 
@@ -301,13 +311,14 @@ cargo run --example tracing
 ```
 
 Demonstrates:
+
 - Distributed tracing with OpenTelemetry
 - Automatic span instrumentation
 - OTLP export to collectors
 
 ## Project Structure
 
-```
+```text
 pulse-rs/
 ├── pulse/                    # Main library
 │   ├── src/
@@ -417,6 +428,7 @@ docker compose up -d
 ```
 
 This provides:
+
 - **Grafana** at `http://localhost:3000` - Dashboards and visualization
 - **Loki** - Log aggregation
 - **Tempo** - Distributed tracing
@@ -523,12 +535,6 @@ export RUST_LOG=debug,my_service=trace
 
 Contributions are welcome! Please see the main [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 
-## License
-
-Copyright © 2026 Machani Robotics
-
-Licensed under the Apache License, Version 2.0. See [LICENSE](../LICENSE) for details.
-
 ## Resources
 
 - [Main Pulse Documentation](../README.md)
@@ -538,6 +544,4 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](../LICENSE) for de
 
 ## License
 
-Copyright © 2026 Machani Robotics
-
-Licensed under the Apache License, Version 2.0.
+Copyright © 2026 Machani Robotics. Licensed under the Apache License, Version 2.0.

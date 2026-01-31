@@ -1,6 +1,7 @@
 # Pulse Observability Stack
 
-Complete observability stack for Pulse applications with logging, tracing, metrics, and profiling.
+Complete observability stack for Pulse applications with logging, tracing,
+metrics, and profiling.
 
 ## Services
 
@@ -42,6 +43,7 @@ graph TB
 ## Installation
 
 ### Prerequisites
+
 - Docker
 - Docker Compose
 - Git
@@ -63,16 +65,17 @@ docker compose ps
 
 ### Access Services
 
-- **Grafana**: http://localhost:3000 (no login required)
-- **Loki**: http://localhost:3100
-- **Tempo**: http://localhost:3200
-- **Prometheus**: http://localhost:9090
-- **Pyroscope**: http://localhost:4040
-- **OTEL Collector**: http://localhost:4317 (gRPC), http://localhost:4318 (HTTP)
+- **Grafana**: <http://localhost:3000> (no login required)
+- **Loki**: <http://localhost:3100>
+- **Tempo**: <http://localhost:3200>
+- **Prometheus**: <http://localhost:9090>
+- **Pyroscope**: <http://localhost:4040>
+- **OTEL Collector**: <http://localhost:4317> (gRPC), <http://localhost:4318> (HTTP)
 
 ### Pre-configured Datasources
 
 All datasources are automatically configured in Grafana:
+
 - **Loki** - Logs with trace correlation
 - **Tempo** - Distributed tracing with log/metric correlation
 - **Prometheus** - Metrics
@@ -81,20 +84,23 @@ All datasources are automatically configured in Grafana:
 ### Running Examples
 
 #### MCAP Logging Example
+
 ```bash
 cd examples/mcap
 go run main.go
 ```
 
 #### Profiling Example
+
 ```bash
 cd examples/profiling
 go run main.go
 ```
 
 Then view:
+
 - Logs in Grafana → Explore → Loki
-- Profiles in Grafana → Explore → Pyroscope or http://localhost:4040
+- Profiles in Grafana → Explore → Pyroscope or <http://localhost:4040>
 
 ### Stop the Stack
 
@@ -103,6 +109,7 @@ docker compose down
 ```
 
 To remove volumes:
+
 ```bash
 docker compose down -v
 ```

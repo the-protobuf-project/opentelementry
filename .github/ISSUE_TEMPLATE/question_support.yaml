@@ -1,7 +1,7 @@
 name: Question and Support
 description: Ask a question or request support.
 title: "[question] "
-labels: ["question","support"]
+labels: ["question", "support"]
 body:
   - type: markdown
     attributes:

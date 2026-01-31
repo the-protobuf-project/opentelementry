@@ -1,16 +1,19 @@
 # Pulse [![codecov](https://codecov.io/gh/machanirobotics/pulse/graph/badge.svg?token=uXWq5jEJBz)](https://codecov.io/gh/machanirobotics/pulse)
 
-<div align="center">
-  <img width="250" src=".assets/logo.png">
-  <h3>Unified Observability Framework</h3>
-  <p>Production-grade logging, metrics, tracing, and profiling for modern applications</p>
-</div>
+![Pulse Logo](.assets/logo.png)
+
+**Unified Observability Framework** - Production-grade logging, metrics,
+tracing, and profiling for modern applications
 
 ## Overview
 
-**Pulse** is a comprehensive observability framework that provides unified telemetry for your applications. Built on OpenTelemetry standards, Pulse makes it easy to instrument your code with structured logging, distributed tracing, metrics collection, and continuous profiling.
+**Pulse** is a comprehensive observability framework that provides unified
+telemetry for your applications. Built on OpenTelemetry standards, Pulse
+makes it easy to instrument your code with structured logging, distributed
+tracing, metrics collection, and continuous profiling.
 
-Pulse is now open-sourced by **Machani Robotics** to help teams build observable, maintainable systems.
+Pulse is now open-sourced by **Machani Robotics** to help teams build
+observable, maintainable systems.
 
 ## Features
 
@@ -131,7 +134,8 @@ async fn main() -> anyhow::Result<()> {
 
 ## Observability Stack
 
-Pulse includes a complete, pre-configured observability stack powered by industry-standard tools:
+Pulse includes a complete, pre-configured observability stack powered by
+industry-standard tools:
 
 - **Loki** - Log aggregation
 - **Tempo** - Distributed tracing
@@ -229,5 +233,4 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for detai
 
 ---
 
-<strong>Built with ❤️ by Machani Robotics</strong>
-| Open Source Observability for Everyone
+**Built with love by Machani Robotics** | Open Source Observability for Everyone

@@ -1,6 +1,8 @@
 # Pulse - Go SDK
 
-A comprehensive observability framework for Go applications, providing unified logging, metrics, tracing, and profiling capabilities with OpenTelemetry integration.
+A comprehensive observability framework for Go applications, providing unified
+logging, metrics, tracing, and profiling capabilities with OpenTelemetry
+integration.
 
 ## Table of Contents
 
@@ -121,7 +123,8 @@ graph TB
 
 ### Logging
 
-Pulse provides structured logging with automatic context propagation and OpenTelemetry integration.
+Pulse provides structured logging with automatic context propagation and
+OpenTelemetry integration.
 
 #### Basic Logging
 
@@ -260,7 +263,8 @@ meter.RegisterCallback(func(ctx context.Context, o metric.Observer) error {
 
 ### Distributed Tracing
 
-Pulse provides automatic distributed tracing with OpenTelemetry, enabling you to track requests across service boundaries.
+Pulse provides automatic distributed tracing with OpenTelemetry, enabling you
+to track requests across service boundaries.
 
 #### Creating Spans
 
@@ -297,7 +301,9 @@ type OrderRequest struct {
     Currency  string  `pulse:"trace:order.currency"`
 }
 
-func processOrder(ctx context.Context, p *pulse.Pulse, req OrderRequest) error {
+func processOrder(
+    ctx context.Context, p *pulse.Pulse, req OrderRequest,
+) error {
     return p.Tracing.Trace(ctx, "ProcessOrder", req, func(ctx context.Context, span *pulse.Span) error {
         // Attributes are automatically added from struct tags
         span.AddEvent("Processing started")
@@ -320,7 +326,9 @@ func processOrder(ctx context.Context, p *pulse.Pulse, req OrderRequest) error {
 Create hierarchical traces to understand complex workflows:
 
 ```go
-func handleCheckout(ctx context.Context, p *pulse.Pulse) error {
+func handleCheckout(
+    ctx context.Context, p *pulse.Pulse,
+) error {
     return p.Tracing.Trace(ctx, "Checkout", nil, func(ctx context.Context, span *pulse.Span) error {
         // Child span 1: Validate cart
         ctx, err := validateCart(ctx, p)
@@ -572,7 +580,8 @@ func getPulseOptions(env options.Environment) options.PulseOptions {
 
 ### Complete LLM Pipeline with Tracing
 
-This example demonstrates distributed tracing across an LLM conversation pipeline with proper span hierarchy:
+This example demonstrates distributed tracing across an LLM conversation
+pipeline with proper span hierarchy:
 
 ```go
 package main
@@ -627,8 +636,12 @@ func main() {
     }
 }
 
-func processConversation(ctx context.Context, p *pulse.Pulse, req ConversationRequest) error {
-    return p.Tracing.Trace(ctx, "ConversationPipeline", req, func(ctx context.Context, span *pulse.Span) error {
+func processConversation(
+    ctx context.Context, p *pulse.Pulse, req ConversationRequest,
+) error {
+    return p.Tracing.Trace(
+        ctx, "ConversationPipeline", req,
+        func(ctx context.Context, span *pulse.Span) error {
         span.AddEvent("pipeline_started")
 
         // Step 1: Process input
@@ -658,7 +671,9 @@ func processConversation(ctx context.Context, p *pulse.Pulse, req ConversationRe
     })
 }
 
-func processInput(ctx context.Context, p *pulse.Pulse, input string) (string, error) {
+func processInput(
+    ctx context.Context, p *pulse.Pulse, input string,
+) (string, error) {
     _, span := p.Tracing.Start(ctx, "InputProcessing")
     defer span.End()
 
@@ -674,7 +689,9 @@ func processInput(ctx context.Context, p *pulse.Pulse, input string) (string, er
     return input, nil
 }
 
-func retrieveContext(ctx context.Context, p *pulse.Pulse, userID string) ([]string, error) {
+func retrieveContext(
+    ctx context.Context, p *pulse.Pulse, userID string,
+) ([]string, error) {
     _, span := p.Tracing.Start(ctx, "ContextRetrieval")
     defer span.End()
 
@@ -691,7 +708,9 @@ func retrieveContext(ctx context.Context, p *pulse.Pulse, userID string) ([]stri
     return context, nil
 }
 
-func generateResponse(ctx context.Context, p *pulse.Pulse, input string, context []string) (string, error) {
+func generateResponse(
+    ctx context.Context, p *pulse.Pulse, input string, context []string,
+) (string, error) {
     _, span := p.Tracing.Start(ctx, "ResponseGeneration")
     defer span.End()
 
@@ -704,7 +723,8 @@ func generateResponse(ctx context.Context, p *pulse.Pulse, input string, context
     span.AddEvent("parsing_response")
     time.Sleep(15 * time.Millisecond)
 
-    response := "Distributed tracing best practices include: 1) Use correlation IDs, 2) Propagate context..."
+    response := "Distributed tracing best practices include: " +
+        "1) Use correlation IDs, 2) Propagate context..."
     span.SetAttribute("response_tokens", len(response))
     span.SetOK()
 

@@ -37,15 +37,15 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        working-directory: ./go
+        working-directory: ./pulse-go
         run: go mod download
 
       - name: Run tests
-        working-directory: ./go
+        working-directory: ./pulse-go
         run: go test -v -race ./...
 
       - name: Build
-        working-directory: ./go
+        working-directory: ./pulse-go
         run: go build -v ./...
 
   docker-compose:
@@ -57,22 +57,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate docker-compose.yaml
-        working-directory: ./otel
+        working-directory: ./opentelemetry
         run: docker compose config
 
       - name: Start observability stack
-        working-directory: ./otel
+        working-directory: ./opentelemetry
         run: |
           docker compose up -d
           sleep 30
 
       - name: Check service health
-        working-directory: ./otel
+        working-directory: ./opentelemetry
         run: |
           docker compose ps
           docker compose logs
 
       - name: Stop services
-        working-directory: ./otel
+        working-directory: ./opentelemetry
         if: always()
         run: docker compose down -v

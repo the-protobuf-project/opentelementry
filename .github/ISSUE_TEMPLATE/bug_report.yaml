@@ -47,7 +47,11 @@ body:
     attributes:
       label: Steps to Reproduce
       description: "Please list the steps to reproduce the issue."
-      placeholder: "1. Trigger the problematic function or operation \n2. Note any specific input or conditions \n3. Describe the observed issue or error \n4. Include any relevant context or settings"
+      placeholder: |
+        1. Trigger the problematic function or operation
+        2. Note any specific input or conditions
+        3. Describe the observed issue or error
+        4. Include any relevant context or settings
     validations:
       required: true
 
@@ -56,7 +60,10 @@ body:
     attributes:
       label: Expected Behavior
       description: "Describe what you expected to happen."
-      placeholder: "Describe the outcome you expected when performing the steps above. For example, 'The system should process the request and return a success message.'"
+      placeholder: |
+        Describe the outcome you expected when performing the steps above.
+        For example, 'The system should process the request and return a
+        success message.'
     validations:
       required: true
 
@@ -65,7 +72,10 @@ body:
     attributes:
       label: Actual Behavior
       description: "Describe what actually happened."
-      placeholder: "Detail the actual outcome after performing the steps. For example, 'Instead of a success message, the system returned an error code 500 with no further explanation.'"
+      placeholder: |
+        Detail the actual outcome after performing the steps.
+        For example, 'Instead of a success message, the system returned
+        an error code 500 with no further explanation.'
     validations:
       required: true
 

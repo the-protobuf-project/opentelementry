@@ -1,6 +1,6 @@
 module github.com/machanirobotics/pulse/pulse-go
 
-go 1.25.0
+go 1.24.2
 
 require (
 	github.com/charmbracelet/log v0.4.2

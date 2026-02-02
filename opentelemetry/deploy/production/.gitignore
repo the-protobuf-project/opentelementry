@@ -1,0 +1,19 @@
+# Environment files with secrets
+.env
+*.env.local
+
+# Terraform state and secrets
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfvars
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+
+# TLS Certificates
+certs/
+*.pem
+*.key
+*.crt
+
+# Local build artifacts
+*.log

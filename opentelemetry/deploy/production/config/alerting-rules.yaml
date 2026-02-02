@@ -1,0 +1,106 @@
+groups:
+  - name: telemetry_alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])) 
+          / sum(rate(traces_spanmetrics_calls_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          alert_type: local_system
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+
+      # High latency alert
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          alert_type: local_system
+        annotations:
+          summary: "High latency detected"
+          description: "P95 latency is {{ $value }}s over the last 5 minutes"
+
+      # Service down alert
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          alert_type: local_system
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} has been down for more than 1 minute"
+
+      # Low throughput alert
+      - alert: LowThroughput
+        expr: |
+          sum(rate(traces_spanmetrics_calls_total[5m])) < 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low throughput detected"
+          description: "Request rate is below 1 req/s for 10 minutes"
+
+      # Memory usage alert (for otelcol)
+      - alert: HighMemoryUsage
+        expr: |
+          process_resident_memory_bytes / 1024 / 1024 > 180
+        for: 5m
+        labels:
+          severity: warning
+          alert_type: local_system
+        annotations:
+          summary: "High memory usage on {{ $labels.job }}"
+          description: "Memory usage is {{ $value }}MB"
+
+      # Loki ingestion rate
+      - alert: LokiHighIngestionRate
+        expr: |
+          sum(rate(loki_distributor_bytes_received_total[5m])) > 10485760
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High log ingestion rate"
+          description: "Loki is receiving {{ $value | humanize }}B/s"
+
+      # Tempo trace ingestion
+      - alert: TempoHighTraceRate
+        expr: |
+          sum(rate(tempo_distributor_spans_received_total[5m])) > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High trace ingestion rate"
+          description: "Tempo is receiving {{ $value }} spans/s"
+
+  - name: infrastructure_alerts
+    rules:
+      # Prometheus target down
+      - alert: PrometheusTargetMissing
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+          alert_type: local_system
+        annotations:
+          summary: "Prometheus target missing"
+          description: "A Prometheus target has been down for more than 5 minutes"
+
+      # Alertmanager cluster issues
+      - alert: AlertmanagerClusterFailed
+        expr: alertmanager_cluster_members < 1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alertmanager cluster degraded"
+          description: "Alertmanager cluster has less than expected members"

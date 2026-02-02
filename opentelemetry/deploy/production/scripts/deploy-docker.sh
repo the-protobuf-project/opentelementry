@@ -1,0 +1,101 @@
+#!/bin/bash
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROD_DIR="$(dirname "$SCRIPT_DIR")"
+OTEL_DIR="$(dirname "$(dirname "$PROD_DIR")")"
+
+echo "=== Pulse Telemetry Local/VM Deployment ==="
+
+# Check for .env file
+if [ ! -f "$PROD_DIR/.env" ]; then
+    if [ -f "$PROD_DIR/.env.example" ]; then
+        echo "Creating .env from .env.example..."
+        cp "$PROD_DIR/.env.example" "$PROD_DIR/.env"
+    else
+        echo "Creating default .env..."
+        cat > "$PROD_DIR/.env" << 'EOF'
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=changeme
+DOMAIN=telemetry.machanirobotics.dev
+EOF
+    fi
+    echo "⚠️  Please edit $PROD_DIR/.env with your credentials"
+fi
+
+# Load environment variables
+source "$PROD_DIR/.env"
+
+DOMAIN="${DOMAIN:-telemetry.machanirobotics.dev}"
+GRAFANA_ADMIN_USER="${GRAFANA_ADMIN_USER:-admin}"
+GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-changeme}"
+
+# Create required directories
+mkdir -p "$PROD_DIR/certs"
+mkdir -p "$PROD_DIR/dashboards"
+
+# Copy dashboards if not present
+if [ ! -f "$PROD_DIR/dashboards/metrics.dashboard.json" ]; then
+    echo "Copying dashboards..."
+    cp -r "$OTEL_DIR/dashboards/"* "$PROD_DIR/dashboards/" 2>/dev/null || true
+fi
+
+# Check for TLS certificates
+if [ ! -f "$PROD_DIR/certs/fullchain.pem" ] || [ ! -f "$PROD_DIR/certs/privkey.pem" ]; then
+    echo "⚠️  TLS certificates not found in $PROD_DIR/certs/"
+    echo "For production, obtain certificates from Let's Encrypt or your CA"
+    echo "For testing, generating self-signed certificates..."
+    
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$PROD_DIR/certs/privkey.pem" \
+        -out "$PROD_DIR/certs/fullchain.pem" \
+        -subj "/CN=$DOMAIN"
+    
+    chmod 644 "$PROD_DIR/certs/privkey.pem"
+    echo "✓ Self-signed certificates generated"
+fi
+
+# Check Docker is installed
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is not installed. Please install Docker first."
+    exit 1
+fi
+
+# Check Docker Compose
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+    echo "Error: Docker Compose is not installed. Please install Docker Compose first."
+    exit 1
+fi
+
+# Use docker compose or docker-compose
+if docker compose version &> /dev/null; then
+    COMPOSE_CMD="docker compose"
+else
+    COMPOSE_CMD="docker-compose"
+fi
+
+# Start the stack
+echo "Starting Pulse Telemetry stack..."
+cd "$PROD_DIR"
+$COMPOSE_CMD -f docker-compose.prod.yaml up -d --build
+
+# Wait and show status
+echo "Waiting for services to start..."
+sleep 10
+
+echo ""
+echo "Service status:"
+docker ps --format 'table {{.Names}}\t{{.Status}}' | grep pulse
+
+echo ""
+echo "=== Deployment Complete ==="
+echo ""
+echo "Access:"
+echo "  Dashboard: https://localhost (or https://$DOMAIN after DNS)"
+echo "  Credentials: $GRAFANA_ADMIN_USER / $GRAFANA_ADMIN_PASSWORD"
+echo ""
+echo "OTLP Endpoints:"
+echo "  gRPC: localhost:4317"
+echo "  HTTP: localhost:4318"
+echo ""
+echo "⚠️  Change the default password immediately!"

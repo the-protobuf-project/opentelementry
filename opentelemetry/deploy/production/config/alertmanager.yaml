@@ -1,0 +1,62 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # Warning alerts
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      repeat_interval: 30m
+
+    # Custom webhook for local system alerts
+    - match:
+        alert_type: local_system
+      receiver: 'local-webhook'
+
+receivers:
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://host.docker.internal:9095/webhook'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    webhook_configs:
+      - url: 'http://host.docker.internal:9095/webhook/critical'
+        send_resolved: true
+
+  - name: 'warning-alerts'
+    webhook_configs:
+      - url: 'http://host.docker.internal:9095/webhook/warning'
+        send_resolved: true
+
+  # Local system webhook receiver - alerts your local machine
+  - name: 'local-webhook'
+    webhook_configs:
+      - url: 'http://host.docker.internal:9095/webhook/local'
+        send_resolved: true
+        http_config:
+          basic_auth:
+            username: alertmanager
+            password_file: /etc/alertmanager/webhook_password
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname']
+
+templates: []

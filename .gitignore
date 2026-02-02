@@ -10,3 +10,4 @@ __pycache__
 target
 *.mcap
 build
+.terraform*

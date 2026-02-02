@@ -1,16 +1,15 @@
 # Pulse Observability Stack
 
-Complete observability stack for Pulse applications with logging, tracing,
-metrics, and profiling.
+Complete observability stack for Pulse applications with logging, tracing, metrics, and profiling.
 
-## Services
+## Features
 
-- **Loki** - Log aggregation system
-- **Tempo** - Distributed tracing backend
-- **Prometheus** - Metrics collection and storage
-- **Pyroscope** - Continuous profiling platform
-- **OpenTelemetry Collector** - Telemetry data pipeline
-- **Grafana** - Unified observability dashboard
+- **Logs** - Centralized log aggregation with Loki
+- **Traces** - Distributed tracing with Tempo
+- **Metrics** - Time-series metrics with Prometheus
+- **Profiles** - Continuous profiling with Pyroscope
+- **Unified Dashboard** - Grafana with pre-configured datasources
+- **OpenTelemetry** - Industry-standard telemetry collection
 
 ## Architecture
 
@@ -40,24 +39,20 @@ graph TB
     Pyroscope --> Grafana
 ```
 
-## Installation
+## Quick Start (Development)
 
 ### Prerequisites
 
-- Docker
-- Docker Compose
+- Docker & Docker Compose
 - Git
 
-## Usage
-
-### Start the Observability Stack
+### Start the Stack
 
 ```bash
-cd docker
 docker compose up -d
 ```
 
-This will start all services with health checks. Wait for all services to be healthy:
+Wait for all services to be healthy:
 
 ```bash
 docker compose ps
@@ -65,53 +60,116 @@ docker compose ps
 
 ### Access Services
 
-- **Grafana**: <http://localhost:3000> (no login required)
-- **Loki**: <http://localhost:3100>
-- **Tempo**: <http://localhost:3200>
-- **Prometheus**: <http://localhost:9090>
-- **Pyroscope**: <http://localhost:4040>
-- **OTEL Collector**: <http://localhost:4317> (gRPC), <http://localhost:4318> (HTTP)
+| Service | URL | Description |
+|---------|-----|-------------|
+| Grafana | http://localhost:3000 | Dashboard (no login required) |
+| Prometheus | http://localhost:9090 | Metrics UI |
+| Loki | http://localhost:3100 | Logs API |
+| Tempo | http://localhost:3200 | Traces API |
+| Pyroscope | http://localhost:4040 | Profiling UI |
+| OTLP gRPC | localhost:4317 | Telemetry ingestion |
+| OTLP HTTP | localhost:4318 | Telemetry ingestion |
 
 ### Pre-configured Datasources
 
-All datasources are automatically configured in Grafana:
+All datasources are automatically configured in Grafana with correlation:
 
-- **Loki** - Logs with trace correlation
-- **Tempo** - Distributed tracing with log/metric correlation
-- **Prometheus** - Metrics
+- **Loki** - Logs with trace ID linking
+- **Tempo** - Traces with log/metric correlation
+- **Prometheus** - Metrics with exemplars
 - **Pyroscope** - Continuous profiling
 
-### Running Examples
+### Stop the Stack
 
-#### MCAP Logging Example
+```bash
+docker compose down
+
+# To remove all data:
+docker compose down -v
+```
+
+## Production Deployment
+
+For production deployment on AWS EC2, see [deploy/production/README.md](deploy/production/README.md).
+
+**Highlights:**
+- Single EC2 instance with Docker Compose
+- Envoy proxy for TLS termination and routing
+- Alertmanager for notifications
+- Cost: ~$15-20/month (no EKS!)
+
+## Sending Telemetry
+
+### Environment Variables
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+export OTEL_SERVICE_NAME=my-service
+```
+
+### Go Example
+
+```go
+import "go.opentelemetry.io/otel"
+
+// Traces
+tracer := otel.Tracer("my-service")
+ctx, span := tracer.Start(ctx, "operation")
+defer span.End()
+
+// Logs (via OTLP)
+logger.Info("message", "trace_id", span.SpanContext().TraceID())
+```
+
+### Python Example
+
+```python
+from opentelemetry import trace
+
+tracer = trace.get_tracer("my-service")
+with tracer.start_as_current_span("operation"):
+    # your code
+```
+
+## Running Examples
+
+### MCAP Logging Example
 
 ```bash
 cd examples/mcap
 go run main.go
 ```
 
-#### Profiling Example
+### Profiling Example
 
 ```bash
 cd examples/profiling
 go run main.go
 ```
 
-Then view:
+View results:
+- Logs: Grafana → Explore → Loki
+- Traces: Grafana → Explore → Tempo
+- Profiles: Grafana → Explore → Pyroscope
 
-- Logs in Grafana → Explore → Loki
-- Profiles in Grafana → Explore → Pyroscope or <http://localhost:4040>
+## Project Structure
 
-### Stop the Stack
-
-```bash
-docker compose down
 ```
-
-To remove volumes:
-
-```bash
-docker compose down -v
+opentelemetry/
+├── compose.yaml           # Development Docker Compose
+├── config/                # Service configurations
+│   ├── grafana-datasources.yaml
+│   ├── otel-collector.yaml
+│   ├── prometheus.yaml
+│   └── ...
+├── dashboards/            # Grafana dashboards
+├── deploy/
+│   └── production/        # Production deployment
+│       ├── terraform/     # AWS infrastructure
+│       ├── scripts/       # Deployment scripts
+│       └── config/        # Production configs
+├── docker/                # Custom Dockerfiles
+└── examples/              # Usage examples
 ```
 
 ## Contributing

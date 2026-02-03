@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go"
@@ -169,50 +168,18 @@ func main() {
 }
 
 func runMaleniaConversationPipeline() {
-	ctx := context.Background()
-
-	// Get OTLP host from environment or use default
-	otlpHost := "otel.machanirobotics.dev"
-	if envHost := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"); envHost != "" {
-		otlpHost = envHost
-	}
-
-	// Initialize Pulse with tracing enabled
-	k, err := pulse.New(ctx, options.ServiceOptions{
-		Name:        "malenia-conversation-service",
-		Description: "Malenia AI Assistant with distributed tracing",
-		Version:     "1.0.0",
-		Environment: options.Production,
-	}, options.PulseOptions{
-		Telemetry: options.TelemetryOptions{
-			Logging: options.LoggingTelemetryOptions{
-				Enabled: true,
-			},
-			Metrics: options.MetricsTelemetryOptions{
-				Enabled:               true,
-				ExportIntervalSeconds: 10,
-			},
-			Tracing: options.TracingTelemetryOptions{
-				Enabled: true,
-			},
-			OTLP: options.OTLPOptions{
-				Host:    otlpHost,
-				Port:    4317,
-				Enabled: true,
-				Headers: map[string]string{
-					"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
-				},
-			},
-		},
-		Tracing: options.TracingOptions{
-			Enabled: true,
-		},
-	})
+	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
+	k, err := pulse.New().
+		WithService("malenia-conversation-service", "1.0.0").
+		WithDescription("Malenia AI Assistant with distributed tracing").
+		WithEnvironment(options.Production).
+		WithTracing().
+		Build()
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
-		_ = k.Close(ctx)
+		_ = k.Close()
 	}()
 
 	k.Logger.Info("=== Malenia Conversation Pipeline ===", nil)
@@ -229,6 +196,7 @@ func runMaleniaConversationPipeline() {
 	}
 
 	// Process the conversation pipeline
+	ctx := context.Background()
 	err = processMaleniaConversation(ctx, k, conversationReq)
 	if err != nil {
 		_ = k.Logger.Error("Conversation failed", map[string]interface{}{"error": err.Error()})
@@ -597,28 +565,16 @@ func formatOutput(ctx context.Context, k *pulse.Pulse, req OutputFormattingReque
 func runMaleniaWithError() {
 	ctx := context.Background()
 
-	k, err := pulse.New(ctx, options.ServiceOptions{
-		Name:        "malenia-conversation-service",
-		Version:     "1.0.0",
-		Environment: options.Development,
-	}, options.PulseOptions{
-		Telemetry: options.TelemetryOptions{
-			Tracing: options.TracingTelemetryOptions{Enabled: true},
-			OTLP: options.OTLPOptions{
-				Host:    "otel.machanirobotics.dev",
-				Port:    4317,
-				Enabled: true,
-				Headers: map[string]string{
-					"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
-				},
-			},
-		},
-		Tracing: options.TracingOptions{Enabled: true},
-	})
+	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
+	k, err := pulse.New().
+		WithService("malenia-conversation-service", "1.0.0").
+		WithEnvironment(options.Development).
+		WithTracing().
+		Build()
 	if err != nil {
 		panic(err)
 	}
-	defer func() { _ = k.Close(ctx) }()
+	defer func() { _ = k.Close() }()
 
 	k.Logger.Info("=== Malenia Pipeline with Error Handling ===", nil)
 

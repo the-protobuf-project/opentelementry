@@ -11,12 +11,12 @@ const (
 )
 
 type LogOptions struct {
-	Prefix          string     // Prefix string in log output
-	ReportCaller    bool       // Include caller info in logs
-	ReportTimestamp bool       // Include timestamp in logs
-	TimeFormatKey   TimeFormat // Named time format enum
-	CustomFormat    string     // Custom format if TimeFormatKey == TimeFormatCustom
-	CallerOffset    int        // Adjust call depth for correct file/line display
+	Prefix          string     `json:"prefix"`           // Prefix string in log output
+	ReportCaller    bool       `json:"report_caller"`    // Include caller info in logs
+	ReportTimestamp bool       `json:"report_timestamp"` // Include timestamp in logs
+	TimeFormatKey   TimeFormat `json:"time_format_key"`  // Named time format enum
+	CustomFormat    string     `json:"custom_format"`    // Custom format if TimeFormatKey == TimeFormatCustom
+	CallerOffset    int        `json:"caller_offset"`    // Adjust call depth for correct file/line display
 }
 
 type LoggingOptions struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go/options"
@@ -87,16 +88,24 @@ func New(ctx context.Context, serviceOpts options.ServiceOptions, telemetryOpts 
 
 // createResource creates an OpenTelemetry resource with service metadata
 func (t *Telemetry) createResource(serviceOpts options.ServiceOptions) (*resource.Resource, error) {
+	// Build base attributes
+	attrs := []attribute.KeyValue{
+		semconv.ServiceName(serviceOpts.Name),
+		semconv.ServiceVersion(serviceOpts.Version),
+		attribute.String("service.description", serviceOpts.Description),
+		attribute.String("environment", string(serviceOpts.Environment)),
+	}
+
+	// Add global attributes (e.g., robot.id, device.id)
+	for key, value := range serviceOpts.Attributes {
+		attrs = append(attrs, attribute.String(key, value))
+	}
+
 	// Create resource with service attributes
 	// Note: We don't specify SchemaURL to avoid conflicts with resource.Default()
 	customResource, err := resource.New(
 		context.Background(),
-		resource.WithAttributes(
-			semconv.ServiceName(serviceOpts.Name),
-			semconv.ServiceVersion(serviceOpts.Version),
-			attribute.String("service.description", serviceOpts.Description),
-			attribute.String("environment", string(serviceOpts.Environment)),
-		),
+		resource.WithAttributes(attrs...),
 	)
 	if err != nil {
 		return nil, err
@@ -109,24 +118,96 @@ func (t *Telemetry) createResource(serviceOpts options.ServiceOptions) (*resourc
 	)
 }
 
+// resolveOTLPConfig resolves the OTLP endpoint and headers from the options.
+// Supports both new (endpoint, auth_token) and legacy (host, port, headers) config.
+func resolveOTLPConfig(otlp *options.OTLPOptions) (endpoint string, headers map[string]string, secure bool) {
+	headers = make(map[string]string)
+
+	// Copy existing headers
+	for k, v := range otlp.Headers {
+		headers[k] = v
+	}
+
+	// Add auth token as Authorization header if provided
+	if otlp.AuthToken != "" {
+		headers["Authorization"] = "Bearer " + otlp.AuthToken
+	}
+
+	// Resolve endpoint: prefer new Endpoint field, fallback to Host:Port
+	if otlp.Endpoint != "" {
+		endpoint = otlp.Endpoint
+		// Add default port if not specified
+		if !strings.Contains(endpoint, ":") {
+			if otlp.UseHTTP {
+				endpoint = endpoint + ":4318"
+			} else {
+				endpoint = endpoint + ":4317"
+			}
+		}
+	} else if otlp.Host != "" {
+		if otlp.Port > 0 {
+			endpoint = fmt.Sprintf("%s:%d", otlp.Host, otlp.Port)
+		} else {
+			// Auto-detect port based on protocol
+			if otlp.UseHTTP {
+				endpoint = fmt.Sprintf("%s:4318", otlp.Host)
+			} else {
+				endpoint = fmt.Sprintf("%s:4317", otlp.Host)
+			}
+		}
+	}
+
+	// Use explicit secure setting only - don't auto-detect
+	// Most OTLP collectors (including otel.machanirobotics.dev) use insecure gRPC on port 4317
+	secure = otlp.Secure
+
+	return endpoint, headers, secure
+}
+
+// isLocalEndpoint checks if the endpoint is a local address
+func isLocalEndpoint(endpoint string) bool {
+	// Extract host from endpoint (remove port if present)
+	host := endpoint
+	if idx := len(endpoint) - 1; idx > 0 {
+		for i := len(endpoint) - 1; i >= 0; i-- {
+			if endpoint[i] == ':' {
+				host = endpoint[:i]
+				break
+			}
+		}
+	}
+
+	host = strings.ToLower(host)
+	return host == "localhost" || host == "" ||
+		strings.HasPrefix(host, "127.") ||
+		strings.HasPrefix(host, "10.") ||
+		strings.HasPrefix(host, "192.168.") ||
+		strings.HasPrefix(host, "172.16.") ||
+		strings.HasPrefix(host, "172.17.") ||
+		strings.HasPrefix(host, "172.18.") ||
+		strings.HasPrefix(host, "172.19.") ||
+		strings.HasPrefix(host, "172.2") ||
+		strings.HasPrefix(host, "172.30.") ||
+		strings.HasPrefix(host, "172.31.")
+}
+
 // initTracing initializes the OpenTelemetry tracing pipeline
 func (t *Telemetry) initTracing(ctx context.Context, opts options.TelemetryOptions) error {
 	var exporter sdktrace.SpanExporter
 	var err error
 
 	if opts.OTLP.Enabled {
-		// Use OTLP exporter for production
-		endpoint := fmt.Sprintf("%s:%d", opts.OTLP.Host, opts.OTLP.Port)
+		endpoint, headers, secure := resolveOTLPConfig(&opts.OTLP)
 		if opts.OTLP.UseHTTP {
 			// Use HTTP exporter
 			httpOpts := []otlptracehttp.Option{
 				otlptracehttp.WithEndpoint(endpoint),
 			}
-			if !opts.OTLP.Secure {
+			if !secure {
 				httpOpts = append(httpOpts, otlptracehttp.WithInsecure())
 			}
-			if len(opts.OTLP.Headers) > 0 {
-				httpOpts = append(httpOpts, otlptracehttp.WithHeaders(opts.OTLP.Headers))
+			if len(headers) > 0 {
+				httpOpts = append(httpOpts, otlptracehttp.WithHeaders(headers))
 			}
 			exporter, err = otlptracehttp.New(ctx, httpOpts...)
 		} else {
@@ -134,13 +215,13 @@ func (t *Telemetry) initTracing(ctx context.Context, opts options.TelemetryOptio
 			grpcOpts := []otlptracegrpc.Option{
 				otlptracegrpc.WithEndpoint(endpoint),
 			}
-			if opts.OTLP.Secure {
+			if secure {
 				grpcOpts = append(grpcOpts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(&tls.Config{})))
 			} else {
 				grpcOpts = append(grpcOpts, otlptracegrpc.WithInsecure())
 			}
-			if len(opts.OTLP.Headers) > 0 {
-				grpcOpts = append(grpcOpts, otlptracegrpc.WithHeaders(opts.OTLP.Headers))
+			if len(headers) > 0 {
+				grpcOpts = append(grpcOpts, otlptracegrpc.WithHeaders(headers))
 			}
 			exporter, err = otlptracegrpc.New(ctx, grpcOpts...)
 		}
@@ -178,18 +259,17 @@ func (t *Telemetry) initMetrics(ctx context.Context, opts options.TelemetryOptio
 	var err error
 
 	if opts.OTLP.Enabled {
-		// Use OTLP exporter for production
-		endpoint := fmt.Sprintf("%s:%d", opts.OTLP.Host, opts.OTLP.Port)
+		endpoint, headers, secure := resolveOTLPConfig(&opts.OTLP)
 		if opts.OTLP.UseHTTP {
 			// Use HTTP exporter
 			httpOpts := []otlpmetrichttp.Option{
 				otlpmetrichttp.WithEndpoint(endpoint),
 			}
-			if !opts.OTLP.Secure {
+			if !secure {
 				httpOpts = append(httpOpts, otlpmetrichttp.WithInsecure())
 			}
-			if len(opts.OTLP.Headers) > 0 {
-				httpOpts = append(httpOpts, otlpmetrichttp.WithHeaders(opts.OTLP.Headers))
+			if len(headers) > 0 {
+				httpOpts = append(httpOpts, otlpmetrichttp.WithHeaders(headers))
 			}
 			exporter, err = otlpmetrichttp.New(ctx, httpOpts...)
 		} else {
@@ -197,13 +277,13 @@ func (t *Telemetry) initMetrics(ctx context.Context, opts options.TelemetryOptio
 			grpcOpts := []otlpmetricgrpc.Option{
 				otlpmetricgrpc.WithEndpoint(endpoint),
 			}
-			if opts.OTLP.Secure {
+			if secure {
 				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithTLSCredentials(credentials.NewTLS(&tls.Config{})))
 			} else {
 				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithInsecure())
 			}
-			if len(opts.OTLP.Headers) > 0 {
-				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithHeaders(opts.OTLP.Headers))
+			if len(headers) > 0 {
+				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithHeaders(headers))
 			}
 			exporter, err = otlpmetricgrpc.New(ctx, grpcOpts...)
 		}
@@ -243,7 +323,7 @@ func (t *Telemetry) initLogging(ctx context.Context, opts options.TelemetryOptio
 	// Only add OTLP exporter if enabled (for Loki/remote logging)
 	// Console output is handled by the charmbracelet logger
 	if opts.OTLP.Enabled {
-		endpoint := fmt.Sprintf("%s:%d", opts.OTLP.Host, opts.OTLP.Port)
+		endpoint, headers, secure := resolveOTLPConfig(&opts.OTLP)
 		var otlpExporter sdklog.Exporter
 		var err error
 		if opts.OTLP.UseHTTP {
@@ -251,11 +331,11 @@ func (t *Telemetry) initLogging(ctx context.Context, opts options.TelemetryOptio
 			httpOpts := []otlploghttp.Option{
 				otlploghttp.WithEndpoint(endpoint),
 			}
-			if !opts.OTLP.Secure {
+			if !secure {
 				httpOpts = append(httpOpts, otlploghttp.WithInsecure())
 			}
-			if len(opts.OTLP.Headers) > 0 {
-				httpOpts = append(httpOpts, otlploghttp.WithHeaders(opts.OTLP.Headers))
+			if len(headers) > 0 {
+				httpOpts = append(httpOpts, otlploghttp.WithHeaders(headers))
 			}
 			otlpExporter, err = otlploghttp.New(ctx, httpOpts...)
 		} else {
@@ -263,13 +343,13 @@ func (t *Telemetry) initLogging(ctx context.Context, opts options.TelemetryOptio
 			grpcOpts := []otlploggrpc.Option{
 				otlploggrpc.WithEndpoint(endpoint),
 			}
-			if opts.OTLP.Secure {
+			if secure {
 				grpcOpts = append(grpcOpts, otlploggrpc.WithTLSCredentials(credentials.NewTLS(&tls.Config{})))
 			} else {
 				grpcOpts = append(grpcOpts, otlploggrpc.WithInsecure())
 			}
-			if len(opts.OTLP.Headers) > 0 {
-				grpcOpts = append(grpcOpts, otlploggrpc.WithHeaders(opts.OTLP.Headers))
+			if len(headers) > 0 {
+				grpcOpts = append(grpcOpts, otlploggrpc.WithHeaders(headers))
 			}
 			otlpExporter, err = otlploggrpc.New(ctx, grpcOpts...)
 		}

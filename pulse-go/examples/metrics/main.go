@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // LLMMetrics demonstrates automatic metric recording with struct tags
@@ -26,38 +24,16 @@ type TranscriptionMetrics struct {
 }
 
 func main() {
-	ctx := context.Background()
-
-	// Configure service
-	serviceOpts := options.ServiceOptions{
-		Name:        "metrics-example",
-		Version:     "1.0.0",
-		Environment: options.Development,
-	}
-
-	// Configure Pulse with OTLP (no MCAP for logs, only for metrics)
-	pulseOpts := options.PulseOptions{
-		Telemetry: options.DefaultTelemetry(),
-	}
-	pulseOpts.Telemetry.OTLP.Enabled = true
-	pulseOpts.Telemetry.OTLP.Host = "otel.machanirobotics.dev"
-	pulseOpts.Telemetry.OTLP.Port = 4317
-	pulseOpts.Telemetry.OTLP.Headers = map[string]string{
-		"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
-	}
-
-	// Enable MCAP for metrics only (not logs)
-	pulseOpts.Foxglove = options.FoxgloveOptions{
-		Enabled:  true,
-		McapPath: "metrics-data.mcap",
-	}
-
-	p, err := pulse.New(ctx, serviceOpts, pulseOpts)
+	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
+	p, err := pulse.New().
+		WithService("metrics-example", "1.0.0").
+		WithMCAP("metrics-data.mcap").
+		Build()
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
-		if err := p.Close(ctx); err != nil {
+		if err := p.Close(); err != nil {
 			fmt.Printf("Error closing pulse: %v\n", err)
 		}
 	}()

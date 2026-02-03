@@ -32,49 +32,18 @@ type InferenceRequest struct {
 }
 
 func main() {
-	ctx := context.Background()
-
-	// Configure service options
-	serviceOpts := options.ServiceOptions{
-		Name:        "llm-profiling-example",
-		Description: "LLM inference simulation with CPU/GPU/Memory profiling",
-		Version:     "1.0.0",
-		Environment: options.Development,
-	}
-
-	// Configure Pulse with comprehensive profiling
-	pulseOpts := options.Default()
-	pulseOpts.Profiling.Enabled = true
-	pulseOpts.Profiling.ServerAddress = "http://localhost:4040"
-
-	// Enable all profile types for comprehensive analysis
-	pulseOpts.Profiling.ProfileCPU = true
-	pulseOpts.Profiling.ProfileAllocObjects = true
-	pulseOpts.Profiling.ProfileAllocSpace = true
-	pulseOpts.Profiling.ProfileInuseObjects = true
-	pulseOpts.Profiling.ProfileInuseSpace = true
-	pulseOpts.Profiling.ProfileGoroutines = true
-	pulseOpts.Profiling.ProfileMutexCount = true
-	pulseOpts.Profiling.ProfileMutexDuration = true
-	pulseOpts.Profiling.ProfileBlockCount = true
-	pulseOpts.Profiling.ProfileBlockDuration = true
-
-	pulseOpts.Profiling.MutexProfileRate = 5
-	pulseOpts.Profiling.BlockProfileRate = 5
-
-	// Add LLM-specific tags
-	pulseOpts.Profiling.Tags = map[string]string{
-		"workload": "llm-inference",
-		"model":    "llama-7b",
-	}
-
-	// Initialize Pulse framework
-	p, err := pulse.New(ctx, serviceOpts, pulseOpts)
+	// Create pulse instance using builder pattern with profiling
+	p, err := pulse.New().
+		WithService("llm-profiling-example", "1.0.0").
+		WithDescription("LLM inference simulation with CPU/GPU/Memory profiling").
+		WithEnvironment(options.Development).
+		WithProfiling("http://localhost:4040").
+		Build()
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
-		if err := p.Close(ctx); err != nil {
+		if err := p.Close(); err != nil {
 			fmt.Printf("Error closing pulse: %v\n", err)
 		}
 	}()
@@ -99,6 +68,7 @@ func main() {
 	p.Logger.Info("Running inference simulation for 60 seconds...")
 
 	// Run inference simulation
+	ctx := context.Background()
 	runInferenceSimulation(ctx, p, config, 60*time.Second)
 
 	p.Logger.Info("Simulation completed")

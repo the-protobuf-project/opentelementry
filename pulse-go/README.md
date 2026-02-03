@@ -35,43 +35,95 @@ go get github.com/machanirobotics/pulse/pulse-go
 
 ## Quick Start
 
+### Minimal Setup (Zero Config)
+
+```go
+package main
+
+import "github.com/machanirobotics/pulse/pulse-go"
+
+func main() {
+    // Auto-discovers pulse.toml or uses defaults
+    p, err := pulse.New().
+        WithService("my-service", "1.0.0").
+        Build()
+    if err != nil {
+        panic(err)
+    }
+    defer p.Close()
+
+    // Start using logging, metrics, and tracing
+    p.Logger.Info("Service started")
+}
+```
+
+### With Configuration File
+
+Create a `pulse.toml` in your project root (auto-discovered):
+
+```toml
+[service]
+name = "my-service"
+version = "1.0.0"
+environment = "production"
+
+[telemetry]
+enabled = true
+
+[telemetry.otlp]
+endpoint = "otel-collector:4317"
+auth_token = "your-token"  # Optional
+enabled = true
+```
+
+Then in your code:
+
+```go
+package main
+
+import "github.com/machanirobotics/pulse/pulse-go"
+
+func main() {
+    // Automatically loads pulse.toml
+    p, err := pulse.New().Build()
+    if err != nil {
+        panic(err)
+    }
+    defer p.Close()
+
+    p.Logger.Info("Service started")
+}
+```
+
+### With Builder Pattern (Programmatic)
+
 ```go
 package main
 
 import (
-    "context"
     "github.com/machanirobotics/pulse/pulse-go"
     "github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 func main() {
-    ctx := context.Background()
-
-    // Initialize Pulse with service information
-    p, err := pulse.New(ctx, options.ServiceOptions{
-        Name:        "my-service",
-        Description: "My awesome service",
-        Version:     "1.0.0",
-        Environment: options.Production,
-    }, options.PulseOptions{
-        Telemetry: options.TelemetryOptions{
-            Logging: options.LoggingTelemetryOptions{Enabled: true},
-            Metrics: options.MetricsTelemetryOptions{Enabled: true},
-            Tracing: options.TracingTelemetryOptions{Enabled: true},
-            OTLP: options.OTLPOptions{
-                Host:    "localhost",
-                Port:    4317,
-                Enabled: true,
-            },
-        },
-    })
+    p, err := pulse.New().
+        WithService("robot-controller", "1.0.0").
+        WithDescription("Controls robot arm movements").
+        WithEnvironment(options.Production).
+        WithAttributes(map[string]string{
+            "robot.id":  "robot-001",
+            "fleet.id":  "fleet-alpha",
+            "region":    "us-west-2",
+        }).
+        WithOTLP("otel-collector", 4317).
+        WithTracing().
+        Build()
     if err != nil {
         panic(err)
     }
-    defer p.Close(ctx)
+    defer p.Close()
 
-    // Use logging, metrics, and tracing
-    p.Logger.Info("Service started", nil)
+    p.Logger.Info("Robot controller started")
 }
 ```
 
@@ -482,103 +534,165 @@ p, err := pulse.New(ctx, serviceOpts, options.PulseOptions{
 
 ## Configuration
 
-### Complete Configuration Example
+Pulse supports multiple configuration methods with automatic discovery.
 
-```go
-p, err := pulse.New(ctx,
-    // Service identification
-    options.ServiceOptions{
-        Name:        "payment-service",
-        Description: "Handles payment processing",
-        Version:     "2.1.0",
-        Environment: options.Production,
-    },
-    // Observability configuration
-    options.PulseOptions{
-        // Unified telemetry (OpenTelemetry)
-        Telemetry: options.TelemetryOptions{
-            Logging: options.LoggingTelemetryOptions{
-                Enabled: true,
-            },
-            Metrics: options.MetricsTelemetryOptions{
-                Enabled:               true,
-                ExportIntervalSeconds: 10,
-            },
-            Tracing: options.TracingTelemetryOptions{
-                Enabled: true,
-            },
-            OTLP: options.OTLPOptions{
-                Host:    "otelcol",
-                Port:    4317,
-                Enabled: true,
-            },
-        },
-        // Legacy logging (optional)
-        Logging: options.LoggingOptions{
-            Enabled: true,
-        },
-        // Distributed tracing
-        Tracing: options.TracingOptions{
-            Enabled: true,
-        },
-        // Continuous profiling
-        Profiling: options.ProfilingOptions{
-            Enabled:        true,
-            ApplicationURL: "http://pyroscope:4040",
-            ServerAddress:  "http://pyroscope:4040",
-            ProfileTypes: []options.ProfileType{
-                options.ProfileCPU,
-                options.ProfileMemory,
-            },
-        },
-        // MCAP recording for Foxglove
-        Foxglove: options.FoxgloveOptions{
-            Enabled:  true,
-            McapPath: "/var/logs/payment-service.mcap",
-        },
-    },
-)
+### Configuration File Formats
+
+Pulse auto-discovers config files in this order:
+1. `PULSE_CONFIG_PATH` environment variable
+2. `pulse.toml` in current directory
+3. `pulse.yaml` / `pulse.yml` / `pulse.json`
+4. `.config/pulse.toml` / `.config/pulse.yaml` / `.config/pulse.json`
+
+#### TOML Configuration (Recommended)
+
+```toml
+# pulse.toml
+[service]
+name = "my-service"
+version = "1.0.0"
+environment = "production"  # development | staging | production
+description = "My awesome service"
+
+# Global attributes added to ALL telemetry
+[service.attributes]
+robot_id = "robot-001"
+fleet_id = "fleet-alpha"
+
+[telemetry]
+enabled = true  # Master switch for logging, metrics, tracing
+
+[telemetry.otlp]
+enabled = true
+endpoint = "otel-collector:4317"  # Port auto-detected if omitted
+auth_token = "your-bearer-token"  # Optional authentication
+# secure = false                   # Auto-detected for non-localhost
+# use_http = false                 # Use gRPC by default
+
+[telemetry.metrics]
+export_interval_seconds = 10
+
+[logging.log]
+report_caller = true
+report_timestamp = true
+
+[foxglove]
+enabled = false
+file_path = "./recordings/session.mcap"
+
+[profiling]
+enabled = false
+server_address = "http://pyroscope:4040"
+
+[tracing]
+enabled = true
 ```
 
-### Environment-Specific Configuration
+#### YAML Configuration
 
-```go
-func getPulseOptions(env options.Environment) options.PulseOptions {
-    switch env {
-    case options.Development:
-        return options.PulseOptions{
-            Telemetry: options.TelemetryOptions{
-                Logging: options.LoggingTelemetryOptions{Enabled: true},
-                Metrics: options.MetricsTelemetryOptions{Enabled: false},
-                Tracing: options.TracingTelemetryOptions{Enabled: false},
-                OTLP:    options.OTLPOptions{Enabled: false},
-            },
-        }
-    case options.Production:
-        return options.PulseOptions{
-            Telemetry: options.TelemetryOptions{
-                Logging: options.LoggingTelemetryOptions{Enabled: true},
-                Metrics: options.MetricsTelemetryOptions{
-                    Enabled:               true,
-                    ExportIntervalSeconds: 10,
-                },
-                Tracing: options.TracingTelemetryOptions{Enabled: true},
-                OTLP: options.OTLPOptions{
-                    Host:    "otelcol",
-                    Port:    4317,
-                    Enabled: true,
-                },
-            },
-            Profiling: options.ProfilingOptions{
-                Enabled:        true,
-                ServerAddress:  "http://pyroscope:4040",
-            },
-        }
-    default:
-        return options.PulseOptions{}
+```yaml
+# pulse.yaml
+service:
+  name: my-service
+  version: "1.0.0"
+  environment: production
+  attributes:
+    robot_id: robot-001
+    fleet_id: fleet-alpha
+
+telemetry:
+  enabled: true
+  otlp:
+    enabled: true
+    endpoint: otel-collector:4317
+    auth_token: your-bearer-token
+  metrics:
+    export_interval_seconds: 10
+
+logging:
+  log:
+    report_caller: true
+    report_timestamp: true
+
+tracing:
+  enabled: true
+```
+
+#### JSON Configuration
+
+```json
+{
+  "service": {
+    "name": "my-service",
+    "version": "1.0.0",
+    "environment": "production",
+    "attributes": {
+      "robot_id": "robot-001"
     }
+  },
+  "telemetry": {
+    "enabled": true,
+    "otlp": {
+      "enabled": true,
+      "endpoint": "otel-collector:4317"
+    }
+  },
+  "tracing": {
+    "enabled": true
+  }
 }
 ```
+
+### Environment Variables
+
+Environment variables override config file values. Use `PULSE_` prefix:
+
+```bash
+export PULSE_TELEMETRY_OTLP_ENDPOINT=otel-collector:4317
+export PULSE_TELEMETRY_OTLP_AUTH_TOKEN=your-token
+export PULSE_SERVICE_NAME=my-service
+```
+
+### Builder Pattern API
+
+For programmatic configuration:
+
+```go
+p, err := pulse.New().
+    // Load from specific config file (optional)
+    WithConfig("./config/pulse.toml").
+    
+    // Service identification
+    WithService("payment-service", "2.1.0").
+    WithDescription("Handles payment processing").
+    WithEnvironment(options.Production).
+    
+    // Global attributes (appear on all telemetry)
+    WithAttributes(map[string]string{
+        "robot.id": "robot-001",
+        "fleet.id": "fleet-alpha",
+    }).
+    
+    // OTLP endpoint (port auto-detected)
+    WithOTLP("otel-collector", 4317).
+    WithOTLPHeaders(map[string]string{
+        "Authorization": "Bearer your-token",
+    }).
+    
+    // Enable features
+    WithTracing().
+    WithProfiling("http://pyroscope:4040").
+    WithMCAP("./recordings/session.mcap").
+    
+    Build()
+```
+
+### Configuration Priority
+
+1. Builder methods (highest priority)
+2. Environment variables (`PULSE_*`)
+3. Config file (auto-discovered or specified)
+4. Default values (lowest priority)
 
 ## Examples
 
@@ -604,28 +718,19 @@ type ConversationRequest struct {
 }
 
 func main() {
-    ctx := context.Background()
-
-    p, err := pulse.New(ctx, options.ServiceOptions{
-        Name:        "llm-service",
-        Version:     "1.0.0",
-        Environment: options.Production,
-    }, options.PulseOptions{
-        Telemetry: options.TelemetryOptions{
-            Tracing: options.TracingTelemetryOptions{Enabled: true},
-            OTLP: options.OTLPOptions{
-                Host:    "localhost",
-                Port:    4317,
-                Enabled: true,
-            },
-        },
-    })
+    // Initialize with builder pattern
+    p, err := pulse.New().
+        WithService("llm-service", "1.0.0").
+        WithEnvironment(options.Production).
+        WithTracing().
+        Build()
     if err != nil {
         panic(err)
     }
-    defer p.Close(ctx)
+    defer p.Close()
 
     // Process conversation
+    ctx := context.Background()
     req := ConversationRequest{
         RequestID: "req-123",
         UserInput: "What are the best practices for distributed tracing?",
@@ -745,29 +850,18 @@ import (
     "context"
     "time"
     "github.com/machanirobotics/pulse/pulse-go"
-    "github.com/machanirobotics/pulse/pulse-go/options"
     "go.opentelemetry.io/otel/attribute"
     "go.opentelemetry.io/otel/metric"
 )
 
 func main() {
-    ctx := context.Background()
+    // Initialize with builder pattern
+    p, _ := pulse.New().
+        WithService("api-server", "1.0.0").
+        Build()
+    defer p.Close()
 
-    p, _ := pulse.New(ctx, options.ServiceOptions{
-        Name:    "api-server",
-        Version: "1.0.0",
-    }, options.PulseOptions{
-        Telemetry: options.TelemetryOptions{
-            Logging: options.LoggingTelemetryOptions{Enabled: true},
-            Metrics: options.MetricsTelemetryOptions{Enabled: true},
-            OTLP: options.OTLPOptions{
-                Host:    "localhost",
-                Port:    4317,
-                Enabled: true,
-            },
-        },
-    })
-    defer p.Close(ctx)
+    ctx := context.Background()
 
     // Create metrics
     requestCounter, _ := p.Metrics.Counter("http_requests_total")
@@ -819,11 +913,13 @@ func main() {
 Ensure proper cleanup of resources:
 
 ```go
-p, err := pulse.New(ctx, serviceOpts, pulseOpts)
+p, err := pulse.New().
+    WithService("my-service", "1.0.0").
+    Build()
 if err != nil {
     return err
 }
-defer p.Close(ctx)
+defer p.Close()
 ```
 
 ### 2. Use Structured Logging

@@ -21,10 +21,11 @@ type PulseOptions struct {
 // The description provides additional context about the service.
 // The version indicates the current version of the service.
 type ServiceOptions struct {
-	Name        string      `json:"name"`        // Service name
-	Description string      `json:"description"` // Service description
-	Version     string      `json:"version"`     // Service version
-	Environment Environment `json:"environment"` // Environment (e.g., "production", "development")
+	Name        string            `json:"name"`        // Service name
+	Description string            `json:"description"` // Service description
+	Version     string            `json:"version"`     // Service version
+	Environment Environment       `json:"environment"` // Environment (e.g., "production", "development")
+	Attributes  map[string]string `json:"attributes"`  // Global attributes added to all telemetry (e.g., robot.id, device.id)
 }
 
 // Environment is a string type that represents the environment in which the service is running.
@@ -41,19 +42,19 @@ const (
 // It includes options for the host and port on which the service listens.
 // The host can be an IP address or a hostname, and the port is the TCP port.
 type NetworkOptions struct {
-	OpenTelemetry OTELOptions `json:"openTelemetry"` // OTEL settings
+	OpenTelemetry OTELOptions `json:"open_telemetry"` // OTEL settings (deprecated)
 }
 
 // FoxgloveOptions defines the settings for Foxglove integration.
 type FoxgloveOptions struct {
-	Enabled  bool   `json:"enabled"`  // Enable MCAP logging
-	McapPath string `json:"filePath"` // Path to save MCAP files (e.g., "/var/logs/service.mcap")
+	Enabled  bool   `json:"enabled"`   // Enable MCAP logging
+	McapPath string `json:"file_path"` // Path to save MCAP files (e.g., "/var/logs/service.mcap")
 }
 
 // OTELOptions defines the settings for OpenTelemetry.
 // It includes the host and port for the OpenTelemetry collector.
 type OTELOptions struct {
-	Host    string `json:"host"`    // e.g., "localhost"
-	Port    int    `json:"port"`    // e.g., 4317 for gRPC, 4318 for HTTP
-	Enabled bool   `json:"enabled"` // Enable OTEL export
+	Host    string `json:"host"`    // e.g., "localhost" (deprecated)
+	Port    int    `json:"port"`    // e.g., 4317 for gRPC, 4318 for HTTP (deprecated)
+	Enabled bool   `json:"enabled"` // Enable OTEL export (deprecated)
 }

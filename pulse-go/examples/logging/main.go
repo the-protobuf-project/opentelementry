@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // ChatMessage represents a message in an LLM chat room
@@ -54,34 +52,22 @@ type LLMRequestEvent struct {
 }
 
 func main() {
-	ctx := context.Background()
-
-	// Configure service
-	serviceOpts := options.ServiceOptions{
-		Name:        "llm-chat-example",
-		Version:     "1.0.0",
-		Environment: options.Development,
-		Description: "LLM chat room with multilingual support",
-	}
-
-	// Configure pulse with OTLP
-	pulseOpts := options.PulseOptions{
-		Telemetry: options.DefaultTelemetry(),
-	}
-	pulseOpts.Telemetry.OTLP.Enabled = true
-	pulseOpts.Telemetry.OTLP.Host = "otel.machanirobotics.dev"
-	pulseOpts.Telemetry.OTLP.Port = 4317
-	pulseOpts.Telemetry.OTLP.Headers = map[string]string{
-		// "Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
-	}
-
-	// Create pulse instance
-	p, err := pulse.New(ctx, serviceOpts, pulseOpts)
+	// Create pulse instance with global attributes
+	// These attributes appear on ALL logs, metrics, and traces
+	p, err := pulse.New().
+		WithService("llm-chat-example", "1.0.0").
+		WithDescription("LLM chat room with multilingual support").
+		WithAttributes(map[string]string{
+			"robot.id":  "robot-001",
+			"fleet.id":  "fleet-alpha",
+			"region.id": "us-west-2",
+		}).
+		Build()
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
-		if err := p.Close(ctx); err != nil {
+		if err := p.Close(); err != nil {
 			fmt.Printf("Error closing pulse: %v\n", err)
 		}
 	}()

@@ -32,3 +32,8 @@ examples/metrics/*.mcap
 # OS
 .DS_Store
 Thumbs.db
+
+# Ignore pulse.toml and config.toml
+pulse.json
+pulse.toml
+pulse.yaml

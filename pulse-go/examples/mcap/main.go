@@ -1,12 +1,10 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // ChatMessage represents a message in an LLM chat room (same as simple example)
@@ -23,40 +21,17 @@ type ChatMessage struct {
 }
 
 func main() {
-	ctx := context.Background()
-
-	// Configure service options - SAME NAME as simple example
-	serviceOpts := options.ServiceOptions{
-		Name:        "llm-chat-example",
-		Description: "LLM chat with MCAP and OTLP logging",
-		Version:     "1.0.0",
-		Environment: options.Development,
-	}
-
-	// Configure Pulse with OTLP and MCAP
-	pulseOpts := options.PulseOptions{
-		Telemetry: options.DefaultTelemetry(),
-	}
-	pulseOpts.Telemetry.OTLP.Enabled = true
-	pulseOpts.Telemetry.OTLP.Host = "otel.machanirobotics.dev"
-	pulseOpts.Telemetry.OTLP.Port = 4317
-	pulseOpts.Telemetry.OTLP.Headers = map[string]string{
-		"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
-	}
-
-	// Enable Foxglove MCAP logging - save in examples/mcap directory
-	pulseOpts.Foxglove = options.FoxgloveOptions{
-		Enabled:  true,
-		McapPath: "examples/mcap/llm-chat-example.mcap",
-	}
-
-	// Initialize Pulse framework
-	p, err := pulse.New(ctx, serviceOpts, pulseOpts)
+	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
+	p, err := pulse.New().
+		WithService("llm-chat-example", "1.0.0").
+		WithDescription("LLM chat with MCAP and OTLP logging").
+		WithMCAP("examples/mcap/llm-chat-example.mcap").
+		Build()
 	if err != nil {
 		panic(err)
 	}
 	defer func() {
-		if err := p.Close(ctx); err != nil {
+		if err := p.Close(); err != nil {
 			fmt.Printf("Error closing pulse: %v\n", err)
 		}
 	}()

@@ -1,9 +1,15 @@
 # Pulse
 
-![Pulse Logo](.assets/logo.png)
+<!-- markdownlint-disable MD033 MD013 -->
+<p align="center">
+  <img src=".assets/logo.png" alt="Pulse Logo" width="314" height="314">
+</p>
 
-**Unified Observability Framework** - Production-grade logging, metrics,
-tracing, and profiling for modern applications
+<p align="center">
+  <strong>Unified Observability Framework</strong> - Production-grade logging, metrics,<br>
+  tracing, and profiling for modern applications
+</p>
+<!-- markdownlint-enable MD033 MD013 -->
 
 ## Overview
 

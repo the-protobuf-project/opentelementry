@@ -36,34 +36,32 @@ go get github.com/machanirobotics/pulse/pulse-go
 ```
 
 ```go
+package main
+
 import (
-    "context"
     "github.com/machanirobotics/pulse/pulse-go"
     "github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 func main() {
-    ctx := context.Background()
-
-    // Initialize Pulse
-    p, err := pulse.New(ctx, options.ServiceOptions{
-        Name:        "my-service",
-        Version:     "1.0.0",
-        Environment: options.Production,
-    }, options.PulseOptions{
-        Telemetry: options.TelemetryOptions{
-            Logging: options.LoggingTelemetryOptions{Enabled: true},
-            Metrics: options.MetricsTelemetryOptions{Enabled: true},
-            Tracing: options.TracingTelemetryOptions{Enabled: true},
-        },
-    })
+    p, err := pulse.New().
+        WithService("robot-controller", "1.0.0").
+        WithDescription("Controls robot arm movements").
+        WithEnvironment(options.Production).
+        WithAttributes(map[string]string{
+            "robot.id":  "robot-001",
+            "fleet.id":  "fleet-alpha",
+            "region":    "us-west-2",
+        }).
+        WithOTLP("otel-collector", 4317).
+        WithTracing().
+        Build()
     if err != nil {
         panic(err)
     }
-    defer p.Close(ctx)
+    defer p.Close()
 
-    // Use it!
-    p.Logger.Info("Service started", nil)
+    p.Logger.Info("Robot controller started")
 }
 ```
 

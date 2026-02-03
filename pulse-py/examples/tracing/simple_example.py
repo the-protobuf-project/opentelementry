@@ -1,12 +1,16 @@
 """
 Tracing example using decorators - cleaner API without manual event tracking.
 
-This example shows how to use the @traced decorator and TracedOperation
-context manager for automatic event tracking.
+This example uses the new Pulse.new() builder API and shows how to use
+the @traced decorator and TracedOperation context manager for automatic
+event tracking.
+
+Run with:
+    uv run python -m examples.tracing.simple_example
 """
 
 import pulse
-from pulse import Pulse, ServiceOptions, PulseOptions, Environment, TelemetryOptions, OTLPOptions, TracedOperation
+from pulse import Pulse, TracedOperation
 from pydantic import BaseModel
 import time
 
@@ -33,22 +37,8 @@ def random_function():
 
 def main():
     """Run tracing example with decorators"""
-    with Pulse(
-        service_opts=ServiceOptions(
-            name="decorator-tracing-example",
-            version="1.0.0",
-            environment=Environment.DEVELOPMENT,
-        ),
-        pulse_opts=PulseOptions(
-            telemetry=TelemetryOptions(
-                otlp=OTLPOptions(
-                    host="localhost",
-                    port=4317,
-                    enabled=True,
-                ),
-            ),
-        ),
-    ) as p:
+    # Uses pulse.toml config for OTLP endpoint and service info
+    with Pulse.new().build() as p:
         p.logger.info("=== Decorator-Based Tracing Example ===")
         
         # Example 0: Using @pulse.trace decorator

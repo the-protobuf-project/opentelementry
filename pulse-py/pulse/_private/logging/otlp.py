@@ -45,7 +45,7 @@ class OTLPLogger:
     """
     
     def __init__(self, service_name: str, service_version: str, service_environment: str,
-                 otlp_host: str, otlp_port: int):
+                 endpoint: str, auth_token: str = "", secure: bool = False):
         """Initialize the OTLP logger.
         
         Sets up OpenTelemetry logging with OTLP exporter and attaches a handler
@@ -58,8 +58,9 @@ class OTLPLogger:
             service_name: Name of the service for resource attributes.
             service_version: Version of the service.
             service_environment: Deployment environment (e.g., "production", "development", "staging").
-            otlp_host: Hostname or IP of the OTLP collector.
-            otlp_port: Port number of the OTLP collector (typically 4317).
+            endpoint: OTLP endpoint (e.g., "localhost:4317" or "otel.example.com").
+            auth_token: Bearer token for authentication.
+            secure: Use TLS for connection.
         """
         resource = Resource.create({
             "service.name": service_name,
@@ -69,9 +70,25 @@ class OTLPLogger:
         
         logger_provider = LoggerProvider(resource=resource)
         
+        # Build headers for authentication
+        headers = []
+        if auth_token:
+            headers.append(("authorization", f"Bearer {auth_token}"))
+        
+        # Determine endpoint URL - auto-add port 4317 for gRPC if not specified
+        if "://" in endpoint:
+            otlp_endpoint = endpoint
+        elif ":" in endpoint:
+            # Port already specified
+            otlp_endpoint = endpoint
+        else:
+            # No port - default to 4317 for gRPC
+            otlp_endpoint = f"{endpoint}:4317"
+        
         otlp_exporter = OTLPLogExporter(
-            endpoint=f"{otlp_host}:{otlp_port}",
-            insecure=True,
+            endpoint=otlp_endpoint,
+            insecure=not secure,
+            headers=headers if headers else None,
         )
         
         logger_provider.add_log_record_processor(

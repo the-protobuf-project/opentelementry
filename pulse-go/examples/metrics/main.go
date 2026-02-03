@@ -24,11 +24,8 @@ type TranscriptionMetrics struct {
 }
 
 func main() {
-	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
-	p, err := pulse.New().
-		WithService("metrics-example", "1.0.0").
-		WithMCAP("metrics-data.mcap").
-		Build()
+	// Uses pulse.toml config for service info and OTLP endpoint
+	p, err := pulse.New().Build()
 	if err != nil {
 		panic(err)
 	}

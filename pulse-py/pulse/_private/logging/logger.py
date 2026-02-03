@@ -51,8 +51,9 @@ class PulseLogger:
                 service_name=service_opts.name,
                 service_version=service_opts.version,
                 service_environment=service_opts.environment.value,
-                otlp_host=otlp_opts.host,
-                otlp_port=otlp_opts.port,
+                endpoint=otlp_opts.endpoint,
+                auth_token=otlp_opts.auth_token,
+                secure=otlp_opts.secure,
             )
         
         # Initialize MCAP logging if enabled

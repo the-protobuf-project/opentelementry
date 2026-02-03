@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // LLMConfig represents configuration for LLM inference
@@ -32,13 +31,8 @@ type InferenceRequest struct {
 }
 
 func main() {
-	// Create pulse instance using builder pattern with profiling
-	p, err := pulse.New().
-		WithService("llm-profiling-example", "1.0.0").
-		WithDescription("LLM inference simulation with CPU/GPU/Memory profiling").
-		WithEnvironment(options.Development).
-		WithProfiling("http://localhost:4040").
-		Build()
+	// Uses pulse.toml config for service info and OTLP endpoint
+	p, err := pulse.New().Build()
 	if err != nil {
 		panic(err)
 	}

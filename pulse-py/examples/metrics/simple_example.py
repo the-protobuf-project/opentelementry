@@ -1,33 +1,26 @@
 """
 Metrics example demonstrating automatic metric recording with Pydantic models.
 
-This example matches the Go implementation and shows:
+This example uses the new Pulse.new() builder API and shows:
 - LLM processing metrics (tokens, response time, active requests, cache hit rate)
 - Transcription metrics (audio duration, confidence, word count)
 - OTLP export and MCAP recording
 
-Make sure you have an OTLP collector running:
-  docker-compose -f ../opentelemetry/compose.yaml up
-  
-Then run this script and check:
-1. MCAP file: examples/metrics-data.mcap
-2. Open in Foxglove Studio
-3. Use Gauge/Indicator/Plot panels to visualize
+Configuration is auto-discovered from pulse.toml.
+
+Run with:
+    uv run python -m examples.metrics.simple_example
 """
 
 import pulse
-from pulse import (
-    Pulse, ServiceOptions, PulseOptions, Environment,
-    TelemetryOptions, OTLPOptions, FoxgloveOptions, MetricsBaseModel
-)
+from pulse import Pulse, MetricsBaseModel
 import time
 import random
 
 
 # LLMMetrics demonstrates automatic metric recording with MetricsBaseModel
-# By default, metrics will be prefixed with the service name ("metrics-example")
-# You can override by specifying: class LLMMetrics(pulse.MetricsBaseModel, prefix="llm")
-class LLMMetrics(MetricsBaseModel, prefix="llm"):
+# No prefix needed - uses service name from pulse.toml automatically
+class LLMMetrics(MetricsBaseModel):
     """LLM processing metrics"""
     tokens_processed: int = pulse.Counter(description="Total tokens processed by LLM")
     response_time: float = pulse.Histogram(description="LLM response time in milliseconds")
@@ -36,7 +29,8 @@ class LLMMetrics(MetricsBaseModel, prefix="llm"):
 
 
 # TranscriptionMetrics for speech-to-text
-class TranscriptionMetrics(MetricsBaseModel, prefix="transcription"):
+# No prefix needed - uses service name from pulse.toml automatically
+class TranscriptionMetrics(MetricsBaseModel):
     """Speech-to-text transcription metrics"""
     audio_duration: float = pulse.Histogram(description="Audio duration in seconds")
     confidence: float = pulse.Gauge(description="Transcription confidence score (0.0-1.0)")
@@ -44,29 +38,8 @@ class TranscriptionMetrics(MetricsBaseModel, prefix="transcription"):
 
 
 def main():
-    # Configure service
-    service_opts = ServiceOptions(
-        name="metrics-example",
-        version="1.0.0",
-        environment=Environment.DEVELOPMENT,
-    )
-
-    # Configure Pulse with OTLP and MCAP for metrics
-    pulse_opts = PulseOptions(
-        telemetry=TelemetryOptions(
-            otlp=OTLPOptions(
-                enabled=True,
-                host="localhost",
-                port=4317,
-            ),
-        ),
-        foxglove=FoxgloveOptions(
-            enabled=True,
-            mcap_path="metrics-data.mcap",
-        ),
-    )
-
-    with Pulse(service_opts, pulse_opts) as p:
+    # Uses pulse.toml config for OTLP endpoint and service info
+    with Pulse.new().build() as p:
         p.logger.info("Metrics Example Started")
         p.logger.info("Metrics will be written to OTLP and MCAP")
 

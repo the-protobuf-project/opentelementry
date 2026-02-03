@@ -1,30 +1,31 @@
 """Configuration options for Pulse SDK.
 
 This module defines all configuration dataclasses and options for the Pulse SDK,
-including service metadata, telemetry settings, and environment-based configuration
-loading.
+including service metadata, telemetry settings, and configuration loading.
+
+Configuration Priority (Lowest to Highest):
+1. Defaults (lowest priority)
+2. Config file (pulse.toml / pulse.yaml / pulse.json)
+3. Environment variables (PULSE_*)
+4. Code-based (builder methods) - highest priority
 
 Typical usage example:
 
-    from pulse import ServiceOptions, PulseOptions, Environment
+    from pulse import Pulse, Environment
     
-    service_opts = ServiceOptions(
-        name="my-service",
-        version="1.0.0",
-        environment=Environment.PRODUCTION
-    )
+    # Auto-discovers pulse.toml config file
+    pulse = Pulse.new() \\
+        .with_service("my-service", "1.0.0") \\
+        .environment(Environment.PRODUCTION) \\
+        .build()
     
-    pulse_opts = PulseOptions()
-    pulse = Pulse(service_opts, pulse_opts)
-    
-    # Or load from environment variables
-    service_opts, pulse_opts = from_env()
+    # Or load from config file only
+    service_opts, pulse_opts = from_config()
 """
 
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
-import os
 
 
 class Environment(str, Enum):
@@ -53,13 +54,36 @@ class OTLPOptions:
     to an OpenTelemetry collector.
     
     Attributes:
-        host: OTLP collector hostname or IP address.
-        port: OTLP collector gRPC port.
+        endpoint: OTLP endpoint (e.g., "localhost:4317" or "otel.example.com").
+        auth_token: Bearer token for authentication.
         enabled: Whether OTLP export is enabled.
+        secure: Use TLS for connection.
+        use_http: Use HTTP instead of gRPC.
+        headers: Custom headers for OTLP requests.
     """
-    host: str = "localhost"
-    port: int = 4317
+    endpoint: str = "localhost:4317"
+    auth_token: str = ""
     enabled: bool = False
+    secure: bool = False
+    use_http: bool = False
+    headers: dict = field(default_factory=dict)
+    
+    @property
+    def host(self) -> str:
+        """Extract host from endpoint."""
+        if ":" in self.endpoint:
+            return self.endpoint.split(":")[0]
+        return self.endpoint
+    
+    @property
+    def port(self) -> int:
+        """Extract port from endpoint."""
+        if ":" in self.endpoint:
+            try:
+                return int(self.endpoint.split(":")[1])
+            except (ValueError, IndexError):
+                pass
+        return 443 if self.secure else 4317
 
 
 @dataclass
@@ -173,47 +197,40 @@ class PulseOptions:
     tracing: Optional[TracingOptions] = None
 
 
-def from_env() -> tuple[ServiceOptions, PulseOptions]:
-    """Load Pulse configuration from environment variables.
+def from_config(config_path: Optional[str] = None) -> tuple[ServiceOptions, PulseOptions]:
+    """Load Pulse configuration from config file and environment variables.
     
-    Reads configuration from environment variables and constructs ServiceOptions
-    and PulseOptions objects. This is the recommended way to configure Pulse
-    in containerized or cloud environments.
+    Uses dynaconf to load configuration with the following priority:
+    1. Defaults (lowest priority)
+    2. Config file (pulse.toml / pulse.yaml / pulse.json)
+    3. Environment variables (PULSE_*)
     
-    Environment variables:
-        SERVICE_NAME: Service name (default: "unnamed-service").
-        SERVICE_VERSION: Service version (default: "1.0.0").
-        SERVICE_DESCRIPTION: Service description (default: "").
-        SERVICE_ENVIRONMENT: Environment - development, staging, production, jetson
-            (default: "development").
-        LOG_LEVEL: Log level - DEBUG, INFO, WARNING, ERROR, CRITICAL
-            (default: "INFO").
-        OTLP_ENABLED: Enable OTLP export - true/false (default: "false").
-        OTLP_HOST: OTLP collector hostname (default: "localhost").
-        OTLP_PORT: OTLP collector port (default: "4317").
-        MCAP_ENABLED: Enable MCAP recording - true/false (default: "false").
-        MCAP_PATH: MCAP file path (default: "").
-        METRICS_ENABLED: Enable metrics - true/false (default: "true").
-        METRICS_EXPORT_INTERVAL: Metrics export interval in seconds (default: "10").
-        TRACING_ENABLED: Enable tracing - true/false (default: "true").
+    Auto-discovers config files from:
+    1. PULSE_CONFIG_PATH environment variable
+    2. pulse.toml in current directory
+    3. .config/pulse.toml
+    
+    Args:
+        config_path: Optional path to config file. If not provided,
+                    auto-discovers pulse.toml/yaml/json.
     
     Returns:
-        A tuple containing (ServiceOptions, PulseOptions) loaded from environment.
+        A tuple containing (ServiceOptions, PulseOptions) loaded from config.
     
     Example:
-        # Set environment variables
-        os.environ["SERVICE_NAME"] = "my-service"
-        os.environ["LOG_LEVEL"] = "DEBUG"
-        os.environ["OTLP_ENABLED"] = "true"
+        # Auto-discover pulse.toml
+        service_opts, pulse_opts = from_config()
         
-        # Load configuration
-        service_opts, pulse_opts = from_env()
-        pulse = Pulse(service_opts, pulse_opts)
+        # Or specify config path
+        service_opts, pulse_opts = from_config("./config/pulse.toml")
     """
-    # Service configuration
-    service_name = os.getenv("SERVICE_NAME", "unnamed-service")
-    service_version = os.getenv("SERVICE_VERSION", "1.0.0")
-    service_env_str = os.getenv("SERVICE_ENVIRONMENT", "development").lower()
+    from .config import settings, load_config
+    
+    # Load config (uses auto-discovery or specified path)
+    if config_path:
+        cfg = load_config(config_path)
+    else:
+        cfg = settings
     
     # Map environment string to enum
     env_map = {
@@ -222,43 +239,54 @@ def from_env() -> tuple[ServiceOptions, PulseOptions]:
         "production": Environment.PRODUCTION,
         "jetson": Environment.JETSON,
     }
-    service_environment = env_map.get(service_env_str, Environment.DEVELOPMENT)
+    env_str = cfg.get("service.environment", "development").lower()
+    service_environment = env_map.get(env_str, Environment.DEVELOPMENT)
     
+    # Service configuration
     service_opts = ServiceOptions(
-        name=service_name,
-        description=os.getenv("SERVICE_DESCRIPTION", ""),
-        version=service_version,
+        name=cfg.get("service.name", "unnamed-service"),
+        description=cfg.get("service.description", ""),
+        version=cfg.get("service.version", "1.0.0"),
         environment=service_environment,
     )
     
-    # OTLP configuration
+    # OTLP configuration - auto-enable if endpoint is set to non-localhost
+    otlp_endpoint = cfg.get("telemetry.otlp.endpoint", "")
+    otlp_enabled = cfg.get("telemetry.otlp.enabled", None)
+    
+    # Auto-enable OTLP if endpoint is configured (and not localhost)
+    if otlp_enabled is None:
+        otlp_enabled = bool(otlp_endpoint and "localhost" not in otlp_endpoint and "127.0.0.1" not in otlp_endpoint)
+    
     otlp_opts = OTLPOptions(
-        host=os.getenv("OTLP_HOST", "localhost"),
-        port=int(os.getenv("OTLP_PORT", "4317")),
-        enabled=os.getenv("OTLP_ENABLED", "false").lower() == "true",
+        endpoint=otlp_endpoint or "localhost:4317",
+        auth_token=cfg.get("telemetry.otlp.auth_token", ""),
+        enabled=otlp_enabled,
+        secure=cfg.get("telemetry.otlp.secure", False),
+        use_http=cfg.get("telemetry.otlp.use_http", False),
     )
     
     # Logging configuration
     logging_opts = LoggingOptions(
         enabled=True,
-        level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        level=cfg.get("logging.log.level", "INFO").upper(),
     )
     
     # Metrics configuration
     metrics_opts = MetricsOptions(
-        enabled=os.getenv("METRICS_ENABLED", "true").lower() == "true",
-        export_interval_seconds=int(os.getenv("METRICS_EXPORT_INTERVAL", "10")),
+        enabled=cfg.get("telemetry.metrics.enabled", True),
+        export_interval_seconds=cfg.get("telemetry.metrics.export_interval_seconds", 10),
     )
     
     # Tracing configuration
     tracing_opts = TracingOptions(
-        enabled=os.getenv("TRACING_ENABLED", "true").lower() == "true",
+        enabled=cfg.get("tracing.enabled", True),
     )
     
     # Foxglove/MCAP configuration
     foxglove_opts = FoxgloveOptions(
-        enabled=os.getenv("MCAP_ENABLED", "false").lower() == "true",
-        mcap_path=os.getenv("MCAP_PATH", ""),
+        enabled=cfg.get("foxglove.enabled", False),
+        mcap_path=cfg.get("foxglove.file_path", ""),
     )
     
     # Build telemetry options
@@ -275,3 +303,12 @@ def from_env() -> tuple[ServiceOptions, PulseOptions]:
     )
     
     return service_opts, pulse_opts
+
+
+# Keep from_env as alias for backward compatibility
+def from_env() -> tuple[ServiceOptions, PulseOptions]:
+    """Load Pulse configuration from environment variables (deprecated).
+    
+    Use from_config() instead which supports both config files and env vars.
+    """
+    return from_config()

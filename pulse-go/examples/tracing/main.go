@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/machanirobotics/pulse/pulse-go"
-	"github.com/machanirobotics/pulse/pulse-go/options"
 )
 
 // Malenia Conversation Pipeline - AI Assistant Tracing Example
@@ -168,13 +167,8 @@ func main() {
 }
 
 func runMaleniaConversationPipeline() {
-	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
-	k, err := pulse.New().
-		WithService("malenia-conversation-service", "1.0.0").
-		WithDescription("Malenia AI Assistant with distributed tracing").
-		WithEnvironment(options.Production).
-		WithTracing().
-		Build()
+	// Uses pulse.toml config for service info and OTLP endpoint
+	k, err := pulse.New().Build()
 	if err != nil {
 		panic(err)
 	}
@@ -565,12 +559,8 @@ func formatOutput(ctx context.Context, k *pulse.Pulse, req OutputFormattingReque
 func runMaleniaWithError() {
 	ctx := context.Background()
 
-	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
-	k, err := pulse.New().
-		WithService("malenia-conversation-service", "1.0.0").
-		WithEnvironment(options.Development).
-		WithTracing().
-		Build()
+	// Uses pulse.toml config for service info and OTLP endpoint
+	k, err := pulse.New().Build()
 	if err != nil {
 		panic(err)
 	}

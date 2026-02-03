@@ -18,6 +18,7 @@ type Metrics struct {
 	mcapWriter  *MetricMcapWriter
 	ctx         context.Context
 	registered  map[string]bool // Track registered metrics
+	serviceName string          // Service name prefix for metrics
 }
 
 // NewMetrics creates a new Metrics instance
@@ -26,6 +27,7 @@ func NewMetrics(serviceOpts options.ServiceOptions, unifiedWriter *foxglove.Unif
 		otelMetrics: otelMetrics,
 		ctx:         context.Background(),
 		registered:  make(map[string]bool),
+		serviceName: serviceOpts.Name,
 	}
 
 	// Initialize MCAP writer if unified writer is provided
@@ -90,6 +92,11 @@ func (m *Metrics) extractAndRecordMetrics(rv reflect.Value, attrs ...metric.AddO
 
 		metricType := parts[1]
 		metricName := parts[2]
+
+		// Prefix metric name with service name
+		if m.serviceName != "" {
+			metricName = m.serviceName + "." + metricName
+		}
 
 		// Record metric based on type
 		if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {

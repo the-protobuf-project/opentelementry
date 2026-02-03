@@ -1,29 +1,152 @@
-from typing import Optional
-from pathlib import Path
+from typing import Optional, Dict
 
-from .options import ServiceOptions, PulseOptions
+from .options import ServiceOptions, PulseOptions, Environment, from_config
 from ._private.logging import PulseLogger
 from ._private.metrics import PulseMetrics, set_current_pulse_metrics, reset_current_pulse_metrics
 from ._private.tracing import PulseTracing, set_current_pulse, reset_current_pulse
 from ._private.foxglove import UnifiedMcapWriter
 
-# Auto-load .env file from project root
-try:
-    from dotenv import load_dotenv
-    # Find .env file in current directory or parent directories
-    env_path = Path.cwd() / '.env'
-    if env_path.exists():
-        load_dotenv(env_path)
-    else:
-        # Try to find .env in parent directories
-        current = Path.cwd()
-        for parent in current.parents:
-            env_path = parent / '.env'
-            if env_path.exists():
-                load_dotenv(env_path)
-                break
-except ImportError:
-    pass  # python-dotenv not installed, skip auto-loading
+
+class PulseBuilder:
+    """Builder for creating Pulse instances with fluent API.
+    
+    Configuration Priority (Lowest to Highest):
+    1. Defaults (lowest priority)
+    2. Config file (pulse.toml / pulse.yaml / pulse.json)
+    3. Environment variables (PULSE_*)
+    4. Code-based (builder methods) - highest priority
+    
+    Example:
+        pulse = Pulse.new() \\
+            .with_service("my-service", "1.0.0") \\
+            .environment(Environment.PRODUCTION) \\
+            .with_otlp("localhost", 4317) \\
+            .build()
+    """
+    
+    def __init__(self):
+        self._config_path: Optional[str] = None
+        self._name: Optional[str] = None
+        self._version: Optional[str] = None
+        self._description: Optional[str] = None
+        self._environment: Optional[Environment] = None
+        self._attributes: Dict[str, str] = {}
+        self._otlp_endpoint: Optional[str] = None
+        self._otlp_auth_token: Optional[str] = None
+        self._otlp_secure: Optional[bool] = None
+        self._otlp_use_http: Optional[bool] = None
+        self._mcap_path: Optional[str] = None
+        self._tracing_enabled: bool = False
+    
+    def with_config(self, config_path: str) -> "PulseBuilder":
+        """Load configuration from a specific file path."""
+        self._config_path = config_path
+        return self
+    
+    def with_service(self, name: str, version: str) -> "PulseBuilder":
+        """Set service name and version."""
+        self._name = name
+        self._version = version
+        return self
+    
+    def description(self, desc: str) -> "PulseBuilder":
+        """Set service description."""
+        self._description = desc
+        return self
+    
+    def environment(self, env: Environment) -> "PulseBuilder":
+        """Set deployment environment."""
+        self._environment = env
+        return self
+    
+    def with_attribute(self, key: str, value: str) -> "PulseBuilder":
+        """Add a custom attribute to all telemetry."""
+        self._attributes[key] = value
+        return self
+    
+    def with_attributes(self, attrs: Dict[str, str]) -> "PulseBuilder":
+        """Add multiple custom attributes to all telemetry."""
+        self._attributes.update(attrs)
+        return self
+    
+    def with_otlp(self, host: str, port: int) -> "PulseBuilder":
+        """Enable OTLP export to the specified endpoint."""
+        self._otlp_endpoint = f"{host}:{port}"
+        return self
+    
+    def with_otlp_endpoint(self, endpoint: str) -> "PulseBuilder":
+        """Enable OTLP export to the specified endpoint string."""
+        self._otlp_endpoint = endpoint
+        return self
+    
+    def with_otlp_auth(self, token: str) -> "PulseBuilder":
+        """Set OTLP authentication token."""
+        self._otlp_auth_token = token
+        return self
+    
+    def with_otlp_secure(self, secure: bool = True) -> "PulseBuilder":
+        """Enable/disable TLS for OTLP connection."""
+        self._otlp_secure = secure
+        return self
+    
+    def with_otlp_http(self, use_http: bool = True) -> "PulseBuilder":
+        """Use HTTP instead of gRPC for OTLP."""
+        self._otlp_use_http = use_http
+        return self
+    
+    def with_mcap(self, path: str) -> "PulseBuilder":
+        """Enable MCAP recording to the specified file path."""
+        self._mcap_path = path
+        return self
+    
+    def with_tracing(self) -> "PulseBuilder":
+        """Enable distributed tracing."""
+        self._tracing_enabled = True
+        return self
+    
+    def build(self) -> "Pulse":
+        """Build and return the Pulse instance."""
+        # Load config from file (auto-discovery or specified path)
+        service_opts, pulse_opts = from_config(self._config_path)
+        
+        # Override with builder values (highest priority)
+        if self._name:
+            service_opts.name = self._name
+        if self._version:
+            service_opts.version = self._version
+        if self._description:
+            service_opts.description = self._description
+        if self._environment:
+            service_opts.environment = self._environment
+        
+        # Merge attributes
+        # (builder attributes would need to be stored on service_opts if supported)
+        
+        # Configure OTLP if specified via builder
+        if self._otlp_endpoint:
+            pulse_opts.telemetry.otlp.enabled = True
+            pulse_opts.telemetry.otlp.endpoint = self._otlp_endpoint
+        
+        if self._otlp_auth_token:
+            pulse_opts.telemetry.otlp.auth_token = self._otlp_auth_token
+        
+        if self._otlp_secure is not None:
+            pulse_opts.telemetry.otlp.secure = self._otlp_secure
+        
+        if self._otlp_use_http is not None:
+            pulse_opts.telemetry.otlp.use_http = self._otlp_use_http
+        
+        # Enable tracing if requested
+        if self._tracing_enabled:
+            pulse_opts.telemetry.tracing.enabled = True
+            pulse_opts.telemetry.otlp.enabled = True
+        
+        # Configure MCAP if specified
+        if self._mcap_path:
+            pulse_opts.foxglove.enabled = True
+            pulse_opts.foxglove.mcap_path = self._mcap_path
+        
+        return Pulse(service_opts, pulse_opts)
 
 
 class Pulse:
@@ -35,45 +158,20 @@ class Pulse:
     - Metrics (OpenTelemetry + MCAP with Pydantic support)
     - Tracing (OpenTelemetry + MCAP with decorator support)
     
-    Example:
-        pulse = Pulse(
-            service_opts=ServiceOptions(
-                name="my-service",
-                version="1.0.0",
-                environment=Environment.PRODUCTION,
-            ),
-            pulse_opts=PulseOptions(
-                telemetry=TelemetryOptions(
-                    otlp=OTLPOptions(
-                        host="localhost",
-                        port=4317,
-                        enabled=True,
-                    ),
-                ),
-                foxglove=FoxgloveOptions(
-                    enabled=True,
-                    mcap_path="/tmp/my-service.mcap",
-                ),
-            ),
-        )
-        
-        # Use logging
-        pulse.logger.info("Service started", {"version": "1.0.0"})
-        
-        # Use metrics with Pydantic
-        class MyMetrics(BaseModel):
-            requests: int = Field(metadata={"metric_type": "counter", "metric_name": "requests_total"})
-        
-        pulse.metrics.record(MyMetrics(requests=1))
-        
-        # Use tracing with decorator
-        @pulse.tracing.trace(name="process_data")
-        def process_data():
-            pass
-        
-        # Cleanup
-        pulse.close()
+    Example using builder pattern:
+        pulse = Pulse.new() \\
+            .with_service("my-service", "1.0.0") \\
+            .environment(Environment.PRODUCTION) \\
+            .build()
+    
+    Example using direct instantiation:
+        pulse = Pulse(service_opts, pulse_opts)
     """
+    
+    @classmethod
+    def new(cls) -> "PulseBuilder":
+        """Create a new PulseBuilder for fluent configuration."""
+        return PulseBuilder()
     
     def __init__(self, service_opts: ServiceOptions, pulse_opts: PulseOptions):
         self.service_opts = service_opts

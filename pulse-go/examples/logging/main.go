@@ -52,17 +52,8 @@ type LLMRequestEvent struct {
 }
 
 func main() {
-	// Create pulse instance with global attributes
-	// These attributes appear on ALL logs, metrics, and traces
-	p, err := pulse.New().
-		WithService("llm-chat-example", "1.0.0").
-		WithDescription("LLM chat room with multilingual support").
-		WithAttributes(map[string]string{
-			"robot.id":  "robot-001",
-			"fleet.id":  "fleet-alpha",
-			"region.id": "us-west-2",
-		}).
-		Build()
+	// Uses pulse.toml config for service info and OTLP endpoint
+	p, err := pulse.New().Build()
 	if err != nil {
 		panic(err)
 	}

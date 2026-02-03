@@ -21,12 +21,9 @@ type ChatMessage struct {
 }
 
 func main() {
-	// Create pulse instance - auto-discovers pulse.toml or .config/pulse.toml
-	p, err := pulse.New().
-		WithService("llm-chat-example", "1.0.0").
-		WithDescription("LLM chat with MCAP and OTLP logging").
-		WithMCAP("examples/mcap/llm-chat-example.mcap").
-		Build()
+	// Uses pulse.toml config for service info and OTLP endpoint
+	// Enable foxglove in pulse.toml to record MCAP
+	p, err := pulse.New().Build()
 	if err != nil {
 		panic(err)
 	}

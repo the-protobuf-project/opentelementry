@@ -2,7 +2,7 @@
 Example demonstrating MCAP logging with Foxglove Studio visualization.
 
 This example shows how to:
-- Enable MCAP recording for logs
+- Enable MCAP recording for logs using Pulse.new() builder
 - Generate various log levels
 - View the MCAP file in Foxglove Studio
 
@@ -10,32 +10,20 @@ After running, open the MCAP file in Foxglove Studio to visualize:
 - Log timeline
 - Log levels distribution
 - Structured data fields
+
+Run with:
+    uv run python -m examples.logging.mcap_example
 """
 
-from pulse import Pulse, ServiceOptions, PulseOptions, Environment, FoxgloveOptions
+from pulse import Pulse
 import time
 
 
 def main():
-    # Create Pulse instance with MCAP enabled using context manager
-    # No need to call pulse.close() - it's automatic!
-    with Pulse(
-        service_opts=ServiceOptions(
-            name="mcap-logging-demo",
-            description="Demonstrates MCAP logging for Foxglove",
-            version="1.0.0",
-            environment=Environment.DEVELOPMENT,
-        ),
-        pulse_opts=PulseOptions(
-            foxglove=FoxgloveOptions(
-                enabled=True,
-                mcap_path="/tmp/logging-demo.mcap",
-            ),
-        ),
-    ) as pulse:
+    # Uses pulse.toml config - enable foxglove.enabled=true and set foxglove.file_path
+    with Pulse.new().build() as pulse:
         
         pulse.logger.info("MCAP logging demo started", {
-            "mcap_path": "/tmp/logging-demo.mcap",
             "foxglove_url": "https://studio.foxglove.dev"
         })
         

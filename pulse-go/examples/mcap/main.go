@@ -38,8 +38,11 @@ func main() {
 		Telemetry: options.DefaultTelemetry(),
 	}
 	pulseOpts.Telemetry.OTLP.Enabled = true
-	pulseOpts.Telemetry.OTLP.Host = "localhost"
+	pulseOpts.Telemetry.OTLP.Host = "otel.machanirobotics.dev"
 	pulseOpts.Telemetry.OTLP.Port = 4317
+	pulseOpts.Telemetry.OTLP.Headers = map[string]string{
+		"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
+	}
 
 	// Enable Foxglove MCAP logging - save in examples/mcap directory
 	pulseOpts.Foxglove = options.FoxgloveOptions{

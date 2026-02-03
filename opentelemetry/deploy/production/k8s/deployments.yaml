@@ -19,6 +19,12 @@ spec:
         - name: otel-collector
           image: otel/opentelemetry-collector-contrib:0.96.0
           args: ["--config=/etc/otelcol/config.yaml"]
+          env:
+            - name: OTLP_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: pulse-secrets
+                  key: otlp-auth-token
           ports:
             - containerPort: 4317
               name: otlp-grpc

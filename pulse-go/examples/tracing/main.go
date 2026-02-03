@@ -172,7 +172,7 @@ func runMaleniaConversationPipeline() {
 	ctx := context.Background()
 
 	// Get OTLP host from environment or use default
-	otlpHost := "localhost"
+	otlpHost := "otel.machanirobotics.dev"
 	if envHost := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT"); envHost != "" {
 		otlpHost = envHost
 	}
@@ -199,6 +199,9 @@ func runMaleniaConversationPipeline() {
 				Host:    otlpHost,
 				Port:    4317,
 				Enabled: true,
+				Headers: map[string]string{
+					"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
+				},
 			},
 		},
 		Tracing: options.TracingOptions{
@@ -601,7 +604,14 @@ func runMaleniaWithError() {
 	}, options.PulseOptions{
 		Telemetry: options.TelemetryOptions{
 			Tracing: options.TracingTelemetryOptions{Enabled: true},
-			OTLP:    options.OTLPOptions{Host: "localhost", Port: 4317, Enabled: true},
+			OTLP: options.OTLPOptions{
+				Host:    "otel.machanirobotics.dev",
+				Port:    4317,
+				Enabled: true,
+				Headers: map[string]string{
+					"Authorization": "Bearer fHnhZYaV3XitYbB8BkgM7MZtRYqyT",
+				},
+			},
 		},
 		Tracing: options.TracingOptions{Enabled: true},
 	})

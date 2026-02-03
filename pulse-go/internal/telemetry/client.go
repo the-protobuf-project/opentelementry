@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -9,8 +10,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/log/global"
 	sdklog "go.opentelemetry.io/otel/sdk/log"
@@ -18,6 +22,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"google.golang.org/grpc/credentials"
 )
 
 // Telemetry provides a unified interface for OpenTelemetry logging, metrics, and tracing.
@@ -112,10 +117,33 @@ func (t *Telemetry) initTracing(ctx context.Context, opts options.TelemetryOptio
 	if opts.OTLP.Enabled {
 		// Use OTLP exporter for production
 		endpoint := fmt.Sprintf("%s:%d", opts.OTLP.Host, opts.OTLP.Port)
-		exporter, err = otlptracegrpc.New(ctx,
-			otlptracegrpc.WithEndpoint(endpoint),
-			otlptracegrpc.WithInsecure(), // Use WithTLSCredentials() in production
-		)
+		if opts.OTLP.UseHTTP {
+			// Use HTTP exporter
+			httpOpts := []otlptracehttp.Option{
+				otlptracehttp.WithEndpoint(endpoint),
+			}
+			if !opts.OTLP.Secure {
+				httpOpts = append(httpOpts, otlptracehttp.WithInsecure())
+			}
+			if len(opts.OTLP.Headers) > 0 {
+				httpOpts = append(httpOpts, otlptracehttp.WithHeaders(opts.OTLP.Headers))
+			}
+			exporter, err = otlptracehttp.New(ctx, httpOpts...)
+		} else {
+			// Use gRPC exporter
+			grpcOpts := []otlptracegrpc.Option{
+				otlptracegrpc.WithEndpoint(endpoint),
+			}
+			if opts.OTLP.Secure {
+				grpcOpts = append(grpcOpts, otlptracegrpc.WithTLSCredentials(credentials.NewTLS(&tls.Config{})))
+			} else {
+				grpcOpts = append(grpcOpts, otlptracegrpc.WithInsecure())
+			}
+			if len(opts.OTLP.Headers) > 0 {
+				grpcOpts = append(grpcOpts, otlptracegrpc.WithHeaders(opts.OTLP.Headers))
+			}
+			exporter, err = otlptracegrpc.New(ctx, grpcOpts...)
+		}
 	} else {
 		// No exporter in development - skip stdout to reduce noise
 		return nil
@@ -152,10 +180,33 @@ func (t *Telemetry) initMetrics(ctx context.Context, opts options.TelemetryOptio
 	if opts.OTLP.Enabled {
 		// Use OTLP exporter for production
 		endpoint := fmt.Sprintf("%s:%d", opts.OTLP.Host, opts.OTLP.Port)
-		exporter, err = otlpmetricgrpc.New(ctx,
-			otlpmetricgrpc.WithEndpoint(endpoint),
-			otlpmetricgrpc.WithInsecure(), // Use WithTLSCredentials() in production
-		)
+		if opts.OTLP.UseHTTP {
+			// Use HTTP exporter
+			httpOpts := []otlpmetrichttp.Option{
+				otlpmetrichttp.WithEndpoint(endpoint),
+			}
+			if !opts.OTLP.Secure {
+				httpOpts = append(httpOpts, otlpmetrichttp.WithInsecure())
+			}
+			if len(opts.OTLP.Headers) > 0 {
+				httpOpts = append(httpOpts, otlpmetrichttp.WithHeaders(opts.OTLP.Headers))
+			}
+			exporter, err = otlpmetrichttp.New(ctx, httpOpts...)
+		} else {
+			// Use gRPC exporter
+			grpcOpts := []otlpmetricgrpc.Option{
+				otlpmetricgrpc.WithEndpoint(endpoint),
+			}
+			if opts.OTLP.Secure {
+				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithTLSCredentials(credentials.NewTLS(&tls.Config{})))
+			} else {
+				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithInsecure())
+			}
+			if len(opts.OTLP.Headers) > 0 {
+				grpcOpts = append(grpcOpts, otlpmetricgrpc.WithHeaders(opts.OTLP.Headers))
+			}
+			exporter, err = otlpmetricgrpc.New(ctx, grpcOpts...)
+		}
 	} else {
 		// No exporter in development - skip stdout to reduce noise
 		return nil
@@ -193,10 +244,35 @@ func (t *Telemetry) initLogging(ctx context.Context, opts options.TelemetryOptio
 	// Console output is handled by the charmbracelet logger
 	if opts.OTLP.Enabled {
 		endpoint := fmt.Sprintf("%s:%d", opts.OTLP.Host, opts.OTLP.Port)
-		otlpExporter, err := otlploggrpc.New(ctx,
-			otlploggrpc.WithEndpoint(endpoint),
-			otlploggrpc.WithInsecure(), // Use WithTLSCredentials() in production
-		)
+		var otlpExporter sdklog.Exporter
+		var err error
+		if opts.OTLP.UseHTTP {
+			// Use HTTP exporter
+			httpOpts := []otlploghttp.Option{
+				otlploghttp.WithEndpoint(endpoint),
+			}
+			if !opts.OTLP.Secure {
+				httpOpts = append(httpOpts, otlploghttp.WithInsecure())
+			}
+			if len(opts.OTLP.Headers) > 0 {
+				httpOpts = append(httpOpts, otlploghttp.WithHeaders(opts.OTLP.Headers))
+			}
+			otlpExporter, err = otlploghttp.New(ctx, httpOpts...)
+		} else {
+			// Use gRPC exporter
+			grpcOpts := []otlploggrpc.Option{
+				otlploggrpc.WithEndpoint(endpoint),
+			}
+			if opts.OTLP.Secure {
+				grpcOpts = append(grpcOpts, otlploggrpc.WithTLSCredentials(credentials.NewTLS(&tls.Config{})))
+			} else {
+				grpcOpts = append(grpcOpts, otlploggrpc.WithInsecure())
+			}
+			if len(opts.OTLP.Headers) > 0 {
+				grpcOpts = append(grpcOpts, otlploggrpc.WithHeaders(opts.OTLP.Headers))
+			}
+			otlpExporter, err = otlploggrpc.New(ctx, grpcOpts...)
+		}
 		if err != nil {
 			return fmt.Errorf("failed to create OTLP log exporter: %w", err)
 		}

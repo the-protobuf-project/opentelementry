@@ -33,10 +33,18 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
 fi
 
+# Generate OTLP token if not set
+OTLP_AUTH_TOKEN="${OTLP_AUTH_TOKEN:-}"
+if [ -z "$OTLP_AUTH_TOKEN" ]; then
+    OTLP_AUTH_TOKEN=$(openssl rand -hex 32)
+    echo "Generated OTLP auth token: $OTLP_AUTH_TOKEN"
+fi
+
 # Update secrets with actual values
 echo "Updating secrets..."
 GRAFANA_PASS_B64=$(echo -n "$GRAFANA_ADMIN_PASSWORD" | base64)
 GRAFANA_USER_B64=$(echo -n "$GRAFANA_ADMIN_USER" | base64)
+OTLP_TOKEN_B64=$(echo -n "$OTLP_AUTH_TOKEN" | base64)
 
 # Create temporary secrets file with actual values
 cat > "$K8S_DIR/secrets-generated.yaml" << EOF
@@ -49,6 +57,7 @@ type: Opaque
 data:
   grafana-admin-user: $GRAFANA_USER_B64
   grafana-admin-password: $GRAFANA_PASS_B64
+  otlp-auth-token: $OTLP_TOKEN_B64
 EOF
 
 # Update ingress with ACM certificate ARN
@@ -86,7 +95,10 @@ echo "Services:"
 kubectl -n pulse get svc
 
 echo ""
-echo "After DNS propagation, access at: https://telemetry.machanirobotics.dev"
+OTEL_DOMAIN="${OTEL_DOMAIN:-otel.example.com}"
+echo "After DNS propagation:"
+echo "  Dashboard: https://$DOMAIN"
+echo "  OTLP Endpoint: https://$OTEL_DOMAIN"
 echo ""
 echo "To get the ALB DNS name for DNS configuration:"
 echo "kubectl -n pulse get ingress pulse-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'"

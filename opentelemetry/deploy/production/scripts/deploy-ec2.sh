@@ -87,17 +87,26 @@ scp -i "$SSH_KEY" "$PROD_DIR/docker-compose.prod.yaml" ec2-user@"$PUBLIC_IP":/op
 scp -i "$SSH_KEY" -r "$OTEL_DIR/dashboards/"* ec2-user@"$PUBLIC_IP":/opt/pulse/dashboards/
 scp -i "$SSH_KEY" -r "$OTEL_DIR/docker/"* ec2-user@"$PUBLIC_IP":/opt/pulse/docker/
 
-# Generate self-signed certs if not exist
+# Generate self-signed certs if not exist (with SAN for both domains)
 echo "Setting up TLS certificates..."
+OTEL_DOMAIN="${OTEL_DOMAIN:-otel.machanirobotics.dev}"
 ssh -i "$SSH_KEY" ec2-user@"$PUBLIC_IP" "
-    if [ ! -f /opt/pulse/certs/fullchain.pem ]; then
-        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout /opt/pulse/certs/privkey.pem \
-            -out /opt/pulse/certs/fullchain.pem \
-            -subj '/CN=$DOMAIN'
-        chmod 644 /opt/pulse/certs/privkey.pem
-    fi
+    # Always regenerate cert to include both domains
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /opt/pulse/certs/privkey.pem \
+        -out /opt/pulse/certs/fullchain.pem \
+        -subj '/CN=$DOMAIN' \
+        -addext 'subjectAltName=DNS:$DOMAIN,DNS:$OTEL_DOMAIN'
+    chmod 644 /opt/pulse/certs/privkey.pem
 "
+
+# Generate OTLP token if not set
+if [ -z "$OTLP_AUTH_TOKEN" ]; then
+    OTLP_AUTH_TOKEN=$(openssl rand -hex 32)
+    echo "Generated OTLP auth token: $OTLP_AUTH_TOKEN"
+fi
+
+OTEL_DOMAIN="${OTEL_DOMAIN:-otel.machanirobotics.dev}"
 
 # Create .env file
 echo "Creating .env file..."
@@ -105,6 +114,8 @@ ssh -i "$SSH_KEY" ec2-user@"$PUBLIC_IP" "cat > /opt/pulse/.env << 'EOF'
 GRAFANA_ADMIN_USER=$GRAFANA_USER
 GRAFANA_ADMIN_PASSWORD=$GRAFANA_PASS
 DOMAIN=$DOMAIN
+OTEL_DOMAIN=$OTEL_DOMAIN
+OTLP_AUTH_TOKEN=$OTLP_AUTH_TOKEN
 EOF"
 
 # Start services
@@ -132,7 +143,14 @@ echo ""
 echo "OTLP Endpoints:"
 echo "  gRPC: $PUBLIC_IP:4317"
 echo "  HTTP: $PUBLIC_IP:4318"
+echo "  After DNS: https://$OTEL_DOMAIN (port 443)"
 echo ""
-echo "DNS: Create A record: $DOMAIN -> $PUBLIC_IP"
+echo "OTLP Authentication:"
+echo "  Token: $OTLP_AUTH_TOKEN"
+echo "  Header: Authorization: Bearer $OTLP_AUTH_TOKEN"
+echo ""
+echo "DNS: Create A records:"
+echo "  $DOMAIN -> $PUBLIC_IP"
+echo "  $OTEL_DOMAIN -> $PUBLIC_IP"
 echo ""
 echo "SSH: ssh -i $SSH_KEY ec2-user@$PUBLIC_IP"

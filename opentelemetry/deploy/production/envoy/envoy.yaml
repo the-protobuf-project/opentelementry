@@ -50,10 +50,26 @@ static_resources:
                 route_config:
                   name: local_route
                   virtual_hosts:
+                    # OTEL endpoint - redirect root to machanirobotics.com, pass through OTLP paths
+                    - name: otel
+                      domains: ["otel.machanirobotics.dev"]
+                      routes:
+                        # OTLP paths go to collector
+                        - match:
+                            prefix: "/v1/"
+                          route:
+                            cluster: otelcol_http
+                            timeout: 60s
+                        # Root and other paths redirect to main website
+                        - match:
+                            prefix: "/"
+                          redirect:
+                            host_redirect: "machanirobotics.com"
+                            https_redirect: true
+                    # Grafana dashboard (has built-in auth)
                     - name: telemetry
                       domains: ["telemetry.machanirobotics.dev", "*"]
                       routes:
-                        # Grafana dashboard (has built-in auth)
                         - match:
                             prefix: "/"
                           route:

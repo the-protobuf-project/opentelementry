@@ -27,7 +27,10 @@ type TracingTelemetryOptions struct {
 
 // OTLPOptions defines the settings for OTLP exporter
 type OTLPOptions struct {
-	Host    string `json:"host"`    // OTLP collector host (e.g., "localhost")
-	Port    int    `json:"port"`    // OTLP collector port (e.g., 4317 for gRPC)
-	Enabled bool   `json:"enabled"` // Enable OTLP export (if false, uses stdout)
+	Host    string            `json:"host"`    // OTLP collector host (e.g., "localhost")
+	Port    int               `json:"port"`    // OTLP collector port (e.g., 4317 for gRPC, 4318 for HTTP)
+	Enabled bool              `json:"enabled"` // Enable OTLP export (if false, uses stdout)
+	Secure  bool              `json:"secure"`  // Use TLS for secure connections (required for HTTPS endpoints)
+	UseHTTP bool              `json:"useHttp"` // Use HTTP instead of gRPC (required for some endpoints like port 443)
+	Headers map[string]string `json:"headers"` // Custom headers to send with requests (e.g., Authorization)
 }

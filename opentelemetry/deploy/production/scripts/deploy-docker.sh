@@ -26,9 +26,17 @@ fi
 # Load environment variables
 source "$PROD_DIR/.env"
 
-DOMAIN="${DOMAIN:-telemetry.machanirobotics.dev}"
+DOMAIN="${DOMAIN:-localhost}"
+OTEL_DOMAIN="${OTEL_DOMAIN:-localhost}"
 GRAFANA_ADMIN_USER="${GRAFANA_ADMIN_USER:-admin}"
 GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-changeme}"
+OTLP_AUTH_TOKEN="${OTLP_AUTH_TOKEN:-}"
+
+# Generate OTLP token if not set
+if [ -z "$OTLP_AUTH_TOKEN" ]; then
+    OTLP_AUTH_TOKEN=$(openssl rand -hex 32)
+    echo "Generated OTLP auth token: $OTLP_AUTH_TOKEN"
+fi
 
 # Create required directories
 mkdir -p "$PROD_DIR/certs"
@@ -49,7 +57,8 @@ if [ ! -f "$PROD_DIR/certs/fullchain.pem" ] || [ ! -f "$PROD_DIR/certs/privkey.p
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout "$PROD_DIR/certs/privkey.pem" \
         -out "$PROD_DIR/certs/fullchain.pem" \
-        -subj "/CN=$DOMAIN"
+        -subj "/CN=$DOMAIN" \
+        -addext "subjectAltName=DNS:$DOMAIN,DNS:$OTEL_DOMAIN,DNS:localhost"
     
     chmod 644 "$PROD_DIR/certs/privkey.pem"
     echo "✓ Self-signed certificates generated"
@@ -97,5 +106,13 @@ echo ""
 echo "OTLP Endpoints:"
 echo "  gRPC: localhost:4317"
 echo "  HTTP: localhost:4318"
+echo "  After DNS: https://$OTEL_DOMAIN (port 443)"
+echo ""
+echo "OTLP Authentication:"
+echo "  Token: $OTLP_AUTH_TOKEN"
+echo "  Header: Authorization: Bearer $OTLP_AUTH_TOKEN"
 echo ""
 echo "⚠️  Change the default password immediately!"
+echo ""
+echo "Save your OTLP token to .env:"
+echo "  OTLP_AUTH_TOKEN=$OTLP_AUTH_TOKEN"

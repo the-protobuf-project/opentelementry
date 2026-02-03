@@ -10,8 +10,18 @@ data:
         protocols:
           grpc:
             endpoint: 0.0.0.0:4317
+            auth:
+              authenticator: bearertoken
           http:
             endpoint: 0.0.0.0:4318
+            auth:
+              authenticator: bearertoken
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+      bearertoken:
+        token: ${env:OTLP_AUTH_TOKEN}
 
     processors:
       batch:
@@ -48,13 +58,10 @@ data:
         tls:
           insecure: true
 
-    extensions:
-      health_check:
-        endpoint: 0.0.0.0:13133
-
     service:
       extensions:
         - health_check
+        - bearertoken
       telemetry:
         logs:
           level: warn

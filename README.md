@@ -1,6 +1,8 @@
-# Pulse [![codecov](https://codecov.io/gh/machanirobotics/pulse/graph/badge.svg?token=uXWq5jEJBz)](https://codecov.io/gh/machanirobotics/pulse)
+# Pulse
 
-![Pulse Logo](.assets/logo.png)
+<p align="center">
+  <img src=".assets/logo.png" alt="Pulse Logo">
+</p>
 
 **Unified Observability Framework** - Production-grade logging, metrics,
 tracing, and profiling for modern applications
@@ -29,8 +31,6 @@ observable, maintainable systems.
 
 ### Go SDK
 
-Get started with Pulse in your Go applications:
-
 ```bash
 go get github.com/machanirobotics/pulse/pulse-go
 ```
@@ -38,30 +38,14 @@ go get github.com/machanirobotics/pulse/pulse-go
 ```go
 package main
 
-import (
-    "github.com/machanirobotics/pulse/pulse-go"
-    "github.com/machanirobotics/pulse/pulse-go/options"
-)
+import "github.com/machanirobotics/pulse/pulse-go"
 
 func main() {
-    p, err := pulse.New().
-        WithService("robot-controller", "1.0.0").
-        WithDescription("Controls robot arm movements").
-        WithEnvironment(options.Production).
-        WithAttributes(map[string]string{
-            "robot.id":  "robot-001",
-            "fleet.id":  "fleet-alpha",
-            "region":    "us-west-2",
-        }).
-        WithOTLP("otel-collector", 4317).
-        WithTracing().
-        Build()
-    if err != nil {
-        panic(err)
-    }
+    // Auto-discovers pulse.toml config
+    p, _ := pulse.New().Build()
     defer p.Close()
 
-    p.Logger.Info("Robot controller started")
+    p.Logger.Info("Service started")
 }
 ```
 
@@ -69,66 +53,58 @@ func main() {
 
 ### Python SDK
 
-Get started with Pulse in your Python applications:
-
 ```bash
-pip install pulse-py
+pip install git+https://github.com/machanirobotics/pulse.git#subdirectory=pulse-py
 ```
 
 ```python
-import pulse
-from pulse import Pulse, ServiceOptions, PulseOptions, Environment
+from pulse import Pulse
 
-# Initialize Pulse
-service_opts = ServiceOptions(
-    name="my-service",
-    version="1.0.0",
-    environment=Environment.PRODUCTION,
-)
-
-pulse_opts = PulseOptions()
-
-with Pulse(service_opts, pulse_opts) as p:
-    # Use it!
-    p.logger.info("Service started")
-    
-    # Record metrics
-    class MyMetrics(pulse.MetricsBaseModel):
-        requests: int = pulse.Counter(description="Total requests")
-    
-    p.metrics.record(MyMetrics(requests=1))
+# Auto-discovers pulse.toml config
+with Pulse.new().build() as pulse:
+    pulse.logger.info("Service started")
 ```
 
 **[📖 Full Python SDK Documentation →](pulse-py/README.md)**
 
 ### Rust SDK
 
-Get started with Pulse in your Rust applications:
-
 ```bash
 cargo add pulse
 ```
 
 ```rust
-use pulse::{Pulse, Environment, logger};
+use pulse::{Pulse, logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Auto-discovers pulse.toml config file
-    let _pulse = Pulse::new()
-        .with_service("my-service", "1.0.0")
-        .environment(Environment::Production)
-        .build()?;
+    // Auto-discovers pulse.toml config
+    let _pulse = Pulse::new().build()?;
     
     logger::info!("Service started");
-    logger::warn!("Warning message");
-    logger::error!("Error occurred");
     
     Ok(())
 }
 ```
 
 **[📖 Full Rust SDK Documentation →](pulse-rs/README.md)**
+
+### Configuration (`pulse.toml`)
+
+All SDKs auto-discover `pulse.toml` from your project root:
+
+```toml
+[service]
+name = "my-service"
+version = "1.0.0"
+environment = "development"
+
+[telemetry.otlp]
+endpoint = "otel.example.com"  # Port 4317 auto-added
+auth_token = "your-token"
+```
+
+**Priority:** Defaults → `pulse.toml` → `.env` / `PULSE_*` env vars → Code (builder methods)
 
 ## Observability Stack
 

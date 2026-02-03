@@ -67,6 +67,7 @@ pub struct Metrics {
     counters: HashMap<String, Counter<f64>>,
     histograms: HashMap<String, Histogram<f64>>,
     gauges: HashMap<String, Gauge<f64>>,
+    service_name: String,
 }
 
 impl Metrics {
@@ -83,7 +84,8 @@ impl Metrics {
         meter_provider: Option<Arc<SdkMeterProvider>>,
     ) -> Result<Self> {
         let service_name = service_opts.name.clone();
-        let meter = meter_provider.map(|p| p.meter(service_name.leak() as &'static str));
+        let meter_name = service_name.clone();
+        let meter = meter_provider.map(|p| p.meter(meter_name.leak() as &'static str));
         
         let mcap_metric_writer = mcap_writer.map(|w| {
             Arc::new(Mutex::new(
@@ -97,6 +99,7 @@ impl Metrics {
             counters: HashMap::new(),
             histograms: HashMap::new(),
             gauges: HashMap::new(),
+            service_name,
         })
     }
 
@@ -125,7 +128,9 @@ impl Metrics {
     /// ```
     pub fn record<T: RecordMetrics>(&mut self, model: &T) -> Result<()> {
         for field in model.metric_fields() {
-            self.record_dynamic(&field.name, field.metric_type, field.value)?;
+            // Prefix metric name with service name
+            let prefixed_name = format!("{}.{}", self.service_name, field.name);
+            self.record_dynamic(&prefixed_name, field.metric_type, field.value)?;
         }
         Ok(())
     }

@@ -2,6 +2,7 @@
 //!
 //! This module defines service metadata and deployment environment configuration.
 
+use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 
 /// Deployment environment types.
@@ -51,6 +52,9 @@ pub struct ServiceOptions {
     pub description: String,
     pub version: String,
     pub environment: Environment,
+    /// Global attributes added to ALL telemetry (logs, metrics, traces).
+    #[serde(default)]
+    pub attributes: HashMap<String, String>,
 }
 
 impl ServiceOptions {
@@ -66,6 +70,7 @@ impl ServiceOptions {
             description: String::new(),
             version: version.into(),
             environment: Environment::default(),
+            attributes: HashMap::new(),
         }
     }
 
@@ -78,6 +83,18 @@ impl ServiceOptions {
     /// Sets the deployment environment.
     pub fn with_environment(mut self, environment: Environment) -> Self {
         self.environment = environment;
+        self
+    }
+
+    /// Sets global attributes that will be added to all telemetry.
+    pub fn with_attributes(mut self, attributes: HashMap<String, String>) -> Self {
+        self.attributes = attributes;
+        self
+    }
+
+    /// Adds a single attribute.
+    pub fn with_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.insert(key.into(), value.into());
         self
     }
 }

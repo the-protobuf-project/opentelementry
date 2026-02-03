@@ -12,8 +12,11 @@ struct ChatMessage {
     timestamp: i64,
 }
 
-fn main() -> anyhow::Result<()> {
-    let _pulse = Pulse::builder("chat-service-mcap", "1.0.0")
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    // Auto-discovers pulse.toml config file, then override with MCAP
+    let _pulse = Pulse::new()
+        .with_service("chat-service-mcap", "1.0.0")
         .description("Chat service with MCAP logging")
         .environment(Environment::Development)
         .with_mcap("examples/chat-logs.mcap")

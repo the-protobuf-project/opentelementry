@@ -689,10 +689,18 @@ p, err := pulse.New().
 
 ### Configuration Priority
 
-1. Builder methods (highest priority)
-2. Environment variables (`PULSE_*`)
-3. Config file (auto-discovered or specified)
-4. Default values (lowest priority)
+```mermaid
+flowchart TB
+    subgraph Priority["Configuration Override Priority"]
+        direction TB
+        D["1. Defaults<br/>(lowest priority)"]
+        C["2. Config File<br/>(pulse.toml / pulse.yaml / pulse.json)"]
+        E["3. Environment Variables<br/>(PULSE_*)"]
+        B["4. Code-based<br/>(builder methods - highest priority)"]
+        
+        D --> C --> E --> B
+    end
+```
 
 ## Examples
 

@@ -13,10 +13,11 @@ struct ChatMessage {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let _pulse = Pulse::builder("chat-service", "1.0.0")
+    // Auto-discovers pulse.toml config file
+    let _pulse = Pulse::new()
+        .with_service("chat-service", "1.0.0")
         .description("Simple chat service with logging")
         .environment(Environment::Development)
-        .with_otlp("localhost", 4317)
         .build()?;
 
     logger::info!("Chat service started");

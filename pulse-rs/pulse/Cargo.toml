@@ -14,7 +14,7 @@ mcap.workspace = true
 opentelemetry.workspace = true
 opentelemetry_sdk.workspace = true
 opentelemetry-otlp.workspace = true
-tonic = "0.12"
+tonic = "0.14"
 tracing.workspace = true
 tracing-subscriber.workspace = true
 tracing-opentelemetry.workspace = true
@@ -23,6 +23,7 @@ prometheus.workspace = true
 tokio.workspace = true
 chrono.workspace = true
 colored.workspace = true
+figment.workspace = true
 
 [[example]]
 name = "logging"

@@ -10,9 +10,11 @@ fn simple_operation() {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let _pulse = Pulse::builder("simple-trace-test", "1.0.0")
+    // Auto-discovers pulse.toml config file
+    let _pulse = Pulse::new()
+        .with_service("simple-trace-test", "1.0.0")
         .environment(Environment::Development)
-        .with_otlp("localhost", 4317)
+        .with_tracing()
         .build()?;
 
     logger::info!("=== SIMPLE TRACE TEST ===");

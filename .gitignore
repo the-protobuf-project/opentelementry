@@ -11,3 +11,4 @@ target
 *.mcap
 build
 .terraform*
+pulse.toml

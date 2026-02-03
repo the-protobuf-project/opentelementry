@@ -28,6 +28,7 @@
 //! // Resources are automatically cleaned up when pulse goes out of scope
 //! ```
 
+pub mod config;
 pub mod options;
 pub mod foxglove;
 pub mod logging;
@@ -38,8 +39,10 @@ pub mod derive;
 pub mod tracing;
 
 use anyhow::Result;
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+pub use config::PulseConfig;
 pub use logging::Logger;
 pub use logging::global as logger;
 pub use metrics::Metrics;
@@ -58,6 +61,29 @@ pub struct Pulse {
 }
 
 impl Pulse {
+    /// Creates a new builder that auto-discovers configuration.
+    ///
+    /// This is the recommended way to initialize Pulse. Configuration is loaded from:
+    /// 1. `PULSE_CONFIG_PATH` environment variable
+    /// 2. `pulse.toml` in current directory
+    /// 3. `pulse.yaml` / `pulse.yml` / `pulse.json`
+    /// 4. `.config/pulse.toml` / `.config/pulse.yaml` / `.config/pulse.json`
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use pulse::Pulse;
+    ///
+    /// // Auto-discovers pulse.toml or uses defaults
+    /// let pulse = Pulse::new()
+    ///     .with_service("my-service", "1.0.0")
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    pub fn new() -> PulseBuilder {
+        PulseBuilder::from_config()
+    }
+
     /// Creates a new builder for configuring Pulse.
     ///
     /// # Arguments
@@ -80,9 +106,10 @@ impl Pulse {
         PulseBuilder::new(name, version)
     }
 
-    /// Creates a new Pulse instance (legacy API).
+    /// Creates a new Pulse instance from options (legacy API).
     ///
     /// Initializes all observability components based on the provided configuration.
+    /// For new code, prefer using `Pulse::new()` or `Pulse::builder()` instead.
     ///
     /// # Arguments
     ///
@@ -96,9 +123,9 @@ impl Pulse {
     ///
     /// let service_opts = ServiceOptions::new("my-service", "1.0.0");
     /// let pulse_opts = PulseOptions::new();
-    /// let pulse = Pulse::new(service_opts, pulse_opts).unwrap();
+    /// let pulse = Pulse::init(service_opts, pulse_opts).unwrap();
     /// ```
-    pub fn new(service_opts: options::ServiceOptions, pulse_opts: options::PulseOptions) -> Result<Self> {
+    pub fn init(service_opts: options::ServiceOptions, pulse_opts: options::PulseOptions) -> Result<Self> {
         let formatter = logging::PulseFormatter::new();
         formatter.set_service_info(
             service_opts.name.clone(),
@@ -219,7 +246,7 @@ impl Pulse {
     ///
     /// let service_opts = ServiceOptions::new("my-service", "1.0.0");
     /// let pulse_opts = PulseOptions::new();
-    /// let mut pulse = Pulse::new(service_opts, pulse_opts).unwrap();
+    /// let mut pulse = Pulse::init(service_opts, pulse_opts).unwrap();
     ///
     /// // Use pulse...
     ///
@@ -274,27 +301,80 @@ impl Drop for Pulse {
 ///     .unwrap();
 /// ```
 pub struct PulseBuilder {
-    name: String,
-    version: String,
+    name: Option<String>,
+    version: Option<String>,
     description: Option<String>,
-    environment: options::Environment,
+    environment: Option<options::Environment>,
+    attributes: HashMap<String, String>,
     otlp_host: Option<String>,
     otlp_port: Option<u16>,
+    otlp_auth_token: Option<String>,
+    otlp_headers: HashMap<String, String>,
+    otlp_secure: Option<bool>,
     mcap_path: Option<String>,
+    config_path: Option<String>,
+    tracing_enabled: bool,
+    profiling_address: Option<String>,
 }
 
 impl PulseBuilder {
     /// Creates a new builder with service name and version.
     pub fn new(name: impl Into<String>, version: impl Into<String>) -> Self {
         Self {
-            name: name.into(),
-            version: version.into(),
+            name: Some(name.into()),
+            version: Some(version.into()),
             description: None,
-            environment: options::Environment::Development,
+            environment: None,
+            attributes: HashMap::new(),
             otlp_host: None,
             otlp_port: None,
+            otlp_auth_token: None,
+            otlp_headers: HashMap::new(),
+            otlp_secure: None,
             mcap_path: None,
+            config_path: None,
+            tracing_enabled: false,
+            profiling_address: None,
         }
+    }
+
+    /// Creates a new builder that will auto-discover configuration.
+    ///
+    /// Configuration is loaded from:
+    /// 1. `PULSE_CONFIG_PATH` environment variable
+    /// 2. `pulse.toml` in current directory
+    /// 3. `pulse.yaml` / `pulse.yml` / `pulse.json`
+    /// 4. `.config/pulse.toml` / `.config/pulse.yaml` / `.config/pulse.json`
+    pub fn from_config() -> Self {
+        Self {
+            name: None,
+            version: None,
+            description: None,
+            environment: None,
+            attributes: HashMap::new(),
+            otlp_host: None,
+            otlp_port: None,
+            otlp_auth_token: None,
+            otlp_headers: HashMap::new(),
+            otlp_secure: None,
+            mcap_path: None,
+            config_path: None,
+            tracing_enabled: false,
+            profiling_address: None,
+        }
+    }
+
+    /// Load configuration from a specific file path.
+    pub fn with_config(mut self, path: impl Into<String>) -> Self {
+        self.config_path = Some(path.into());
+        self
+    }
+
+    /// Sets the service name and version.
+    pub fn with_service(mut self, name: impl Into<String>, version: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self.version = Some(version.into());
+        self
     }
 
     /// Sets the service description.
@@ -305,7 +385,19 @@ impl PulseBuilder {
 
     /// Sets the deployment environment.
     pub fn environment(mut self, environment: options::Environment) -> Self {
-        self.environment = environment;
+        self.environment = Some(environment);
+        self
+    }
+
+    /// Sets global attributes that will be added to all telemetry.
+    pub fn with_attributes(mut self, attributes: HashMap<String, String>) -> Self {
+        self.attributes = attributes;
+        self
+    }
+
+    /// Adds a single attribute.
+    pub fn with_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.insert(key.into(), value.into());
         self
     }
 
@@ -321,6 +413,36 @@ impl PulseBuilder {
         self
     }
 
+    /// Sets OTLP authentication token.
+    pub fn with_otlp_auth(mut self, token: impl Into<String>) -> Self {
+        self.otlp_auth_token = Some(token.into());
+        self
+    }
+
+    /// Sets OTLP headers.
+    pub fn with_otlp_headers(mut self, headers: HashMap<String, String>) -> Self {
+        self.otlp_headers = headers;
+        self
+    }
+
+    /// Sets whether to use secure connection for OTLP.
+    pub fn with_otlp_secure(mut self, secure: bool) -> Self {
+        self.otlp_secure = Some(secure);
+        self
+    }
+
+    /// Enables distributed tracing.
+    pub fn with_tracing(mut self) -> Self {
+        self.tracing_enabled = true;
+        self
+    }
+
+    /// Enables profiling with Pyroscope.
+    pub fn with_profiling(mut self, server_address: impl Into<String>) -> Self {
+        self.profiling_address = Some(server_address.into());
+        self
+    }
+
     /// Enables MCAP recording to the specified file path.
     ///
     /// # Arguments
@@ -333,20 +455,67 @@ impl PulseBuilder {
 
     /// Builds and initializes the Pulse instance.
     pub fn build(self) -> Result<Pulse> {
-        let mut service_opts = options::ServiceOptions::new(&self.name, &self.version)
-            .with_environment(self.environment);
-        
+        // Load config from file if available
+        let config = if let Some(path) = &self.config_path {
+            config::PulseConfig::load_from(path).ok()
+        } else {
+            config::PulseConfig::load().ok()
+        };
+
+        // Start with config values or defaults
+        let (mut service_opts, mut pulse_opts) = if let Some(cfg) = &config {
+            (cfg.to_service_options(), cfg.to_pulse_options())
+        } else {
+            let name = self.name.clone().unwrap_or_else(|| "unknown".to_string());
+            let version = self.version.clone().unwrap_or_else(|| "0.0.0".to_string());
+            (
+                options::ServiceOptions::new(&name, &version),
+                options::PulseOptions::new(),
+            )
+        };
+
+        // Override with builder values (highest priority)
+        if let Some(name) = self.name {
+            service_opts.name = name;
+        }
+        if let Some(version) = self.version {
+            service_opts.version = version;
+        }
         if let Some(desc) = self.description {
-            service_opts = service_opts.with_description(desc);
+            service_opts.description = desc;
+        }
+        if let Some(env) = self.environment {
+            service_opts.environment = env;
         }
 
-        let mut pulse_opts = options::PulseOptions::new();
+        // Merge attributes (builder attributes override config)
+        for (k, v) in self.attributes {
+            service_opts.attributes.insert(k, v);
+        }
 
-        // Configure OTLP if specified
+        // Configure OTLP if specified via builder
         if let (Some(host), Some(port)) = (self.otlp_host, self.otlp_port) {
             pulse_opts.telemetry.otlp.enabled = true;
+            pulse_opts.telemetry.otlp.endpoint = format!("{}:{}", host, port);
             pulse_opts.telemetry.otlp.host = host;
             pulse_opts.telemetry.otlp.port = port;
+        }
+
+        if let Some(token) = self.otlp_auth_token {
+            pulse_opts.telemetry.otlp.auth_token = Some(token);
+        }
+
+        if !self.otlp_headers.is_empty() {
+            pulse_opts.telemetry.otlp.headers = self.otlp_headers;
+        }
+
+        if let Some(secure) = self.otlp_secure {
+            pulse_opts.telemetry.otlp.secure = secure;
+        }
+
+        // Enable tracing if requested
+        if self.tracing_enabled {
+            pulse_opts.telemetry.otlp.enabled = true;
         }
 
         // Configure MCAP if specified
@@ -355,6 +524,6 @@ impl PulseBuilder {
             pulse_opts.foxglove.mcap_path = path;
         }
 
-        Pulse::new(service_opts, pulse_opts)
+        Pulse::init(service_opts, pulse_opts)
     }
 }

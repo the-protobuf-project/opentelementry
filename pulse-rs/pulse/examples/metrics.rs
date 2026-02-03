@@ -15,11 +15,12 @@ pub struct LlmMetrics {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let mut pulse = Pulse::builder("metrics-example", "1.0.0")
+    // Auto-discovers pulse.toml config file
+    let mut pulse = Pulse::new()
+        .with_service("metrics-example", "1.0.0")
         .description("Metrics example service")
         .environment(Environment::Development)
         .with_mcap("pulse/examples/metrics.mcap")
-        .with_otlp("localhost", 4317)
         .build()?;
 
     logger::info!("Metrics Example Started");

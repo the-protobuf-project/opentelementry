@@ -13,19 +13,10 @@ use serde::{Deserialize, Serialize};
 ///
 /// let opts = FoxgloveOptions::new("output.mcap");
 /// ```
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct FoxgloveOptions {
     pub enabled: bool,
     pub mcap_path: String,
-}
-
-impl Default for FoxgloveOptions {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            mcap_path: String::new(),
-        }
-    }
 }
 
 impl FoxgloveOptions {

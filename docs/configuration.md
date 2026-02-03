@@ -1,6 +1,7 @@
 # Pulse Configuration Guide
 
-This document provides comprehensive documentation on how `pulse.toml` works, the configuration lifecycle, supported formats, and all available options.
+Comprehensive documentation on `pulse.toml` configuration, lifecycle,
+supported formats, and all available options.
 
 ## Table of Contents
 
@@ -17,7 +18,8 @@ This document provides comprehensive documentation on how `pulse.toml` works, th
 
 ## Overview
 
-Pulse uses a unified configuration system across all SDKs (Go, Python, Rust). The configuration defines:
+Pulse uses a unified configuration system across all SDKs (Go, Python, Rust).
+The configuration defines:
 
 - **Service identity** - Name, version, environment, and custom attributes
 - **Telemetry settings** - OTLP export, metrics intervals
@@ -43,6 +45,7 @@ Pulse supports multiple configuration file formats, auto-detected by file extens
 ### Format Examples
 
 **TOML** (Recommended):
+
 ```toml
 [service]
 name = "my-service"
@@ -53,6 +56,7 @@ endpoint = "otel.example.com:4317"
 ```
 
 **YAML**:
+
 ```yaml
 service:
   name: my-service
@@ -64,6 +68,7 @@ telemetry:
 ```
 
 **JSON**:
+
 ```json
 {
   "service": {
@@ -84,19 +89,20 @@ telemetry:
 
 Configuration is loaded and merged in the following order (lowest to highest priority):
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  4. Code (Builder Methods)          ← HIGHEST PRIORITY     │
-├─────────────────────────────────────────────────────────────┤
-│  3. Environment Variables (PULSE_*)                        │
-├─────────────────────────────────────────────────────────────┤
-│  2. Config File (pulse.toml / pulse.yaml / pulse.json)     │
-├─────────────────────────────────────────────────────────────┤
-│  1. Default Values                  ← LOWEST PRIORITY      │
-└─────────────────────────────────────────────────────────────┘
+```text
+┌───────────────────────────────────────────────────────┐
+│  4. Code (Builder Methods)       ← HIGHEST PRIORITY  │
+├───────────────────────────────────────────────────────┤
+│  3. Environment Variables (PULSE_*)                  │
+├───────────────────────────────────────────────────────┤
+│  2. Config File (pulse.toml / pulse.yaml / json)     │
+├───────────────────────────────────────────────────────┤
+│  1. Default Values               ← LOWEST PRIORITY   │
+└───────────────────────────────────────────────────────┘
 ```
 
 **Key Points:**
+
 - Later sources override earlier sources
 - Environment variables always override config file values
 - Builder methods in code have the final say
@@ -108,70 +114,71 @@ Configuration is loaded and merged in the following order (lowest to highest pri
 
 ### 1. Initialization Phase
 
-When you call `Pulse.new()` (or equivalent), the SDK begins the configuration loading process:
+When you call `Pulse.new()` (or equivalent), the SDK begins the
+configuration loading process:
 
 ```mermaid
 stateDiagram-v2
     [*] --> LoadDefaults: Pulse::new()
-    
+
     LoadDefaults: Load Default Values
     note right of LoadDefaults
         Initialize all options with sensible defaults
         OTLP disabled, logging enabled, etc.
     end note
-    
+
     LoadDefaults --> DiscoverConfig
-    
+
     DiscoverConfig: Discover Config File
     note right of DiscoverConfig
         Check PULSE_CONFIG_PATH env var
         Search pulse.toml, pulse.yaml, pulse.json
         Search .config/pulse.toml, etc.
     end note
-    
+
     DiscoverConfig --> ConfigFound: File exists
     DiscoverConfig --> LoadEnvVars: No file found
-    
+
     ConfigFound --> ParseConfig
-    
+
     ParseConfig: Parse & Merge Config File
     note right of ParseConfig
         Auto-detect format from extension
         Parse file contents
         Merge with defaults (file overrides defaults)
     end note
-    
+
     ParseConfig --> LoadEnvVars
-    
+
     LoadEnvVars: Load Environment Variables
     note right of LoadEnvVars
         Scan for PULSE_* prefixed variables
         Transform keys (PULSE_TELEMETRY_OTLP_HOST → nested)
         Merge with config (env vars override file)
     end note
-    
+
     LoadEnvVars --> ApplyBuilder
-    
+
     ApplyBuilder: Apply Builder Methods
     note right of ApplyBuilder
         .with_service(), .with_otlp(), etc.
         Code-level overrides have highest priority
     end note
-    
+
     ApplyBuilder --> Validate
-    
+
     Validate: Validate & Build
     note right of Validate
         Validate required fields
         Initialize telemetry providers
     end note
-    
+
     Validate --> Ready: Success
     Validate --> Error: Validation failed
-    
+
     Ready: Pulse Instance Ready
     Error: Configuration Error
-    
+
     Ready --> [*]
     Error --> [*]
 ```
@@ -179,6 +186,7 @@ stateDiagram-v2
 ### 2. Runtime Behavior
 
 Once initialized, configuration is **immutable**. To change configuration:
+
 1. Close the existing Pulse instance
 2. Create a new instance with updated configuration
 
@@ -202,22 +210,22 @@ Pulse auto-discovers configuration files in this order:
 
 ### Discovery Algorithm
 
-```
+```text
 function discoverConfigPath():
     // 1. Check environment variable first
     if PULSE_CONFIG_PATH is set and file exists:
         return PULSE_CONFIG_PATH
-    
+
     // 2. Search in current directory
     for ext in [".toml", ".yaml", ".yml", ".json"]:
         if "pulse{ext}" exists:
             return "pulse{ext}"
-    
+
     // 3. Search in .config directory
     for ext in [".toml", ".yaml", ".yml", ".json"]:
         if ".config/pulse{ext}" exists:
             return ".config/pulse{ext}"
-    
+
     // 4. No config file found - use defaults only
     return null
 ```
@@ -227,17 +235,20 @@ function discoverConfigPath():
 You can bypass auto-discovery by specifying a path:
 
 **Go:**
+
 ```go
 opts, svc, _ := options.LoadConfigWithDefaults("/path/to/config.toml")
 ```
 
 **Python:**
+
 ```python
 from pulse.options import from_config
 service_opts, pulse_opts = from_config("/path/to/config.toml")
 ```
 
 **Rust:**
+
 ```rust
 let config = PulseConfig::load_from("/path/to/config.toml")?;
 ```
@@ -253,17 +264,17 @@ Environment variables provide runtime configuration without modifying files.
 | SDK | Prefix | Separator | Example |
 |-----|--------|-----------|---------|
 | Go | `PULSE_` | `_` (single underscore) | `PULSE_TELEMETRY_OTLP_ENDPOINT` |
-| Python | `PULSE_` | `__` (double underscore) | `PULSE_TELEMETRY__OTLP__ENDPOINT` |
+| Python | `PULSE_` | `__` (double underscore) | `PULSE_TELEMETRY__OTLP__EP` |
 | Rust | `PULSE_` | `_` (single underscore) | `PULSE_TELEMETRY_OTLP_ENDPOINT` |
 
 ### Transformation Rules
 
 Environment variable names are transformed to config paths:
 
-```
-PULSE_SERVICE_NAME          → service.name
-PULSE_TELEMETRY_OTLP_HOST   → telemetry.otlp.host
-PULSE_FOXGLOVE_ENABLED      → foxglove.enabled
+```text
+PULSE_SERVICE_NAME        → service.name
+PULSE_TELEMETRY_OTLP_HOST → telemetry.otlp.host
+PULSE_FOXGLOVE_ENABLED    → foxglove.enabled
 ```
 
 ### Common Environment Variables
@@ -394,6 +405,7 @@ sample_ratio = 1.0            # 0.0 to 1.0 (Rust only)
 #### `[service.attributes]` - Custom Attributes
 
 Key-value pairs added to all telemetry signals. Useful for:
+
 - Robot/device identification
 - Fleet/region tagging
 - Custom metadata
@@ -473,16 +485,17 @@ func main() {
     // Auto-discover config
     p, _ := pulse.New().Build()
     defer p.Close()
-    
+
     // Or load config explicitly
     pulseOpts, serviceOpts, _ := options.LoadConfigWithDefaults("")
-    
+
     // Or specify path
     pulseOpts, serviceOpts, _ := options.LoadConfigWithDefaults("/path/to/config.toml")
 }
 ```
 
 **Environment Variable Format:** Single underscore separator
+
 ```bash
 PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
 ```
@@ -507,6 +520,7 @@ service_opts, pulse_opts = from_config("/path/to/config.toml")
 ```
 
 **Environment Variable Format:** Double underscore separator
+
 ```bash
 PULSE_TELEMETRY__OTLP__ENDPOINT=localhost:4317
 ```
@@ -524,18 +538,19 @@ use pulse::{Pulse, PulseConfig};
 async fn main() -> anyhow::Result<()> {
     // Auto-discover config
     let _pulse = Pulse::new().build()?;
-    
+
     // Or load config explicitly
     let config = PulseConfig::load()?;
-    
+
     // Or specify path
     let config = PulseConfig::load_from("/path/to/config.toml")?;
-    
+
     Ok(())
 }
 ```
 
 **Environment Variable Format:** Single underscore separator
+
 ```bash
 PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
 ```
@@ -564,7 +579,7 @@ export PULSE_TELEMETRY_OTLP_AUTH_TOKEN="your-secret-token"
 
 Use different config files per environment:
 
-```
+```text
 config/
 ├── pulse.development.toml
 ├── pulse.staging.toml

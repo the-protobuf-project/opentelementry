@@ -10,7 +10,7 @@ std::pair<std::string, uint16_t> get_otel_endpoint() {
         std::string endpoint(env);
         auto pos = endpoint.find(':');
         if (pos != std::string::npos) {
-            return {endpoint.substr(0, pos), 
+            return {endpoint.substr(0, pos),
                     static_cast<uint16_t>(std::stoi(endpoint.substr(pos + 1)))};
         }
         return {endpoint, 4317};
@@ -38,7 +38,7 @@ struct ChatMessage {
 
 int main() {
     auto [otel_host, otel_port] = get_otel_endpoint();
-    
+
     auto pulse = pulse::Pulse::builder("chat-service", "1.0.0")
         .description("Simple chat service with logging")
         .environment(pulse::Environment::Development)
@@ -51,7 +51,7 @@ int main() {
 
     int active_rooms = 3;
     int total_users = 42;
-    std::string init_msg = "Service initialized with " + std::to_string(active_rooms) + 
+    std::string init_msg = "Service initialized with " + std::to_string(active_rooms) +
                            " active rooms and " + std::to_string(total_users) + " users";
     PULSE_LOG_INFO(init_msg.c_str());
 
@@ -96,20 +96,20 @@ int main() {
     };
 
     double rate_limit_percent = 85.5;
-    std::string rate_msg = "Rate limit at " + std::to_string(rate_limit_percent) + 
+    std::string rate_msg = "Rate limit at " + std::to_string(rate_limit_percent) +
                            "% for user " + msg3.user_id;
     PULSE_LOG_WARN(rate_msg.c_str());
     PULSE_LOG_WARN_DATA("Rate limit approaching", msg3);
 
     int error_code = 500;
-    std::string error_msg = "Failed to process message (error code: " + 
+    std::string error_msg = "Failed to process message (error code: " +
                             std::to_string(error_code) + ") for user " + msg3.user_id;
     PULSE_LOG_ERROR(error_msg.c_str());
     PULSE_LOG_ERROR_DATA("Failed to process message", msg3);
 
     int total_messages = 3;
     double processing_time_ms = 123.45;
-    std::string stats_msg = "Processed " + std::to_string(total_messages) + 
+    std::string stats_msg = "Processed " + std::to_string(total_messages) +
                             " messages in " + std::to_string(processing_time_ms) + "ms";
     PULSE_LOG_INFO(stats_msg.c_str());
     PULSE_LOG_INFO("Chat service shutting down");

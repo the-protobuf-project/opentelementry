@@ -53,13 +53,13 @@ if [ ! -f "$PROD_DIR/certs/fullchain.pem" ] || [ ! -f "$PROD_DIR/certs/privkey.p
     echo "⚠️  TLS certificates not found in $PROD_DIR/certs/"
     echo "For production, obtain certificates from Let's Encrypt or your CA"
     echo "For testing, generating self-signed certificates..."
-    
+
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout "$PROD_DIR/certs/privkey.pem" \
         -out "$PROD_DIR/certs/fullchain.pem" \
         -subj "/CN=$DOMAIN" \
         -addext "subjectAltName=DNS:$DOMAIN,DNS:$OTEL_DOMAIN,DNS:localhost"
-    
+
     chmod 644 "$PROD_DIR/certs/privkey.pem"
     echo "✓ Self-signed certificates generated"
 fi

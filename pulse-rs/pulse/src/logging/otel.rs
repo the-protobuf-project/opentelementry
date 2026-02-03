@@ -3,13 +3,13 @@
 //! This module provides a wrapper around the OpenTelemetry SDK logger
 //! for sending logs to OpenTelemetry collectors.
 
+use opentelemetry::KeyValue;
+use opentelemetry::logs::Logger as _;
 use opentelemetry::logs::Severity;
 use opentelemetry::logs::{AnyValue, LogRecord as _};
-use opentelemetry::logs::Logger as _;
-use opentelemetry::KeyValue;
+use opentelemetry_sdk::logs::SdkLogger;
 use std::sync::Arc;
 use std::time::SystemTime;
-use opentelemetry_sdk::logs::SdkLogger;
 
 /// OpenTelemetry logger wrapper.
 ///

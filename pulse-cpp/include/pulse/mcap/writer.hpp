@@ -34,10 +34,10 @@ public:
     const std::string& path() const { return path_; }
 
     uint16_t create_channel(const std::string& topic, const std::string& schema_name);
-    
+
     void write_message(uint16_t channel_id, const uint8_t* data, size_t size,
                        uint64_t log_time, uint64_t publish_time);
-    
+
     void write_log(const logging::LogEntry& entry);
     void write_metric(const std::string& name, const std::string& type, double value,
                       uint64_t timestamp_ns);

@@ -539,6 +539,7 @@ Pulse supports multiple configuration methods with automatic discovery.
 ### Configuration File Formats
 
 Pulse auto-discovers config files in this order:
+
 1. `PULSE_CONFIG_PATH` environment variable
 2. `pulse.toml` in current directory
 3. `pulse.yaml` / `pulse.yml` / `pulse.json`
@@ -661,29 +662,29 @@ For programmatic configuration:
 p, err := pulse.New().
     // Load from specific config file (optional)
     WithConfig("./config/pulse.toml").
-    
+
     // Service identification
     WithService("payment-service", "2.1.0").
     WithDescription("Handles payment processing").
     WithEnvironment(options.Production).
-    
+
     // Global attributes (appear on all telemetry)
     WithAttributes(map[string]string{
         "robot.id": "robot-001",
         "fleet.id": "fleet-alpha",
     }).
-    
+
     // OTLP endpoint (port auto-detected)
     WithOTLP("otel-collector", 4317).
     WithOTLPHeaders(map[string]string{
         "Authorization": "Bearer your-token",
     }).
-    
+
     // Enable features
     WithTracing().
     WithProfiling("http://pyroscope:4040").
     WithMCAP("./recordings/session.mcap").
-    
+
     Build()
 ```
 
@@ -697,7 +698,7 @@ flowchart TB
         C["2. Config File<br/>(pulse.toml / pulse.yaml / pulse.json)"]
         E["3. Environment Variables<br/>(PULSE_*)"]
         B["4. Code-based<br/>(builder methods - highest priority)"]
-        
+
         D --> C --> E --> B
     end
 ```

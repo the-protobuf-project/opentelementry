@@ -3,11 +3,11 @@
 //! This module provides functionality to write metrics to MCAP files
 //! using a custom metric schema.
 
-use std::collections::BTreeMap;
-use std::sync::{Arc, Mutex};
 use anyhow::{Context, Result};
 use chrono::Utc;
 use serde_json::json;
+use std::collections::BTreeMap;
+use std::sync::{Arc, Mutex};
 
 use crate::foxglove::UnifiedMcapWriter;
 use crate::options::ServiceOptions;
@@ -82,7 +82,8 @@ impl MetricMcapWriter {
         });
 
         let data = serde_json::to_vec(&metric)?;
-        let log_time = (now.timestamp() as u64) * 1_000_000_000 + (now.timestamp_subsec_nanos() as u64);
+        let log_time =
+            (now.timestamp() as u64) * 1_000_000_000 + (now.timestamp_subsec_nanos() as u64);
 
         let mut writer = self.writer.lock().unwrap();
         writer.write_message(channel_id, &data, log_time, log_time)?;
@@ -104,12 +105,15 @@ impl MetricMcapWriter {
 
         let channel_id = {
             let mut writer = self.writer.lock().unwrap();
-            writer.create_channel(&topic, "machanirobotics.metric")
-                .context(format!("Failed to create channel for metric {}", metric_name))?
+            writer
+                .create_channel(&topic, "machanirobotics.metric")
+                .context(format!(
+                    "Failed to create channel for metric {}",
+                    metric_name
+                ))?
         };
 
         self.channels.insert(metric_name.to_string(), channel_id);
         Ok(channel_id)
     }
-
 }

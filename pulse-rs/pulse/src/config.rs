@@ -46,21 +46,21 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use figment::{
-    providers::{Env, Format, Json, Serialized, Toml, Yaml},
     Figment,
+    providers::{Env, Format, Json, Serialized, Toml, Yaml},
 };
 use serde::{Deserialize, Serialize};
 
 use crate::options::{
-    Environment, FoxgloveOptions, LoggingOptions, OTLPOptions, ProfilingOptions,
-    PulseOptions, ServiceOptions, TelemetryOptions, TracingOptions,
+    Environment, FoxgloveOptions, LoggingOptions, OTLPOptions, ProfilingOptions, PulseOptions,
+    ServiceOptions, TelemetryOptions, TracingOptions,
 };
 
 /// Complete Pulse configuration loaded from files/environment.
 ///
 /// This struct represents the full configuration that can be loaded from
 /// TOML, YAML, JSON files or environment variables.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct PulseConfig {
     pub service: ServiceConfig,
@@ -69,19 +69,6 @@ pub struct PulseConfig {
     pub tracing: TracingConfig,
     pub logging: LoggingConfig,
     pub profiling: ProfilingConfig,
-}
-
-impl Default for PulseConfig {
-    fn default() -> Self {
-        Self {
-            service: ServiceConfig::default(),
-            telemetry: TelemetryConfig::default(),
-            foxglove: FoxgloveConfig::default(),
-            tracing: TracingConfig::default(),
-            logging: LoggingConfig::default(),
-            profiling: ProfilingConfig::default(),
-        }
-    }
 }
 
 /// Service identification configuration.
@@ -175,20 +162,11 @@ impl Default for MetricsConfig {
 }
 
 /// Foxglove MCAP recording configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct FoxgloveConfig {
     pub enabled: bool,
     pub file_path: String,
-}
-
-impl Default for FoxgloveConfig {
-    fn default() -> Self {
-        Self {
-            enabled: false,
-            file_path: String::new(),
-        }
-    }
 }
 
 /// Tracing configuration.
@@ -210,18 +188,10 @@ impl Default for TracingConfig {
 }
 
 /// Logging configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct LoggingConfig {
     pub log: LogConfig,
-}
-
-impl Default for LoggingConfig {
-    fn default() -> Self {
-        Self {
-            log: LogConfig::default(),
-        }
-    }
 }
 
 /// Log output configuration.
@@ -326,11 +296,13 @@ impl PulseConfig {
     }
 
     /// Load configuration from auto-discovered sources.
+    #[allow(clippy::result_large_err)]
     pub fn load() -> Result<Self, figment::Error> {
         Self::figment().extract()
     }
 
     /// Load configuration from a specific file path.
+    #[allow(clippy::result_large_err)]
     pub fn load_from(path: &str) -> Result<Self, figment::Error> {
         Self::figment_with_path(Some(path)).extract()
     }
@@ -400,10 +372,10 @@ impl PulseConfig {
             .trim_start_matches("https://")
             .trim_start_matches("grpc://");
 
-        if let Some((host, port_str)) = endpoint.rsplit_once(':') {
-            if let Ok(port) = port_str.parse::<u16>() {
-                return (host.to_string(), port);
-            }
+        if let Some((host, port_str)) = endpoint.rsplit_once(':')
+            && let Ok(port) = port_str.parse::<u16>()
+        {
+            return (host.to_string(), port);
         }
 
         // Default to port 4317 if not specified
@@ -445,11 +417,17 @@ mod tests {
         config.service.name = "test-service".to_string();
         config.service.version = "1.0.0".to_string();
         config.service.environment = "production".to_string();
-        config.service.attributes.insert("robot_id".to_string(), "robot-001".to_string());
+        config
+            .service
+            .attributes
+            .insert("robot_id".to_string(), "robot-001".to_string());
 
         let opts = config.to_service_options();
         assert_eq!(opts.name, "test-service");
         assert_eq!(opts.version, "1.0.0");
-        assert_eq!(opts.attributes.get("robot_id"), Some(&"robot-001".to_string()));
+        assert_eq!(
+            opts.attributes.get("robot_id"),
+            Some(&"robot-001".to_string())
+        );
     }
 }

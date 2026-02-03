@@ -3,7 +3,8 @@
 //! This module provides functionality for collecting and recording metrics
 //! to both OpenTelemetry and MCAP backends.
 
-pub mod metrics;
 mod mcap;
+#[allow(clippy::module_inception)]
+pub mod metrics;
 
-pub use metrics::{Metrics, MetricType, MetricField, RecordMetrics};
+pub use metrics::{MetricField, MetricType, Metrics, RecordMetrics};

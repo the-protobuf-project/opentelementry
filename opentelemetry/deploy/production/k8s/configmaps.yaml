@@ -168,7 +168,7 @@ data:
         rules:
           - alert: HighErrorRate
             expr: |
-              sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m])) 
+              sum(rate(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR"}[5m]))
               / sum(rate(traces_spanmetrics_calls_total[5m])) > 0.05
             for: 2m
             labels:

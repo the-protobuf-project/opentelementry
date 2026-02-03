@@ -1,4 +1,4 @@
-use pulse::{Pulse, Environment, logger};
+use pulse::{Environment, Pulse, logger};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -25,9 +25,9 @@ async fn main() -> anyhow::Result<()> {
     logger::info!("MCAP + Logging Example Started");
     logger::info!("Logs will be written to examples/chat-logs.mcap");
 
-    let users = vec!["user-alice", "user-carlos", "user-yuki", "user-marie"];
-    let languages = vec!["en", "es", "ja", "fr"];
-    let message_types = vec!["text", "speech", "llm_response"];
+    let users = ["user-alice", "user-carlos", "user-yuki", "user-marie"];
+    let languages = ["en", "es", "ja", "fr"];
+    let message_types = ["text", "speech", "llm_response"];
 
     for i in 0..20 {
         let user_idx = i % users.len();
@@ -43,11 +43,21 @@ async fn main() -> anyhow::Result<()> {
         };
 
         match i % 5 {
-            0 => { logger::debug!("DEBUG: Chat message").with_data(&msg); }
-            1 => { logger::info!("INFO: Chat message").with_data(&msg); }
-            2 => { logger::warn!("WARN: Chat message").with_data(&msg); }
-            3 => { logger::error!("ERROR: Chat message").with_data(&msg); }
-            _ => { logger::info!("INFO: Chat message").with_data(&msg); }
+            0 => {
+                logger::debug!("DEBUG: Chat message").with_data(&msg);
+            }
+            1 => {
+                logger::info!("INFO: Chat message").with_data(&msg);
+            }
+            2 => {
+                logger::warn!("WARN: Chat message").with_data(&msg);
+            }
+            3 => {
+                logger::error!("ERROR: Chat message").with_data(&msg);
+            }
+            _ => {
+                logger::info!("INFO: Chat message").with_data(&msg);
+            }
         }
 
         std::thread::sleep(std::time::Duration::from_millis(100));

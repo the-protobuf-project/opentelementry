@@ -17,25 +17,32 @@ def main():
     # Auto-discovers pulse.toml config file
     # No builder overrides - uses config file values
     with Pulse.new().build() as pulse:
-        
         pulse.logger.info("Chat service started")
         pulse.logger.debug("Debug mode enabled")
         pulse.logger.info("OpenTelemetry logging example")
-        
+
         active_rooms = 3
         total_users = 42
-        pulse.logger.info(f"Service initialized with {active_rooms} active rooms and {total_users} users")
-        
-        pulse.logger.warning("Rate limit approaching", {
-            "current_percent": 85.5,
-            "user_id": "user-123",
-        })
-        
-        pulse.logger.error("Failed to process message", {
-            "error_code": 500,
-            "user_id": "user-456",
-        })
-        
+        pulse.logger.info(
+            f"Service initialized with {active_rooms} active rooms and {total_users} users"
+        )
+
+        pulse.logger.warning(
+            "Rate limit approaching",
+            {
+                "current_percent": 85.5,
+                "user_id": "user-123",
+            },
+        )
+
+        pulse.logger.error(
+            "Failed to process message",
+            {
+                "error_code": 500,
+                "user_id": "user-456",
+            },
+        )
+
         pulse.logger.info("Chat service shutting down")
 
 

@@ -12,7 +12,7 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Data, Fields, Expr, ExprLit, Lit, ItemFn};
+use syn::{Data, DeriveInput, Expr, ExprLit, Fields, ItemFn, Lit, parse_macro_input};
 
 /// Derives the `RecordMetrics` trait for a struct.
 ///
@@ -34,10 +34,10 @@ use syn::{parse_macro_input, DeriveInput, Data, Fields, Expr, ExprLit, Lit, Item
 /// struct MyMetrics {
 ///     #[metric(name = "requests_total", counter, description = "Total requests")]
 ///     requests: u64,
-///     
+///
 ///     #[metric(name = "request_duration_ms", histogram, description = "Request duration")]
 ///     duration: f64,
-///     
+///
 ///     #[metric(name = "active_connections", gauge, description = "Active connections")]
 ///     connections: i32,
 /// }
@@ -59,7 +59,7 @@ pub fn derive_metrics(input: TokenStream) -> TokenStream {
         .iter()
         .filter_map(|field| {
             let field_name = field.ident.as_ref()?;
-            
+
             // Find #[metric(...)] attribute
             for attr in &field.attrs {
                 if !attr.path().is_ident("metric") {
@@ -74,12 +74,18 @@ pub fn derive_metrics(input: TokenStream) -> TokenStream {
                 let _ = attr.parse_nested_meta(|meta| {
                     if meta.path.is_ident("name") {
                         let value: Expr = meta.value()?.parse()?;
-                        if let Expr::Lit(ExprLit { lit: Lit::Str(s), .. }) = value {
+                        if let Expr::Lit(ExprLit {
+                            lit: Lit::Str(s), ..
+                        }) = value
+                        {
                             metric_name = Some(s.value());
                         }
                     } else if meta.path.is_ident("description") {
                         let value: Expr = meta.value()?.parse()?;
-                        if let Expr::Lit(ExprLit { lit: Lit::Str(s), .. }) = value {
+                        if let Expr::Lit(ExprLit {
+                            lit: Lit::Str(s), ..
+                        }) = value
+                        {
                             description = Some(s.value());
                         }
                     } else if meta.path.is_ident("counter") {
@@ -152,27 +158,27 @@ pub fn derive_metrics(input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn trace(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
-    
+
     let fn_name = &input.sig.ident;
     let fn_name_str = fn_name.to_string();
     let fn_vis = &input.vis;
     let fn_sig = &input.sig;
     let fn_block = &input.block;
     let fn_attrs = &input.attrs;
-    
+
     let is_async = fn_sig.asyncness.is_some();
-    
+
     let expanded = if is_async {
         quote! {
             #(#fn_attrs)*
             #fn_vis #fn_sig {
                 let __pulse_tracing = unsafe { PULSE_TRACING.as_ref() };
-                
+
                 if let Some(tracing) = __pulse_tracing {
                     let mut __span = tracing.start_span(#fn_name_str);
-                    
+
                     let __result = async move #fn_block.await;
-                    
+
                     __span.end();
                     __result
                 } else {
@@ -185,12 +191,12 @@ pub fn trace(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#fn_attrs)*
             #fn_vis #fn_sig {
                 let __pulse_tracing = unsafe { PULSE_TRACING.as_ref() };
-                
+
                 if let Some(tracing) = __pulse_tracing {
                     let mut __span = tracing.start_span(#fn_name_str);
-                    
+
                     let __result = (|| #fn_block)();
-                    
+
                     __span.end();
                     __result
                 } else {
@@ -199,6 +205,6 @@ pub fn trace(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
     };
-    
+
     TokenStream::from(expanded)
 }

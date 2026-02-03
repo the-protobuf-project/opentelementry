@@ -3,11 +3,11 @@
 //! This module provides the core metrics functionality including metric types,
 //! the Metrics struct for recording, and derive macro support.
 
+use anyhow::Result;
+use opentelemetry::metrics::{Counter, Gauge, Histogram, Meter, MeterProvider};
+use opentelemetry_sdk::metrics::SdkMeterProvider;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use anyhow::Result;
-use opentelemetry::metrics::{Counter, Histogram, Gauge, Meter, MeterProvider};
-use opentelemetry_sdk::metrics::SdkMeterProvider;
 
 use super::mcap::MetricMcapWriter;
 use crate::foxglove::UnifiedMcapWriter;
@@ -86,13 +86,13 @@ impl Metrics {
         let service_name = service_opts.name.clone();
         let meter_name = service_name.clone();
         let meter = meter_provider.map(|p| p.meter(meter_name.leak() as &'static str));
-        
+
         let mcap_metric_writer = mcap_writer.map(|w| {
             Arc::new(Mutex::new(
-                MetricMcapWriter::new(&service_opts, w).expect("Failed to create metric writer")
+                MetricMcapWriter::new(&service_opts, w).expect("Failed to create metric writer"),
             ))
         });
-        
+
         Ok(Self {
             mcap_writer: mcap_metric_writer,
             meter,
@@ -140,31 +140,34 @@ impl Metrics {
         // Convert to 'static by leaking - this is acceptable for metric names which are typically
         // a small, fixed set defined at compile time via the derive macro
         let static_name: &'static str = Box::leak(name.to_string().into_boxed_str());
-        
+
         // OTel with static name
         if let Some(ref meter) = self.meter {
             match metric_type {
                 MetricType::Counter => {
-                    let counter = self.counters.entry(name.to_string()).or_insert_with(|| {
-                        meter.f64_counter(static_name).build()
-                    });
+                    let counter = self
+                        .counters
+                        .entry(name.to_string())
+                        .or_insert_with(|| meter.f64_counter(static_name).build());
                     counter.add(value, &[]);
                 }
                 MetricType::Histogram => {
-                    let histogram = self.histograms.entry(name.to_string()).or_insert_with(|| {
-                        meter.f64_histogram(static_name).build()
-                    });
+                    let histogram = self
+                        .histograms
+                        .entry(name.to_string())
+                        .or_insert_with(|| meter.f64_histogram(static_name).build());
                     histogram.record(value, &[]);
                 }
                 MetricType::Gauge => {
-                    let gauge = self.gauges.entry(name.to_string()).or_insert_with(|| {
-                        meter.f64_gauge(static_name).build()
-                    });
+                    let gauge = self
+                        .gauges
+                        .entry(name.to_string())
+                        .or_insert_with(|| meter.f64_gauge(static_name).build());
                     gauge.record(value, &[]);
                 }
             }
         }
-        
+
         // MCAP
         if let Some(ref writer) = self.mcap_writer {
             let mut w = writer.lock().unwrap();
@@ -181,9 +184,10 @@ impl Metrics {
     fn record_counter(&mut self, name: &'static str, value: f64) -> Result<()> {
         // OTel counter - create once and cache
         if let Some(ref meter) = self.meter {
-            let counter = self.counters.entry(name.to_string()).or_insert_with(|| {
-                meter.f64_counter(name).build()
-            });
+            let counter = self
+                .counters
+                .entry(name.to_string())
+                .or_insert_with(|| meter.f64_counter(name).build());
             counter.add(value, &[]);
         }
 
@@ -199,9 +203,10 @@ impl Metrics {
     fn record_histogram(&mut self, name: &'static str, value: f64) -> Result<()> {
         // OTel histogram - create once and cache
         if let Some(ref meter) = self.meter {
-            let histogram = self.histograms.entry(name.to_string()).or_insert_with(|| {
-                meter.f64_histogram(name).build()
-            });
+            let histogram = self
+                .histograms
+                .entry(name.to_string())
+                .or_insert_with(|| meter.f64_histogram(name).build());
             histogram.record(value, &[]);
         }
 
@@ -217,9 +222,10 @@ impl Metrics {
     fn record_gauge(&mut self, name: &'static str, value: f64) -> Result<()> {
         // OTel gauge - create once and cache
         if let Some(ref meter) = self.meter {
-            let gauge = self.gauges.entry(name.to_string()).or_insert_with(|| {
-                meter.f64_gauge(name).build()
-            });
+            let gauge = self
+                .gauges
+                .entry(name.to_string())
+                .or_insert_with(|| meter.f64_gauge(name).build());
             gauge.record(value, &[]);
         }
 

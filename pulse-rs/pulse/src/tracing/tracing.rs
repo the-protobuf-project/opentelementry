@@ -4,26 +4,26 @@
 //! supporting both tokio-rs/tracing instrumentation and manual span management.
 
 use anyhow::Result;
-use opentelemetry::trace::{TracerProvider as _, Status};
-use opentelemetry::{global, KeyValue};
-use opentelemetry_sdk::trace::SdkTracerProvider;
-use opentelemetry_sdk::Resource;
+use opentelemetry::trace::{Status, TracerProvider as _};
+use opentelemetry::{KeyValue, global};
 use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::Resource;
+use opentelemetry_sdk::trace::SdkTracerProvider;
 
 use crate::options::ServiceOptions;
 
 /// Initialize tokio-rs/tracing with OpenTelemetry integration.
-/// 
+///
 /// This sets up the tracing subscriber to send spans to OpenTelemetry/Tempo
 /// via OTLP. Use the #[instrument] macro on functions to automatically create spans.
-/// 
+///
 /// Set ENABLE_TRACING_DEFAULT=true to show TRACE logs from dependencies.
 /// Default is to only show INFO and above.
 pub fn init_tokio_tracing(service_opts: &ServiceOptions) -> Result<()> {
+    use tracing_subscriber::EnvFilter;
     use tracing_subscriber::layer::SubscriberExt;
     use tracing_subscriber::util::SubscriberInitExt;
-    use tracing_subscriber::EnvFilter;
-    
+
     // Create OTLP exporter for traces
     let exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic()
@@ -34,7 +34,10 @@ pub fn init_tokio_tracing(service_opts: &ServiceOptions) -> Result<()> {
         .with_service_name(service_opts.name.clone())
         .with_attributes(vec![
             KeyValue::new("service.version", service_opts.version.clone()),
-            KeyValue::new("deployment.environment", service_opts.environment.to_string()),
+            KeyValue::new(
+                "deployment.environment",
+                service_opts.environment.to_string(),
+            ),
         ])
         .build();
 
@@ -48,29 +51,28 @@ pub fn init_tokio_tracing(service_opts: &ServiceOptions) -> Result<()> {
 
     // Create OpenTelemetry tracing layer
     let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-    
+
     // Set up env filter - default to INFO level unless ENABLE_TRACING_DEFAULT is set
     // Hide OpenTelemetry, h2, tonic, and hyper internal logs by default
     let filter = if std::env::var("ENABLE_TRACING_DEFAULT").is_ok() {
-        EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new("trace"))
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("trace"))
     } else {
         EnvFilter::try_from_default_env()
             .unwrap_or_else(|_| EnvFilter::new("info,opentelemetry=warn,opentelemetry_sdk=warn,h2=warn,tonic=warn,hyper=warn,tower=warn"))
     };
-    
+
     // Set up console logging for tracing events
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_target(false)
         .with_thread_ids(true);
-    
+
     // Use try_init to avoid panic if already initialized
     let _ = tracing_subscriber::registry()
         .with(filter)
         .with(telemetry)
         .with(fmt_layer)
         .try_init();
-    
+
     Ok(())
 }
 
@@ -103,10 +105,7 @@ impl PulseTracing {
     ///
     /// * `service_opts` - Service configuration
     /// * `otlp_endpoint` - Optional OTLP endpoint URL
-    pub fn new(
-        service_opts: &ServiceOptions,
-        otlp_endpoint: Option<String>,
-    ) -> Result<Self> {
+    pub fn new(service_opts: &ServiceOptions, otlp_endpoint: Option<String>) -> Result<Self> {
         let tracer = if let Some(endpoint) = otlp_endpoint {
             let exporter = opentelemetry_otlp::SpanExporter::builder()
                 .with_tonic()
@@ -117,7 +116,10 @@ impl PulseTracing {
                 .with_service_name(service_opts.name.clone())
                 .with_attributes(vec![
                     KeyValue::new("service.version", service_opts.version.clone()),
-                    KeyValue::new("deployment.environment", service_opts.environment.to_string()),
+                    KeyValue::new(
+                        "deployment.environment",
+                        service_opts.environment.to_string(),
+                    ),
                 ])
                 .build();
 
@@ -132,9 +134,7 @@ impl PulseTracing {
             None
         };
 
-        Ok(Self {
-            tracer,
-        })
+        Ok(Self { tracer })
     }
 
     /// Starts a new span.
@@ -161,7 +161,10 @@ pub struct Span {
 
 impl Span {
     /// Creates a new span (internal use).
-    pub(crate) fn new(tracer: Option<&opentelemetry_sdk::trace::Tracer>, name: &'static str) -> Self {
+    pub(crate) fn new(
+        tracer: Option<&opentelemetry_sdk::trace::Tracer>,
+        name: &'static str,
+    ) -> Self {
         let span = tracer.map(|t| {
             use opentelemetry::trace::Tracer;
             t.start(name)

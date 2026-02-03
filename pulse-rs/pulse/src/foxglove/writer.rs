@@ -3,14 +3,14 @@
 //! This module provides a unified writer that can handle multiple message types
 //! (logs, metrics, traces) in a single MCAP file.
 
+use super::schemas::SchemaRegistry;
+use crate::options::ServiceOptions;
+use anyhow::{Context, Result};
+use mcap::{Writer, records::MessageHeader};
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
-use anyhow::{Context, Result};
-use mcap::{Writer, records::MessageHeader};
-use super::schemas::SchemaRegistry;
-use crate::options::ServiceOptions;
 
 /// Unified MCAP writer for multiple message types.
 ///
@@ -44,18 +44,15 @@ impl UnifiedMcapWriter {
     /// ```
     pub fn new(_service_opts: &ServiceOptions, mcap_path: impl AsRef<Path>) -> Result<Self> {
         let path = mcap_path.as_ref();
-        
+
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .context("Failed to create directory for MCAP file")?;
+            std::fs::create_dir_all(parent).context("Failed to create directory for MCAP file")?;
         }
 
-        let file = File::create(path)
-            .context("Failed to create MCAP file")?;
-        
+        let file = File::create(path).context("Failed to create MCAP file")?;
+
         let buf_writer = BufWriter::new(file);
-        let writer = Writer::new(buf_writer)
-            .context("Failed to create MCAP writer")?;
+        let writer = Writer::new(buf_writer).context("Failed to create MCAP writer")?;
 
         Ok(Self {
             writer,
@@ -73,14 +70,15 @@ impl UnifiedMcapWriter {
             return Ok(schema_id);
         }
 
-        let schema_data = self.registry.get(schema_name)
+        let schema_data = self
+            .registry
+            .get(schema_name)
             .context(format!("Schema '{}' not found in registry", schema_name))?;
 
-        let schema_id = self.writer.add_schema(
-            schema_name,
-            "jsonschema",
-            schema_data.as_bytes(),
-        ).context("Failed to add schema")?;
+        let schema_id = self
+            .writer
+            .add_schema(schema_name, "jsonschema", schema_data.as_bytes())
+            .context("Failed to add schema")?;
 
         self.schemas.insert(schema_name.to_string(), schema_id);
         Ok(schema_id)
@@ -96,23 +94,17 @@ impl UnifiedMcapWriter {
     /// # Returns
     ///
     /// Channel ID that can be used to write messages
-    pub fn create_channel(
-        &mut self,
-        topic: &str,
-        schema_name: &str,
-    ) -> Result<u16> {
+    pub fn create_channel(&mut self, topic: &str, schema_name: &str) -> Result<u16> {
         if let Some(&channel_id) = self.channels.get(topic) {
             return Ok(channel_id);
         }
 
         let schema_id = self.get_or_create_schema(schema_name)?;
 
-        let channel_id = self.writer.add_channel(
-            schema_id,
-            topic,
-            "json",
-            &BTreeMap::new(),
-        ).context("Failed to create channel")?;
+        let channel_id = self
+            .writer
+            .add_channel(schema_id, topic, "json", &BTreeMap::new())
+            .context("Failed to create channel")?;
 
         self.channels.insert(topic.to_string(), channel_id);
         Ok(channel_id)
@@ -137,15 +129,17 @@ impl UnifiedMcapWriter {
             anyhow::bail!("Writer is closed");
         }
 
-        self.writer.write_to_known_channel(
-            &MessageHeader {
-                channel_id,
-                sequence: 0,
-                log_time,
-                publish_time,
-            },
-            data
-        ).context("Failed to write message")?;
+        self.writer
+            .write_to_known_channel(
+                &MessageHeader {
+                    channel_id,
+                    sequence: 0,
+                    log_time,
+                    publish_time,
+                },
+                data,
+            )
+            .context("Failed to write message")?;
 
         Ok(())
     }
@@ -156,7 +150,9 @@ impl UnifiedMcapWriter {
             return Ok(());
         }
 
-        self.writer.finish().context("Failed to close MCAP writer")?;
+        self.writer
+            .finish()
+            .context("Failed to close MCAP writer")?;
         self.closed = true;
         Ok(())
     }

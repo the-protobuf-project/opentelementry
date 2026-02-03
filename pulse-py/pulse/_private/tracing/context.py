@@ -6,7 +6,7 @@ enabling automatic trace propagation across function calls.
 Typical usage example:
 
     from pulse._private.tracing.context import get_trace_context, set_trace_context
-    
+
     ctx = get_trace_context()
     trace_id = ctx.get("trace_id")
 """
@@ -21,7 +21,7 @@ _trace_context: ContextVar[Dict[str, str]] = ContextVar("trace_context", default
 
 def get_trace_context() -> Dict[str, str]:
     """Get the current trace context.
-    
+
     Returns:
         A dictionary containing trace_id and span_id if available,
         otherwise an empty dictionary.
@@ -31,10 +31,10 @@ def get_trace_context() -> Dict[str, str]:
 
 def set_trace_context(context: Dict[str, str]):
     """Set the trace context.
-    
+
     Args:
         context: Dictionary containing trace_id and span_id.
-        
+
     Returns:
         A token that can be used to reset the context.
     """
@@ -43,7 +43,7 @@ def set_trace_context(context: Dict[str, str]):
 
 def reset_trace_context(token):
     """Reset the trace context to a previous state.
-    
+
     Args:
         token: Token returned from set_trace_context.
     """
@@ -52,7 +52,7 @@ def reset_trace_context(token):
 
 def get_current_trace_id() -> str:
     """Get the current trace ID from context.
-    
+
     Returns:
         The current trace ID as a hex string, or empty string if not set.
     """
@@ -62,7 +62,7 @@ def get_current_trace_id() -> str:
 
 def get_current_span_id() -> str:
     """Get the current span ID from context.
-    
+
     Returns:
         The current span ID as a hex string, or empty string if not set.
     """

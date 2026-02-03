@@ -20,7 +20,7 @@ Logger::Logger(const std::string& service_name,
     , service_version_(service_version)
     , environment_(environment)
     , mutex_(platform::create_mutex()) {
-    
+
 #if !PULSE_PLATFORM_FREERTOS
     static int logger_counter = 0;
     std::string logger_name = service_name + "_" + std::to_string(++logger_counter);
@@ -45,7 +45,7 @@ Logger::Logger(const std::string& service_name,
     , otel_exporter_(otel_exporter)
 #endif
     , mutex_(platform::create_mutex()) {
-    
+
 #if !PULSE_PLATFORM_FREERTOS
     static int logger_counter_mcap = 0;
     std::string logger_name = service_name + "_mcap_" + std::to_string(++logger_counter_mcap);
@@ -105,7 +105,7 @@ Logger& Logger::operator=(Logger&& other) noexcept {
 void Logger::set_level(Level level) {
     platform::ScopedLock lock(mutex_);
     level_ = level;
-    
+
 #if !PULSE_PLATFORM_FREERTOS
     if (spdlog_logger_) {
         switch (level) {
@@ -179,7 +179,7 @@ void Logger::log(Level level, const char* message, const char* file, uint32_t li
 void Logger::log_to_console(const LogEntry& entry) {
 #if !PULSE_PLATFORM_FREERTOS
     if (!spdlog_logger_) return;
-    
+
     switch (entry.level) {
         case Level::Trace: spdlog_logger_->trace("{}", entry.message); break;
         case Level::Debug: spdlog_logger_->debug("{}", entry.message); break;
@@ -189,7 +189,7 @@ void Logger::log_to_console(const LogEntry& entry) {
         case Level::Fatal: spdlog_logger_->critical("{}", entry.message); break;
         default: break;
     }
-    
+
     if (!entry.data_json.empty()) {
         spdlog_logger_->info("  └─ {}", entry.data_json);
     }
@@ -207,9 +207,9 @@ void Logger::log_to_mcap(const LogEntry& entry) {
 #if PULSE_USE_OTEL
 void Logger::log_to_otel(const LogEntry& entry) {
     if (!otel_logger_) return;
-    
+
     namespace logs_api = opentelemetry::logs;
-    
+
     logs_api::Severity severity;
     switch (entry.level) {
         case Level::Trace: severity = logs_api::Severity::kTrace; break;
@@ -220,7 +220,7 @@ void Logger::log_to_otel(const LogEntry& entry) {
         case Level::Fatal: severity = logs_api::Severity::kFatal; break;
         default: severity = logs_api::Severity::kInfo; break;
     }
-    
+
     otel_logger_->EmitLogRecord(
         severity,
         entry.message

@@ -19,13 +19,13 @@
             ({ config, pkgs, ... }: {
               ec2.hvm = true;
               system.stateVersion = "24.05";
-              
+
               services.pulse-telemetry.enable = true;
-              
+
               environment.systemPackages = with pkgs; [
                 vim htop curl jq openssl certbot
               ];
-              
+
               services.openssh.enable = true;
               nix.settings.experimental-features = [ "nix-command" "flakes" ];
               security.sudo.wheelNeedsPassword = false;
@@ -37,7 +37,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        
+
         # Common dependencies for all scripts
         commonDeps = with pkgs; [
           coreutils
@@ -74,24 +74,24 @@
         # Deploy script
         deployScript = pkgs.writeShellScriptBin "pulse-deploy" ''
           set -e
-          
+
           # Load .env if exists
           if [ -f ".env" ]; then
             set -a; source .env; set +a
           fi
-          
+
           SSH_KEY="''${SSH_KEY_PATH:-~/.ssh/id_ed25519}"
           DOMAIN="''${DOMAIN:-telemetry.example.com}"
           OTEL_DOMAIN="''${OTEL_DOMAIN:-otel.example.com}"
           GRAFANA_USER="''${GRAFANA_ADMIN_USER:-admin}"
           GRAFANA_PASS="''${GRAFANA_ADMIN_PASSWORD:-changeme}"
           ACME_EMAIL="''${ACME_EMAIL:-}"
-          
+
           if [ -z "''${OTLP_AUTH_TOKEN:-}" ]; then
             OTLP_AUTH_TOKEN=$(${pkgs.openssl}/bin/openssl rand -hex 32)
             echo "Generated OTLP token: $OTLP_AUTH_TOKEN"
           fi
-          
+
           usage() {
             echo "Pulse Telemetry NixOS Deployment"
             echo ""
@@ -107,7 +107,7 @@
             echo ""
             echo "Set configuration in .env file or environment variables"
           }
-          
+
           wait_ssh() {
             echo "Waiting for SSH..."
             for i in {1..30}; do
@@ -118,12 +118,12 @@
             done
             echo "SSH timeout"; exit 1
           }
-          
+
           provision() {
             local ip=$1
             echo "=== Provisioning NixOS on $ip ==="
             wait_ssh "$ip"
-            
+
             if ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "test -f /etc/NIXOS" 2>/dev/null; then
               echo "Already NixOS, deploying..."
             else
@@ -133,19 +133,19 @@
               sleep 60
               wait_ssh "$ip"
             fi
-            
+
             deploy "$ip"
           }
-          
+
           deploy() {
             local ip=$1
             echo "=== Deploying to $ip ==="
-            
+
             # Copy module
             ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "mkdir -p /etc/nixos/modules /var/lib/pulse/config"
             ${pkgs.openssh}/bin/scp -i "$SSH_KEY" -r ./nix/modules/* "root@$ip:/etc/nixos/modules/"
             ${pkgs.openssh}/bin/scp -i "$SSH_KEY" -r ./config/* "root@$ip:/var/lib/pulse/config/"
-            
+
             # Generate configuration
             ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "cat > /etc/nixos/configuration.nix" << EOF
           { config, pkgs, modulesPath, ... }:
@@ -154,10 +154,10 @@
               "\''${modulesPath}/virtualisation/amazon-image.nix"
               ./modules/pulse-telemetry.nix
             ];
-            
+
             ec2.hvm = true;
             system.stateVersion = "24.05";
-            
+
             services.pulse-telemetry = {
               enable = true;
               domain = "$DOMAIN";
@@ -165,26 +165,26 @@
               grafanaAdminUser = "$GRAFANA_USER";
               $([ -n "$ACME_EMAIL" ] && echo "acmeEmail = \"$ACME_EMAIL\";")
             };
-            
+
             environment.systemPackages = with pkgs; [ vim htop curl jq openssl certbot ];
             services.openssh.enable = true;
             nix.settings.experimental-features = [ "nix-command" "flakes" ];
             security.sudo.wheelNeedsPassword = false;
-            
+
             users.users.root.openssh.authorizedKeys.keys = [
               "$(cat ''${SSH_KEY}.pub 2>/dev/null || echo "")"
             ];
           }
           EOF
-            
+
             # Create secrets
             echo "$GRAFANA_PASS" | ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "cat > /var/lib/pulse/grafana-password"
             echo "$OTLP_AUTH_TOKEN" | ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "cat > /var/lib/pulse/otlp-token"
-            
+
             # Rebuild
             echo "Rebuilding NixOS..."
             ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "nixos-rebuild switch"
-            
+
             echo ""
             echo "=== Deployment Complete ==="
             echo "Dashboard: https://$DOMAIN"
@@ -194,15 +194,15 @@
             echo "DNS: $DOMAIN -> $ip"
             echo "DNS: $OTEL_DOMAIN -> $ip"
           }
-          
+
           status() {
             ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$1" "podman ps; echo; systemctl status 'podman-*' --no-pager || true"
           }
-          
+
           logs() {
             ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$1" "journalctl -f -u 'podman-*'"
           }
-          
+
           certs() {
             [ -z "$ACME_EMAIL" ] && { echo "Set ACME_EMAIL"; exit 1; }
             ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$1" "
@@ -212,7 +212,7 @@
               systemctl start podman-envoy
             "
           }
-          
+
           case "''${1:-}" in
             provision) [ -z "''${2:-}" ] && { usage; exit 1; }; provision "$2" ;;
             deploy)    [ -z "''${2:-}" ] && { usage; exit 1; }; deploy "$2" ;;
@@ -229,7 +229,7 @@
         devShells.default = pkgs.mkShell {
           name = "pulse-telemetry";
           buildInputs = allDeps ++ [ deployScript ];
-          
+
           shellHook = ''
             echo "🚀 Pulse Telemetry Development Environment"
             echo ""
@@ -246,7 +246,7 @@
             echo ""
             echo "Configuration: cp .env.example .env && edit .env"
             echo ""
-            
+
             export PATH="$PWD/scripts:$PATH"
           '';
         };

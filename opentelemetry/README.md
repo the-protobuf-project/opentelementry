@@ -17,22 +17,22 @@ Logging, tracing, metrics, and profiling for Pulse applications.
 graph TB
     App[Application with Pulse SDK]
     OTLP[OpenTelemetry Collector<br/>:4317 gRPC / :4318 HTTP]
-    
+
     subgraph "Storage Backends"
         Loki[Loki<br/>Logs<br/>:3100]
         Tempo[Tempo<br/>Traces<br/>:3200]
         Prometheus[Prometheus<br/>Metrics<br/>:9090]
         Pyroscope[Pyroscope<br/>Profiles<br/>:4040]
     end
-    
+
     Grafana[Grafana<br/>Visualization<br/>:3000]
-    
+
     App --> OTLP
     OTLP --> Loki
     OTLP --> Tempo
     OTLP --> Prometheus
     OTLP --> Pyroscope
-    
+
     Loki --> Grafana
     Tempo --> Grafana
     Prometheus --> Grafana
@@ -62,11 +62,11 @@ docker compose ps
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| Grafana | http://localhost:3000 | Dashboard (no login required) |
-| Prometheus | http://localhost:9090 | Metrics UI |
-| Loki | http://localhost:3100 | Logs API |
-| Tempo | http://localhost:3200 | Traces API |
-| Pyroscope | http://localhost:4040 | Profiling UI |
+| Grafana | <http://localhost:3000> | Dashboard (no login required) |
+| Prometheus | <http://localhost:9090> | Metrics UI |
+| Loki | <http://localhost:3100> | Logs API |
+| Tempo | <http://localhost:3200> | Traces API |
+| Pyroscope | <http://localhost:4040> | Profiling UI |
 | OTLP gRPC | localhost:4317 | Telemetry ingestion |
 | OTLP HTTP | localhost:4318 | Telemetry ingestion |
 
@@ -93,6 +93,7 @@ docker compose down -v
 For production deployment on AWS EC2, see [deploy/production/README.md](deploy/production/README.md).
 
 **Highlights:**
+
 - Single EC2 instance with Docker Compose
 - Envoy proxy for TLS termination and routing
 - Alertmanager for notifications
@@ -148,13 +149,14 @@ go run main.go
 ```
 
 View results:
+
 - Logs: Grafana → Explore → Loki
 - Traces: Grafana → Explore → Tempo
 - Profiles: Grafana → Explore → Pyroscope
 
 ## Project Structure
 
-```
+```text
 opentelemetry/
 ├── compose.yaml           # Development Docker Compose
 ├── config/                # Service configurations

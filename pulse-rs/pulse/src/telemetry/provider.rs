@@ -3,19 +3,19 @@
 //! This module provides a unified telemetry provider that manages
 //! OpenTelemetry logging and metrics exporters.
 
-use anyhow::Result;
-use std::sync::Arc;
-use crate::options::{ServiceOptions, TelemetryOptions};
 use crate::logging::OtelLogger;
-use opentelemetry::logs::LoggerProvider as _;
+use crate::options::{ServiceOptions, TelemetryOptions};
+use anyhow::Result;
 use opentelemetry::KeyValue;
-use opentelemetry_otlp::{LogExporter, MetricExporter, WithTonicConfig, WithHttpConfig};
+use opentelemetry::logs::LoggerProvider as _;
 use opentelemetry_otlp::WithExportConfig;
-use tonic::metadata::{MetadataKey, MetadataMap, MetadataValue};
-use std::collections::HashMap;
+use opentelemetry_otlp::{LogExporter, MetricExporter, WithHttpConfig, WithTonicConfig};
+use opentelemetry_sdk::Resource;
 use opentelemetry_sdk::logs::SdkLoggerProvider;
 use opentelemetry_sdk::metrics::SdkMeterProvider;
-use opentelemetry_sdk::Resource;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tonic::metadata::{MetadataKey, MetadataMap, MetadataValue};
 
 /// Telemetry provider for OpenTelemetry integration.
 ///
@@ -33,10 +33,7 @@ impl TelemetryProvider {
     ///
     /// * `service_opts` - Service configuration
     /// * `telemetry_opts` - Telemetry configuration
-    pub fn new(
-        service_opts: &ServiceOptions,
-        telemetry_opts: &TelemetryOptions,
-    ) -> Result<Self> {
+    pub fn new(service_opts: &ServiceOptions, telemetry_opts: &TelemetryOptions) -> Result<Self> {
         let logger_provider = if telemetry_opts.otlp.enabled {
             let exporter = if telemetry_opts.otlp.use_http {
                 // Use HTTP protocol
@@ -57,12 +54,15 @@ impl TelemetryProvider {
                 // Use gRPC protocol
                 let mut metadata = MetadataMap::new();
                 if let Some(ref token) = telemetry_opts.otlp.auth_token {
-                    metadata.insert("authorization", format!("Bearer {}", token).parse().unwrap());
+                    metadata.insert(
+                        "authorization",
+                        format!("Bearer {}", token).parse().unwrap(),
+                    );
                 }
                 for (key, value) in &telemetry_opts.otlp.headers {
                     if let (Ok(k), Ok(v)) = (
                         key.parse::<MetadataKey<_>>(),
-                        value.parse::<MetadataValue<_>>()
+                        value.parse::<MetadataValue<_>>(),
                     ) {
                         metadata.insert(k, v);
                     }
@@ -78,7 +78,10 @@ impl TelemetryProvider {
             // Build resource attributes including custom service attributes
             let mut attrs = vec![
                 KeyValue::new("service.version", service_opts.version.clone()),
-                KeyValue::new("deployment.environment", service_opts.environment.to_string()),
+                KeyValue::new(
+                    "deployment.environment",
+                    service_opts.environment.to_string(),
+                ),
             ];
             for (key, value) in &service_opts.attributes {
                 attrs.push(KeyValue::new(key.clone(), value.clone()));
@@ -119,12 +122,15 @@ impl TelemetryProvider {
                 // Use gRPC protocol
                 let mut metadata = MetadataMap::new();
                 if let Some(ref token) = telemetry_opts.otlp.auth_token {
-                    metadata.insert("authorization", format!("Bearer {}", token).parse().unwrap());
+                    metadata.insert(
+                        "authorization",
+                        format!("Bearer {}", token).parse().unwrap(),
+                    );
                 }
                 for (key, value) in &telemetry_opts.otlp.headers {
                     if let (Ok(k), Ok(v)) = (
                         key.parse::<MetadataKey<_>>(),
-                        value.parse::<MetadataValue<_>>()
+                        value.parse::<MetadataValue<_>>(),
                     ) {
                         metadata.insert(k, v);
                     }
@@ -140,7 +146,10 @@ impl TelemetryProvider {
             // Build resource attributes including custom service attributes
             let mut attrs = vec![
                 KeyValue::new("service.version", service_opts.version.clone()),
-                KeyValue::new("deployment.environment", service_opts.environment.to_string()),
+                KeyValue::new(
+                    "deployment.environment",
+                    service_opts.environment.to_string(),
+                ),
             ];
             for (key, value) in &service_opts.attributes {
                 attrs.push(KeyValue::new(key.clone(), value.clone()));
@@ -161,7 +170,10 @@ impl TelemetryProvider {
             None
         };
 
-        Ok(Self { logger_provider, meter_provider })
+        Ok(Self {
+            logger_provider,
+            meter_provider,
+        })
     }
 
     /// Gets a logger instance with the specified name.

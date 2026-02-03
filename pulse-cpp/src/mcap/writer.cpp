@@ -15,10 +15,10 @@ namespace {
 std::string timestamp_to_iso8601(uint64_t timestamp_ns) {
     auto time_s = timestamp_ns / 1000000000ULL;
     auto time_ns = timestamp_ns % 1000000000ULL;
-    
+
     std::time_t t = static_cast<std::time_t>(time_s);
     std::tm* tm = std::gmtime(&t);
-    
+
     std::ostringstream oss;
     oss << std::put_time(tm, "%Y-%m-%dT%H:%M:%S");
     oss << "." << std::setfill('0') << std::setw(9) << time_ns << "Z";
@@ -33,7 +33,7 @@ McapWriter::McapWriter(const ServiceOptions& service_opts, const std::string& pa
     , service_version_(service_opts.version)
     , environment_(environment_to_string(service_opts.environment))
     , mutex_(platform::create_mutex()) {
-    
+
 #if !PULSE_PLATFORM_FREERTOS
     file_.open(path, std::ios::binary);
     if (!file_.is_open()) {
@@ -46,7 +46,7 @@ McapWriter::McapWriter(const ServiceOptions& service_opts, const std::string& pa
 
     is_open_ = true;
     register_schemas();
-    
+
     log_channel_id_ = ensure_channel("/pulse/logs", "Log");
     metric_channel_id_ = ensure_channel("/pulse/metrics", "Metric");
     span_channel_id_ = ensure_channel("/pulse/spans", "Span");
@@ -83,7 +83,7 @@ uint16_t McapWriter::get_or_create_schema(const std::string& schema_name) {
         reinterpret_cast<const std::byte*>(schema_it->second.data.data()),
         reinterpret_cast<const std::byte*>(schema_it->second.data.data() + schema_it->second.data.size())
     );
-    
+
     writer_.addSchema(schema);
     schema_ids_[schema_name] = schema.id;
     return schema.id;
@@ -100,12 +100,12 @@ uint16_t McapWriter::ensure_channel(const std::string& topic, const std::string&
     }
 
     uint16_t schema_id = get_or_create_schema(schema_name);
-    
+
     ::mcap::Channel channel;
     channel.topic = topic;
     channel.messageEncoding = "json";
     channel.schemaId = schema_id;
-    
+
     writer_.addChannel(channel);
     channel_ids_[topic] = channel.id;
     return channel.id;
@@ -123,9 +123,9 @@ void McapWriter::write_message(uint16_t channel_id, const uint8_t* data, size_t 
                                 uint64_t log_time, uint64_t publish_time) {
 #if !PULSE_PLATFORM_FREERTOS
     if (!is_open_ || closed_) return;
-    
+
     platform::ScopedLock lock(mutex_);
-    
+
     ::mcap::Message msg;
     msg.channelId = channel_id;
     msg.sequence = 0;
@@ -133,7 +133,7 @@ void McapWriter::write_message(uint16_t channel_id, const uint8_t* data, size_t 
     msg.publishTime = publish_time;
     msg.data = reinterpret_cast<const std::byte*>(data);
     msg.dataSize = size;
-    
+
     writer_.write(msg);
 #endif
 }
@@ -141,7 +141,7 @@ void McapWriter::write_message(uint16_t channel_id, const uint8_t* data, size_t 
 void McapWriter::write_log(const logging::LogEntry& entry) {
 #if !PULSE_PLATFORM_FREERTOS
     if (!is_open_ || closed_) return;
-    
+
     std::ostringstream json;
     json << "{";
     json << "\"timestamp\":\"" << timestamp_to_iso8601(entry.timestamp_ns) << "\",";
@@ -154,20 +154,20 @@ void McapWriter::write_log(const logging::LogEntry& entry) {
         json << ",\"data\":" << entry.data_json;
     }
     json << "}";
-    
+
     std::string data = json.str();
-    write_message(log_channel_id_, 
-                  reinterpret_cast<const uint8_t*>(data.data()), 
+    write_message(log_channel_id_,
+                  reinterpret_cast<const uint8_t*>(data.data()),
                   data.size(),
                   entry.timestamp_ns, entry.timestamp_ns);
 #endif
 }
 
-void McapWriter::write_metric(const std::string& name, const std::string& type, 
+void McapWriter::write_metric(const std::string& name, const std::string& type,
                                double value, uint64_t timestamp_ns) {
 #if !PULSE_PLATFORM_FREERTOS
     if (!is_open_ || closed_) return;
-    
+
     std::ostringstream json;
     json << "{";
     json << "\"timestamp\":\"" << timestamp_to_iso8601(timestamp_ns) << "\",";
@@ -175,7 +175,7 @@ void McapWriter::write_metric(const std::string& name, const std::string& type,
     json << "\"type\":\"" << type << "\",";
     json << "\"value\":" << value;
     json << "}";
-    
+
     std::string data = json.str();
     write_message(metric_channel_id_,
                   reinterpret_cast<const uint8_t*>(data.data()),
@@ -185,11 +185,11 @@ void McapWriter::write_metric(const std::string& name, const std::string& type,
 }
 
 void McapWriter::write_span(const std::string& name, const std::string& trace_id,
-                             const std::string& span_id, uint64_t start_ns, 
+                             const std::string& span_id, uint64_t start_ns,
                              uint64_t end_ns, const std::string& status) {
 #if !PULSE_PLATFORM_FREERTOS
     if (!is_open_ || closed_) return;
-    
+
     std::ostringstream json;
     json << "{";
     json << "\"trace_id\":\"" << trace_id << "\",";
@@ -199,7 +199,7 @@ void McapWriter::write_span(const std::string& name, const std::string& trace_id
     json << "\"end_time\":\"" << timestamp_to_iso8601(end_ns) << "\",";
     json << "\"status\":\"" << status << "\"";
     json << "}";
-    
+
     std::string data = json.str();
     write_message(span_channel_id_,
                   reinterpret_cast<const uint8_t*>(data.data()),
@@ -219,7 +219,7 @@ void McapWriter::flush() {
 void McapWriter::close() {
 #if !PULSE_PLATFORM_FREERTOS
     if (closed_) return;
-    
+
     platform::ScopedLock lock(mutex_);
     if (is_open_) {
         writer_.close();

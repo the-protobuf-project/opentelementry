@@ -1,6 +1,6 @@
 // Simple tracing example to verify OTLP export
-use pulse::{Pulse, Environment, logger};
 use pulse::tracing::instrument;
+use pulse::{Environment, Pulse, logger};
 
 #[instrument]
 fn simple_operation() {

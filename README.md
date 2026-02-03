@@ -1,8 +1,6 @@
 # Pulse
 
-<p align="center">
-  <img src=".assets/logo.png" alt="Pulse Logo" width="314" height="314">
-</p>
+![Pulse Logo](.assets/logo.png)
 
 **Unified Observability Framework** - Production-grade logging, metrics,
 tracing, and profiling for modern applications
@@ -80,9 +78,9 @@ use pulse::{Pulse, logger};
 async fn main() -> anyhow::Result<()> {
     // Auto-discovers pulse.toml config
     let _pulse = Pulse::new().build()?;
-    
+
     logger::info!("Service started");
-    
+
     Ok(())
 }
 ```
@@ -104,7 +102,7 @@ endpoint = "otel.example.com"  # Port 4317 auto-added
 auth_token = "your-token"
 ```
 
-**Priority:** Defaults → `pulse.toml` → `.env` / `PULSE_*` env vars → Code (builder methods)
+**Priority:** Defaults → `pulse.toml` → `.env` / `PULSE_*` env vars → Code
 
 **[Configuration Guide →](docs/configuration.md)**
 

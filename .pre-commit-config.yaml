@@ -1,0 +1,70 @@
+repos:
+  # Markdown link checker
+  - repo: https://github.com/tcort/markdown-link-check
+    rev: v3.12.2
+    hooks:
+      - id: markdown-link-check
+        args: ['--config', '.markdown-link-check.json']
+        files: \.md$
+
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.42.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        files: \.md$
+
+  # YAML linting
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: ['-c', '.yamllint.yml']
+        files: \.(yaml|yml)$
+
+  # Go formatting and linting
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.62.2
+    hooks:
+      - id: golangci-lint
+        entry: bash -c 'cd pulse-go && golangci-lint run'
+        files: ^pulse-go/.*\.go$
+        pass_filenames: false
+
+  # Rust formatting and linting
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: cargo fmt
+        entry: bash -c 'cd pulse-rs && cargo fmt --all -- --check'
+        language: system
+        files: ^pulse-rs/.*\.rs$
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        entry: bash -c 'cd pulse-rs && cargo clippy --all-targets --all-features -- -D warnings'
+        language: system
+        files: ^pulse-rs/.*\.rs$
+        pass_filenames: false
+
+  # Python linting with Ruff
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.2
+    hooks:
+      - id: ruff
+        args: ['--fix']
+        files: ^pulse-py/.*\.py$
+      - id: ruff-format
+        files: ^pulse-py/.*\.py$
+
+  # Trailing whitespace and end of file
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: ['--unsafe']
+      - id: check-added-large-files
+      - id: check-merge-conflict

@@ -144,15 +144,15 @@ func resolveOTLPConfig(otlp *options.OTLPOptions) (endpoint string, headers map[
 				endpoint = endpoint + ":4317"
 			}
 		}
-	} else if otlp.Host != "" {
+	} else if otlp.Host != "" { //nolint:staticcheck // Deprecated but kept for backward compatibility
 		if otlp.Port > 0 {
-			endpoint = fmt.Sprintf("%s:%d", otlp.Host, otlp.Port)
+			endpoint = fmt.Sprintf("%s:%d", otlp.Host, otlp.Port) //nolint:staticcheck // Deprecated
 		} else {
 			// Auto-detect port based on protocol
 			if otlp.UseHTTP {
-				endpoint = fmt.Sprintf("%s:4318", otlp.Host)
+				endpoint = fmt.Sprintf("%s:4318", otlp.Host) //nolint:staticcheck // Deprecated
 			} else {
-				endpoint = fmt.Sprintf("%s:4317", otlp.Host)
+				endpoint = fmt.Sprintf("%s:4317", otlp.Host) //nolint:staticcheck // Deprecated
 			}
 		}
 	}
@@ -162,33 +162,6 @@ func resolveOTLPConfig(otlp *options.OTLPOptions) (endpoint string, headers map[
 	secure = otlp.Secure
 
 	return endpoint, headers, secure
-}
-
-// isLocalEndpoint checks if the endpoint is a local address
-func isLocalEndpoint(endpoint string) bool {
-	// Extract host from endpoint (remove port if present)
-	host := endpoint
-	if idx := len(endpoint) - 1; idx > 0 {
-		for i := len(endpoint) - 1; i >= 0; i-- {
-			if endpoint[i] == ':' {
-				host = endpoint[:i]
-				break
-			}
-		}
-	}
-
-	host = strings.ToLower(host)
-	return host == "localhost" || host == "" ||
-		strings.HasPrefix(host, "127.") ||
-		strings.HasPrefix(host, "10.") ||
-		strings.HasPrefix(host, "192.168.") ||
-		strings.HasPrefix(host, "172.16.") ||
-		strings.HasPrefix(host, "172.17.") ||
-		strings.HasPrefix(host, "172.18.") ||
-		strings.HasPrefix(host, "172.19.") ||
-		strings.HasPrefix(host, "172.2") ||
-		strings.HasPrefix(host, "172.30.") ||
-		strings.HasPrefix(host, "172.31.")
 }
 
 // initTracing initializes the OpenTelemetry tracing pipeline

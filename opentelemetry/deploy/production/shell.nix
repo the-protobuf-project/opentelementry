@@ -4,7 +4,7 @@
 
 pkgs.mkShell {
   name = "pulse-telemetry";
-  
+
   buildInputs = with pkgs; [
     # Core utilities
     coreutils
@@ -14,16 +14,16 @@ pkgs.mkShell {
     gnugrep
     curl
     jq
-    
+
     # AWS/EC2 deployment
     awscli2
     terraform
     openssh
-    
+
     # Docker deployment
     docker
     docker-compose
-    
+
     # Kubernetes/EKS deployment
     kubectl
     kubernetes-helm
@@ -40,7 +40,7 @@ pkgs.mkShell {
     echo "  ./scripts/destroy-ec2.sh     - Destroy EC2 infrastructure"
     echo "  ./scripts/setup-otel-endpoint.sh - Generate OTLP token"
     echo ""
-    
+
     # Add scripts to PATH
     export PATH="$PWD/scripts:$PATH"
   '';

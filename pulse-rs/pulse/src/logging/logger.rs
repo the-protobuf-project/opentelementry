@@ -3,14 +3,14 @@
 //! This module provides the `Logger` struct which handles logging to console,
 //! MCAP files, and OpenTelemetry backends simultaneously.
 
+use super::LogMcapWriter;
+use super::OtelLogger;
 use anyhow::Result;
+use opentelemetry::KeyValue;
+use opentelemetry::logs::Severity;
 use serde::Serialize;
 use serde_json::Value;
 use std::sync::Arc;
-use super::LogMcapWriter;
-use super::OtelLogger;
-use opentelemetry::KeyValue;
-use opentelemetry::logs::Severity;
 
 /// Logger that writes to multiple backends simultaneously.
 ///

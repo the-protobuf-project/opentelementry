@@ -51,7 +51,7 @@ public:
 class Counter {
 public:
     Counter(const std::string& name, const std::string& description = "");
-    
+
     void add(double value = 1.0);
     double value() const { return value_; }
     const std::string& name() const { return name_; }
@@ -67,7 +67,7 @@ class Histogram {
 public:
     Histogram(const std::string& name, const std::string& description = "",
               const std::vector<double>& buckets = {});
-    
+
     void record(double value);
     uint64_t count() const { return count_; }
     double sum() const { return sum_; }
@@ -86,7 +86,7 @@ private:
 class Gauge {
 public:
     Gauge(const std::string& name, const std::string& description = "");
-    
+
     void set(double value);
     void increment(double value = 1.0);
     void decrement(double value = 1.0);
@@ -103,7 +103,7 @@ private:
 class Metrics {
 public:
     Metrics(const ServiceOptions& service_opts);
-    Metrics(const ServiceOptions& service_opts, 
+    Metrics(const ServiceOptions& service_opts,
             std::shared_ptr<mcap::McapWriter> mcap_writer
 #if PULSE_USE_OTEL
             , otel::OtelExporter* otel_exporter = nullptr
@@ -146,11 +146,11 @@ private:
 #if PULSE_USE_OTEL
     otel::OtelExporter* otel_exporter_ = nullptr;
 #endif
-    
+
     std::map<std::string, std::unique_ptr<Counter>> counters_;
     std::map<std::string, std::unique_ptr<Histogram>> histograms_;
     std::map<std::string, std::unique_ptr<Gauge>> gauges_;
-    
+
     platform::Mutex mutex_;
 };
 

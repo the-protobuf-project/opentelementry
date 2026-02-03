@@ -108,12 +108,12 @@ void Span::record_error(const std::string& error_message) {
 
 void Span::end() {
     if (ended_) return;
-    
+
     end_time_ns_ = platform::get_timestamp_ns();
     ended_ = true;
-    
+
     if (mcap_writer_) {
-        mcap_writer_->write_span(name_, trace_id_, span_id_, 
+        mcap_writer_->write_span(name_, trace_id_, span_id_,
                                   start_time_ns_, end_time_ns_,
                                   span_status_to_string(status_));
     }
@@ -214,7 +214,7 @@ std::string Tracer::generate_trace_id() {
     platform::ScopedLock lock(mutex_);
     uint64_t high = rng_();
     uint64_t low = rng_();
-    
+
     std::ostringstream oss;
     oss << std::hex << std::setfill('0');
     oss << std::setw(16) << high << std::setw(16) << low;
@@ -224,7 +224,7 @@ std::string Tracer::generate_trace_id() {
 std::string Tracer::generate_span_id() {
     platform::ScopedLock lock(mutex_);
     uint64_t id = rng_();
-    
+
     std::ostringstream oss;
     oss << std::hex << std::setfill('0') << std::setw(16) << id;
     return oss.str();

@@ -36,10 +36,8 @@ impl SchemaRegistry {
 
     /// Registers the built-in schemas (Foxglove Log, metrics, traces).
     fn register_builtin_schemas(&mut self) {
-        self.schemas.insert(
-            "foxglove.Log".to_string(),
-            FOXGLOVE_LOG_SCHEMA.to_string(),
-        );
+        self.schemas
+            .insert("foxglove.Log".to_string(), FOXGLOVE_LOG_SCHEMA.to_string());
         self.schemas.insert(
             "machanirobotics.metric".to_string(),
             METRIC_SCHEMA.to_string(),

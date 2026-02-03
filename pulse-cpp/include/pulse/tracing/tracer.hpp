@@ -46,7 +46,7 @@ struct SpanEvent {
 
 class Span {
 public:
-    Span(const std::string& name, const std::string& trace_id, 
+    Span(const std::string& name, const std::string& trace_id,
          const std::string& span_id, std::shared_ptr<mcap::McapWriter> mcap_writer);
     ~Span();
 
@@ -85,14 +85,14 @@ private:
     std::map<std::string, std::string> attributes_;
     std::vector<SpanEvent> events_;
     bool ended_ = false;
-    
+
     std::shared_ptr<mcap::McapWriter> mcap_writer_;
 };
 
 class Tracer {
 public:
     Tracer(const ServiceOptions& service_opts);
-    Tracer(const ServiceOptions& service_opts, 
+    Tracer(const ServiceOptions& service_opts,
            std::shared_ptr<mcap::McapWriter> mcap_writer
 #if PULSE_USE_OTEL
            , otel::OtelExporter* otel_exporter = nullptr
@@ -127,12 +127,12 @@ private:
     std::string environment_;
     std::string otlp_endpoint_;
     bool enabled_ = true;
-    
+
     std::shared_ptr<mcap::McapWriter> mcap_writer_;
 #if PULSE_USE_OTEL
     otel::OtelExporter* otel_exporter_ = nullptr;
 #endif
-    
+
     std::mt19937_64 rng_;
     platform::Mutex mutex_;
 };

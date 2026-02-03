@@ -22,9 +22,9 @@ int main() {
         span.set_attribute("user_id", "12345");
         span.set_attribute("method", "GET");
         span.add_event("started_processing");
-        
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        
+
         span.add_event("finished_processing");
         span.set_status(pulse::tracing::SpanStatus::Ok);
         span.end();
@@ -44,7 +44,7 @@ int main() {
     }
 
     PULSE_LOG_INFO("Application shutting down");
-    
+
     pulse.flush();
     pulse.close();
 

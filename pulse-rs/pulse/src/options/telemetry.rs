@@ -2,8 +2,8 @@
 //!
 //! Configuration for OpenTelemetry OTLP exporters.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Telemetry configuration options.
 ///

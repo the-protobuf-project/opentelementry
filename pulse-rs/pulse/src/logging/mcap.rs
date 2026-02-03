@@ -3,12 +3,12 @@
 //! This module provides functionality to write log entries to MCAP files
 //! using the Foxglove Log schema.
 
-use anyhow::Result;
-use chrono::Utc;
-use serde_json::{json, Value};
-use std::sync::{Arc, Mutex};
 use crate::foxglove::UnifiedMcapWriter;
 use crate::options::ServiceOptions;
+use anyhow::Result;
+use chrono::Utc;
+use serde_json::{Value, json};
+use std::sync::{Arc, Mutex};
 
 /// Writer for logging to MCAP files.
 ///
@@ -92,7 +92,8 @@ impl LogMcapWriter {
         });
 
         let data_bytes = serde_json::to_vec(&log_entry)?;
-        let log_time = (now.timestamp() as u64) * 1_000_000_000 + (now.timestamp_subsec_nanos() as u64);
+        let log_time =
+            (now.timestamp() as u64) * 1_000_000_000 + (now.timestamp_subsec_nanos() as u64);
 
         let mut writer = self.writer.lock().unwrap();
         writer.write_message(self.channel_id, &data_bytes, log_time, log_time)?;

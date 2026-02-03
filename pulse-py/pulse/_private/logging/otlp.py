@@ -32,28 +32,35 @@ import logging
 
 class OTLPLogger:
     """OTLP logging handler for OpenTelemetry.
-    
+
     Configures and manages OpenTelemetry logging export to an OTLP collector.
     Attaches a LoggingHandler to Python's root logger to capture all log records
     and export them with service metadata.
-    
+
     Attributes:
         logger: OpenTelemetry logger instance.
         service_name: Name of the service.
         service_version: Version of the service.
         service_environment: Deployment environment.
     """
-    
-    def __init__(self, service_name: str, service_version: str, service_environment: str,
-                 endpoint: str, auth_token: str = "", secure: bool = False):
+
+    def __init__(
+        self,
+        service_name: str,
+        service_version: str,
+        service_environment: str,
+        endpoint: str,
+        auth_token: str = "",
+        secure: bool = False,
+    ):
         """Initialize the OTLP logger.
-        
+
         Sets up OpenTelemetry logging with OTLP exporter and attaches a handler
         to Python's root logger. Log level is determined by service_environment:
         - development: DEBUG
-        - staging: INFO  
+        - staging: INFO
         - production: WARNING
-        
+
         Args:
             service_name: Name of the service for resource attributes.
             service_version: Version of the service.
@@ -62,19 +69,21 @@ class OTLPLogger:
             auth_token: Bearer token for authentication.
             secure: Use TLS for connection.
         """
-        resource = Resource.create({
-            "service.name": service_name,
-            "service.version": service_version,
-            "service.environment": service_environment,
-        })
-        
+        resource = Resource.create(
+            {
+                "service.name": service_name,
+                "service.version": service_version,
+                "service.environment": service_environment,
+            }
+        )
+
         logger_provider = LoggerProvider(resource=resource)
-        
+
         # Build headers for authentication
         headers = []
         if auth_token:
             headers.append(("authorization", f"Bearer {auth_token}"))
-        
+
         # Determine endpoint URL - auto-add port 4317 for gRPC if not specified
         if "://" in endpoint:
             otlp_endpoint = endpoint
@@ -84,28 +93,26 @@ class OTLPLogger:
         else:
             # No port - default to 4317 for gRPC
             otlp_endpoint = f"{endpoint}:4317"
-        
+
         otlp_exporter = OTLPLogExporter(
             endpoint=otlp_endpoint,
             insecure=not secure,
             headers=headers if headers else None,
         )
-        
-        logger_provider.add_log_record_processor(
-            BatchLogRecordProcessor(otlp_exporter)
-        )
-        
+
+        logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_exporter))
+
         set_logger_provider(logger_provider)
-        
+
         # Determine log level based on service environment
         log_level = self._get_log_level_for_environment(service_environment)
-        
+
         # Setup Python logging bridge to OTEL
         handler = LoggingHandler(
             level=log_level,
             logger_provider=logger_provider,
         )
-        
+
         # Ensure root logger level allows all logs to pass through to handler
         root_logger = logging.getLogger()
         root_logger.setLevel(logging.DEBUG)
@@ -114,13 +121,13 @@ class OTLPLogger:
         self.service_name = service_name
         self.service_version = service_version
         self.service_environment = service_environment
-    
+
     def _get_log_level_for_environment(self, environment: str) -> int:
         """Determine log level based on service environment.
-        
+
         Args:
             environment: Service environment string (development, staging, production).
-            
+
         Returns:
             Python logging level integer.
         """
@@ -129,21 +136,27 @@ class OTLPLogger:
             return logging.DEBUG
         else:
             return logging.INFO
-    
-    def write_log(self, level: str, message: str, data: Optional[Dict[str, Any]],
-                  caller_file: str = "", caller_line: int = 0):
+
+    def write_log(
+        self,
+        level: str,
+        message: str,
+        data: Optional[Dict[str, Any]],
+        caller_file: str = "",
+        caller_line: int = 0,
+    ):
         """Write a log entry to OTLP.
-        
+
         Emits a log record to Python's standard logging, which is then captured
         by the OpenTelemetry LoggingHandler and exported to the OTLP collector.
-        
+
         Args:
             level: Log level string (DEBUG, INFO, WARNING, ERROR, CRITICAL).
             message: Log message text.
             data: Optional dictionary of structured data to include as attributes.
             caller_file: Source file path where the log was called.
             caller_line: Line number where the log was called.
-            
+
         Note:
             Structured data is added both as a JSON string in the 'data' attribute
             and as individual fields for easier querying. Reserved LogRecord keys
@@ -151,7 +164,7 @@ class OTLPLogger:
         """
         import logging as std_logging
         import json
-        
+
         # Map logbook levels to standard logging levels
         level_map = {
             "DEBUG": std_logging.DEBUG,
@@ -160,7 +173,7 @@ class OTLPLogger:
             "ERROR": std_logging.ERROR,
             "CRITICAL": std_logging.CRITICAL,
         }
-        
+
         # Build extra attributes with service metadata and code location
         extra_attrs = {
             "service.name": self.service_name,
@@ -169,26 +182,41 @@ class OTLPLogger:
             "code.filepath": caller_file,
             "code.lineno": caller_line,
         }
-        
+
         # Add structured data as a nested 'data' attribute
         if data:
             extra_attrs["data"] = json.dumps(data)
-            
+
             # Also add individual fields for easier querying
             reserved_keys = {
-                'name', 'msg', 'args', 'created', 'filename', 'funcName', 
-                'levelname', 'levelno', 'lineno', 'module', 'msecs', 'message', 
-                'pathname', 'process', 'processName', 'relativeCreated', 'thread', 'threadName'
+                "name",
+                "msg",
+                "args",
+                "created",
+                "filename",
+                "funcName",
+                "levelname",
+                "levelno",
+                "lineno",
+                "module",
+                "msecs",
+                "message",
+                "pathname",
+                "process",
+                "processName",
+                "relativeCreated",
+                "thread",
+                "threadName",
             }
-            
+
             for key, value in data.items():
                 attr_key = f"field.{key}" if key in reserved_keys else key
-                
+
                 if isinstance(value, (dict, list)):
                     extra_attrs[attr_key] = json.dumps(value)
                 else:
                     extra_attrs[attr_key] = value
-        
+
         # Emit to standard logging
         std_level = level_map.get(level, std_logging.INFO)
         std_logging.log(std_level, message, extra=extra_attrs)

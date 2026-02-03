@@ -1,6 +1,6 @@
 {
   "_comment": "Pulse Configuration File - see pulse.toml for detailed documentation",
-  
+
   "service": {
     "name": "my-service",
     "version": "1.0.0",
@@ -9,7 +9,7 @@
     "attributes": {
     }
   },
-  
+
   "telemetry": {
     "enabled": true,
     "otlp": {
@@ -20,7 +20,7 @@
       "export_interval_seconds": 10
     }
   },
-  
+
   "logging": {
     "log": {
       "report_caller": true,
@@ -28,17 +28,17 @@
       "caller_offset": 3
     }
   },
-  
+
   "foxglove": {
     "enabled": false,
     "file_path": ""
   },
-  
+
   "profiling": {
     "enabled": false,
     "server_address": "http://localhost:4040"
   },
-  
+
   "tracing": {
     "enabled": true
   }

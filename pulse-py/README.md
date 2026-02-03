@@ -36,7 +36,7 @@ cd pulse-py && uv sync
 
 ## Quick Start
 
-### 1. Create `pulse.toml` in your project root:
+### 1. Create `pulse.toml` in your project root
 
 ```toml
 [service]
@@ -49,7 +49,7 @@ endpoint = "otel.example.com"
 auth_token = "your-token"
 ```
 
-### 2. Use Pulse in your code:
+### 2. Use Pulse in your code
 
 ```python
 from pulse import Pulse
@@ -164,7 +164,7 @@ def process_request(user_id: str):
 with Pulse.new().build() as p:
     # Using decorator
     result = process_request("user-123")
-    
+
     # Using TracedOperation
     with TracedOperation(p.tracing, "pipeline") as op:
         op.step("loading")

@@ -10,35 +10,35 @@ namespace pulse::logging {
 
 class Formatter {
 public:
-    static std::string format(const LogEntry& entry, 
+    static std::string format(const LogEntry& entry,
                               const std::string& service_name,
                               const std::string& service_version,
                               const std::string& environment) {
         std::ostringstream oss;
-        
+
         auto time_s = entry.timestamp_ns / 1000000000ULL;
         auto time_ms = (entry.timestamp_ns % 1000000000ULL) / 1000000ULL;
-        
+
         std::time_t t = static_cast<std::time_t>(time_s);
         std::tm* tm = std::localtime(&t);
-        
+
         oss << std::put_time(tm, "%Y-%m-%d %H:%M:%S");
         oss << "." << std::setfill('0') << std::setw(3) << time_ms;
-        
+
         oss << " [" << level_to_string(entry.level) << "]";
         oss << " [" << service_name << "@" << service_version << "]";
         oss << " [" << environment << "]";
-        
+
         if (!entry.file.empty()) {
             oss << " " << entry.file << ":" << entry.line;
         }
-        
+
         oss << " " << entry.message;
-        
+
         if (!entry.data_json.empty()) {
             oss << " | " << entry.data_json;
         }
-        
+
         return oss.str();
     }
 

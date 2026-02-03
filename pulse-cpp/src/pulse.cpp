@@ -9,7 +9,7 @@ Pulse::Pulse(const ServiceOptions& service_opts, const PulseOptions& pulse_opts)
 
 #if PULSE_USE_OTEL
     if (pulse_opts.telemetry.otlp.enabled) {
-        std::string endpoint = "http://" + pulse_opts.telemetry.otlp.host + ":" + 
+        std::string endpoint = "http://" + pulse_opts.telemetry.otlp.host + ":" +
                                std::to_string(pulse_opts.telemetry.otlp.port);
         otel_exporter_ = std::make_unique<otel::OtelExporter>(service_opts, endpoint);
     }
@@ -32,7 +32,7 @@ Pulse::Pulse(const ServiceOptions& service_opts, const PulseOptions& pulse_opts)
     );
 
     if (pulse_opts.telemetry.otlp.enabled) {
-        std::string endpoint = "http://" + pulse_opts.telemetry.otlp.host + ":" + 
+        std::string endpoint = "http://" + pulse_opts.telemetry.otlp.host + ":" +
                                std::to_string(pulse_opts.telemetry.otlp.port);
         tracer_ = std::make_unique<tracing::Tracer>(service_opts, mcap_writer_, endpoint
 #if PULSE_USE_OTEL
@@ -103,19 +103,19 @@ void Pulse::flush() {
 
 void Pulse::close() {
     if (closed_) return;
-    
+
     logging::GlobalLogger::shutdown();
-    
+
 #if PULSE_USE_OTEL
     if (otel_exporter_) {
         otel_exporter_->shutdown();
     }
 #endif
-    
+
     if (mcap_writer_) {
         mcap_writer_->close();
     }
-    
+
     closed_ = true;
 }
 
@@ -148,7 +148,7 @@ PulseBuilder& PulseBuilder::with_mcap(const std::string& path) {
 Pulse PulseBuilder::build() {
     ServiceOptions service_opts(name_, version_);
     service_opts.with_environment(environment_);
-    
+
     if (description_) {
         service_opts.with_description(*description_);
     }

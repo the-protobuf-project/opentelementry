@@ -10,7 +10,7 @@ std::pair<std::string, uint16_t> get_otel_endpoint() {
         std::string endpoint(env);
         auto pos = endpoint.find(':');
         if (pos != std::string::npos) {
-            return {endpoint.substr(0, pos), 
+            return {endpoint.substr(0, pos),
                     static_cast<uint16_t>(std::stoi(endpoint.substr(pos + 1)))};
         }
         return {endpoint, 4317};
@@ -26,7 +26,7 @@ void simple_operation(pulse::tracing::Tracer& tracer) {
 
 int main() {
     auto [otel_host, otel_port] = get_otel_endpoint();
-    
+
     auto pulse = pulse::Pulse::builder("simple-trace-test", "1.0.0")
         .environment(pulse::Environment::Development)
         .with_otlp(otel_host, otel_port)

@@ -1,15 +1,27 @@
-use pulse::{Pulse, Environment, logger};
 use pulse::derive::Metrics;
+use pulse::{Environment, Pulse, logger};
 
 #[derive(Debug, Metrics)]
 pub struct LlmMetrics {
-    #[metric(name = "llm.requests.total", description = "Total number of LLM requests", counter)]
+    #[metric(
+        name = "llm.requests.total",
+        description = "Total number of LLM requests",
+        counter
+    )]
     pub request_count: u64,
 
-    #[metric(name = "llm.response.latency_ms", description = "LLM response latency in milliseconds", histogram)]
+    #[metric(
+        name = "llm.response.latency_ms",
+        description = "LLM response latency in milliseconds",
+        histogram
+    )]
     pub latency_ms: f64,
 
-    #[metric(name = "llm.cache.hit_rate", description = "LLM cache hit rate percentage", gauge)]
+    #[metric(
+        name = "llm.cache.hit_rate",
+        description = "LLM cache hit rate percentage",
+        gauge
+    )]
     pub cache_hit_rate: f64,
 }
 
@@ -38,12 +50,16 @@ async fn main() -> anyhow::Result<()> {
 
     // Or record metrics directly
     logger::info!("Recording metrics for 30 seconds...");
-    
+
     for _iteration in 0..30 {
         for i in 0..10 {
             pulse.metrics.counter("api.requests", 1.0)?;
-            pulse.metrics.histogram("api.latency_ms", (i as f64) * 10.0 + 50.0)?;
-            pulse.metrics.gauge("api.active_connections", (10 - i) as f64)?;
+            pulse
+                .metrics
+                .histogram("api.latency_ms", (i as f64) * 10.0 + 50.0)?;
+            pulse
+                .metrics
+                .gauge("api.active_connections", (10 - i) as f64)?;
 
             // Re-record LLM metrics every iteration to keep them visible
             pulse.metrics.record(&llm_metrics)?;
@@ -55,6 +71,6 @@ async fn main() -> anyhow::Result<()> {
 
     logger::info!("Metrics recording completed");
     logger::info!("MCAP file will be finalized automatically");
-    
+
     Ok(())
 }

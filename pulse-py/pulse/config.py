@@ -30,26 +30,27 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from dynaconf import Dynaconf, Validator
 
+
 # Auto-discover config files
 def _find_config_files() -> list[str]:
     """Find config files in order of priority."""
     config_files = []
-    
+
     # Check for pulse.toml, pulse.yaml, pulse.json in current directory
-    for ext in ['toml', 'yaml', 'yml', 'json']:
-        path = Path.cwd() / f'pulse.{ext}'
+    for ext in ["toml", "yaml", "yml", "json"]:
+        path = Path.cwd() / f"pulse.{ext}"
         if path.exists():
             config_files.append(str(path))
             break
-    
+
     # Check .config directory
     if not config_files:
-        for ext in ['toml', 'yaml', 'yml', 'json']:
-            path = Path.cwd() / '.config' / f'pulse.{ext}'
+        for ext in ["toml", "yaml", "yml", "json"]:
+            path = Path.cwd() / ".config" / f"pulse.{ext}"
             if path.exists():
                 config_files.append(str(path))
                 break
-    
+
     return config_files
 
 
@@ -66,31 +67,24 @@ settings = Dynaconf(
         Validator("service.version", default="1.0.0"),
         Validator("service.environment", default="development"),
         Validator("service.description", default=""),
-        
         # Telemetry validators
         Validator("telemetry.enabled", default=True),
-        
         # OTLP validators
         Validator("telemetry.otlp.endpoint", default="localhost:4317"),
         Validator("telemetry.otlp.auth_token", default=""),
         Validator("telemetry.otlp.secure", default=False),
         Validator("telemetry.otlp.use_http", default=False),
-        
         # Metrics validators
         Validator("telemetry.metrics.export_interval_seconds", default=10),
-        
         # Logging validators
         Validator("logging.log.report_caller", default=True),
         Validator("logging.log.report_timestamp", default=True),
-        
         # Foxglove validators
         Validator("foxglove.enabled", default=False),
         Validator("foxglove.file_path", default=""),
-        
         # Profiling validators
         Validator("profiling.enabled", default=False),
         Validator("profiling.server_address", default="http://localhost:4040"),
-        
         # Tracing validators
         Validator("tracing.enabled", default=True),
     ],
@@ -99,11 +93,11 @@ settings = Dynaconf(
 
 def load_config(config_path: Optional[str] = None) -> Dynaconf:
     """Load configuration from file and environment variables.
-    
+
     Args:
         config_path: Optional path to config file. If not provided,
                     auto-discovers pulse.toml/yaml/json.
-    
+
     Returns:
         Dynaconf settings object with loaded configuration.
     """
@@ -141,7 +135,9 @@ def get_telemetry_config() -> Dict[str, Any]:
             "use_http": settings.get("telemetry.otlp.use_http", False),
         },
         "metrics": {
-            "export_interval_seconds": settings.get("telemetry.metrics.export_interval_seconds", 10),
+            "export_interval_seconds": settings.get(
+                "telemetry.metrics.export_interval_seconds", 10
+            ),
         },
     }
 
@@ -173,5 +169,7 @@ def get_profiling_config() -> Dict[str, Any]:
     """Get profiling configuration as a dictionary."""
     return {
         "enabled": settings.get("profiling.enabled", False),
-        "server_address": settings.get("profiling.server_address", "http://localhost:4040"),
+        "server_address": settings.get(
+            "profiling.server_address", "http://localhost:4040"
+        ),
     }

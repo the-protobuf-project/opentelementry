@@ -18,17 +18,17 @@ Deploy the observability stack to AWS EC2, EKS, or run locally with Docker Compo
 ```mermaid
 flowchart TB
     Apps["Your Applications"]
-    
+
     subgraph External["External Access"]
         OTEL_EP["otel.yourdomain.com:443<br/>(OTLP ingestion + auth)"]
         GRAF_EP["telemetry.yourdomain.com:443<br/>(Grafana dashboard)"]
     end
-    
+
     subgraph Envoy["Envoy Proxy"]
         direction LR
         TLS["TLS termination, routing, auth"]
     end
-    
+
     subgraph Docker["Docker Network"]
         subgraph Storage["Storage Backends"]
             Loki["Loki<br/>Logs"]
@@ -36,11 +36,11 @@ flowchart TB
             Prometheus["Prometheus<br/>Metrics"]
             Pyroscope["Pyroscope<br/>Profiles"]
         end
-        
+
         OTEL["OTEL Collector<br/>◄ Bearer Token Auth"]
         Grafana["Grafana<br/>◄ Username/Password"]
     end
-    
+
     Apps -->|"OTLP (traces, logs, metrics)"| External
     OTEL_EP --> Envoy
     GRAF_EP --> Envoy
@@ -129,6 +129,7 @@ pulse-deploy deploy <EC2_PUBLIC_IP>
 ```
 
 **Nix Deploy Commands:**
+
 ```bash
 pulse-deploy provision <ip>  # Fresh instance: install NixOS + deploy
 pulse-deploy deploy <ip>     # Update existing NixOS instance
@@ -182,7 +183,8 @@ OTEL_DOMAIN=otel.yourdomain.com
 ### DNS Configuration
 
 Create A records pointing to your server IP:
-```
+
+```text
 telemetry.yourdomain.com -> <YOUR_IP>
 otel.yourdomain.com      -> <YOUR_IP>
 ```
@@ -206,6 +208,7 @@ Authorization: Bearer <your-token>
 ```
 
 Generate a token:
+
 ```bash
 ./scripts/setup-otel-endpoint.sh
 ```
@@ -213,6 +216,7 @@ Generate a token:
 ### Client Examples
 
 **Go (pulse-go):**
+
 ```go
 pulseOpts := options.PulseOptions{
     Telemetry: options.DefaultTelemetry(),
@@ -228,6 +232,7 @@ pulseOpts.Telemetry.OTLP.UseHTTP = true
 ```
 
 **Python:**
+
 ```python
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
@@ -238,6 +243,7 @@ exporter = OTLPSpanExporter(
 ```
 
 **Node.js:**
+
 ```javascript
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
 
@@ -250,6 +256,7 @@ const exporter = new OTLPTraceExporter({
 ```
 
 **Environment Variables (any OTEL SDK):**
+
 ```bash
 export OTEL_EXPORTER_OTLP_ENDPOINT=https://otel.yourdomain.com
 export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <your-token>"
@@ -264,7 +271,7 @@ export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer <your-token>"
 | `scripts/deploy-eks.sh` | EKS/Kubernetes deployment |
 | `scripts/redeploy-ec2.sh` | Update existing EC2 deployment |
 | `scripts/destroy-ec2.sh` | Destroy EC2 infrastructure |
-| `scripts/setup-otel-endpoint.sh` | Generate OTLP token and show client config |
+| `scripts/setup-otel-endpoint.sh` | Generate OTLP token and show config |
 | `scripts/start-local-webhook.sh` | Local alert notifications |
 
 ## TLS Certificates
@@ -276,6 +283,7 @@ Generated automatically on first deployment.
 ### Let's Encrypt (Production)
 
 SSH into the instance and run:
+
 ```bash
 # Stop Envoy temporarily
 sudo docker stop pulse-prod-envoy-1
@@ -306,22 +314,26 @@ Configure webhook URL in `config/alertmanager.yaml`.
 ## Troubleshooting
 
 ### Check service status
+
 ```bash
 ssh ec2-user@<IP> "sudo docker ps"
 ```
 
 ### View logs
+
 ```bash
 ssh ec2-user@<IP> "sudo docker logs pulse-prod-otelcol-1"
 ssh ec2-user@<IP> "sudo docker logs pulse-prod-grafana-1"
 ```
 
 ### Restart services
+
 ```bash
-ssh ec2-user@<IP> "cd /opt/pulse && sudo docker-compose -f docker-compose.prod.yaml restart"
+ssh ec2-user@<IP> "cd /opt/pulse && sudo docker-compose restart"
 ```
 
 ### Test OTLP endpoint
+
 ```bash
 curl -v https://otel.yourdomain.com/v1/traces \
   -H 'Content-Type: application/json' \

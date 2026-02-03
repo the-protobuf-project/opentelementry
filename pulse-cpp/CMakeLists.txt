@@ -26,9 +26,9 @@ if(NOT PULSE_FREERTOS)
         GIT_TAG releases/cpp/v1.4.1
     )
     FetchContent_MakeAvailable(mcap)
-    
+
     add_library(mcap INTERFACE)
-    target_include_directories(mcap INTERFACE 
+    target_include_directories(mcap INTERFACE
         $<BUILD_INTERFACE:${mcap_SOURCE_DIR}/cpp/mcap/include>
         $<INSTALL_INTERFACE:include>
     )
@@ -81,14 +81,14 @@ if(PULSE_USE_OTEL)
     set(BUILD_TESTING OFF CACHE BOOL "Disable OTel tests" FORCE)
     set(WITH_EXAMPLES OFF CACHE BOOL "Disable OTel examples" FORCE)
     set(WITH_BENCHMARK OFF CACHE BOOL "Disable OTel benchmarks" FORCE)
-    
+
     FetchContent_Declare(
         opentelemetry-cpp
         GIT_REPOSITORY https://github.com/open-telemetry/opentelemetry-cpp.git
         GIT_TAG v1.18.0
     )
     FetchContent_MakeAvailable(opentelemetry-cpp)
-    
+
     target_link_libraries(pulse
         PUBLIC
             opentelemetry_api

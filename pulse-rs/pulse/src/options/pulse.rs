@@ -2,8 +2,8 @@
 //!
 //! Aggregates all configuration options for the Pulse library.
 
-use serde::{Deserialize, Serialize};
 use super::{FoxgloveOptions, LoggingOptions, ProfilingOptions, TelemetryOptions, TracingOptions};
+use serde::{Deserialize, Serialize};
 
 /// Main configuration options for Pulse.
 ///

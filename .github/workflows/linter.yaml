@@ -53,3 +53,72 @@ jobs:
           file_or_dir: .
           config_file: .yamllint.yml
           strict: true
+
+  lint-rust:
+    name: Lint Rust Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            pulse-rs/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check formatting
+        working-directory: ./pulse-rs
+        run: cargo fmt --all -- --check
+
+      - name: Run Clippy
+        working-directory: ./pulse-rs
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  lint-python:
+    name: Lint Python Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install linters
+        run: pip install ruff mypy
+
+      - name: Run Ruff linter
+        working-directory: ./pulse-py
+        run: ruff check .
+
+      - name: Run Ruff formatter check
+        working-directory: ./pulse-py
+        run: ruff format --check .
+
+  check-links:
+    name: Check Markdown Links
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Check markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          config-file: '.markdown-link-check.json'
+          folder-path: '.'
+          file-extension: '.md'
+          check-modified-files-only: 'no'

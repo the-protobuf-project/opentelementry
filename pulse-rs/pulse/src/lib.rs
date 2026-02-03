@@ -29,14 +29,14 @@
 //! ```
 
 pub mod config;
-pub mod options;
+pub mod derive;
 pub mod foxglove;
 pub mod logging;
-pub mod telemetry;
 pub mod metrics;
-pub mod traits;
-pub mod derive;
+pub mod options;
+pub mod telemetry;
 pub mod tracing;
+pub mod traits;
 
 use anyhow::Result;
 use std::collections::HashMap;
@@ -80,6 +80,7 @@ impl Pulse {
     ///     .build()
     ///     .unwrap();
     /// ```
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> PulseBuilder {
         PulseBuilder::from_config()
     }
@@ -125,7 +126,10 @@ impl Pulse {
     /// let pulse_opts = PulseOptions::new();
     /// let pulse = Pulse::init(service_opts, pulse_opts).unwrap();
     /// ```
-    pub fn init(service_opts: options::ServiceOptions, pulse_opts: options::PulseOptions) -> Result<Self> {
+    pub fn init(
+        service_opts: options::ServiceOptions,
+        pulse_opts: options::PulseOptions,
+    ) -> Result<Self> {
         let formatter = logging::PulseFormatter::new();
         formatter.set_service_info(
             service_opts.name.clone(),
@@ -140,30 +144,38 @@ impl Pulse {
             .and_then(|s| s.parse::<log::LevelFilter>().ok())
             .unwrap_or(log::LevelFilter::Info);
 
-        let _ = log4rs::init_file("log4rs.yaml", Default::default())
-            .or_else(|_| {
-                let stdout = log4rs::append::console::ConsoleAppender::builder()
-                    .encoder(Box::new(formatter))
-                    .build();
-                let config = log4rs::config::Config::builder()
-                    .appender(log4rs::config::Appender::builder().build("stdout", Box::new(stdout)))
-                    .build(log4rs::config::Root::builder().appender("stdout").build(default_level))
-                    .unwrap();
-                log4rs::init_config(config).map(|_| ())
-            });
+        let _ = log4rs::init_file("log4rs.yaml", Default::default()).or_else(|_| {
+            let stdout = log4rs::append::console::ConsoleAppender::builder()
+                .encoder(Box::new(formatter))
+                .build();
+            let config = log4rs::config::Config::builder()
+                .appender(log4rs::config::Appender::builder().build("stdout", Box::new(stdout)))
+                .build(
+                    log4rs::config::Root::builder()
+                        .appender("stdout")
+                        .build(default_level),
+                )
+                .unwrap();
+            log4rs::init_config(config).map(|_| ())
+        });
 
-        let mcap_writer = if pulse_opts.foxglove.enabled && !pulse_opts.foxglove.mcap_path.is_empty() {
-            let writer = foxglove::UnifiedMcapWriter::new(&service_opts, &pulse_opts.foxglove.mcap_path)?;
+        let mcap_writer = if pulse_opts.foxglove.enabled
+            && !pulse_opts.foxglove.mcap_path.is_empty()
+        {
+            let writer =
+                foxglove::UnifiedMcapWriter::new(&service_opts, &pulse_opts.foxglove.mcap_path)?;
             Some(Arc::new(Mutex::new(writer)))
         } else {
             None
         };
 
-        let mcap_log_writer = mcap_writer.as_ref().map(|writer| {
-            logging::LogMcapWriter::new(&service_opts, Arc::clone(writer))
-        }).transpose()?;
+        let mcap_log_writer = mcap_writer
+            .as_ref()
+            .map(|writer| logging::LogMcapWriter::new(&service_opts, Arc::clone(writer)))
+            .transpose()?;
 
-        let telemetry = telemetry::TelemetryProvider::new(&service_opts, &pulse_opts.telemetry).ok();
+        let telemetry =
+            telemetry::TelemetryProvider::new(&service_opts, &pulse_opts.telemetry).ok();
         let otel_logger = telemetry.as_ref().and_then(|t| t.get_logger("pulse"));
 
         let logger = Logger::new(
@@ -190,7 +202,10 @@ impl Pulse {
 
         // Initialize PulseTracing for manual span management if OTLP is enabled
         let tracing_instance = if pulse_opts.telemetry.otlp.enabled {
-            let endpoint = format!("http://{}:{}", pulse_opts.telemetry.otlp.host, pulse_opts.telemetry.otlp.port);
+            let endpoint = format!(
+                "http://{}:{}",
+                pulse_opts.telemetry.otlp.host, pulse_opts.telemetry.otlp.port
+            );
             tracing::PulseTracing::new(&service_opts, Some(endpoint)).ok()
         } else {
             None
@@ -234,7 +249,7 @@ impl Pulse {
     /// Manually closes the Pulse instance and cleans up resources.
     ///
     /// This shuts down telemetry providers and closes MCAP writers.
-    /// 
+    ///
     /// **Note**: Resources are automatically cleaned up when Pulse goes out of scope
     /// via the Drop trait. You only need to call this manually if you want explicit
     /// error handling during cleanup.
@@ -252,7 +267,7 @@ impl Pulse {
     ///
     /// // Optional: Manually close if you need error handling
     /// pulse.close().unwrap();
-    /// 
+    ///
     /// // Otherwise, resources are cleaned up automatically when pulse goes out of scope
     /// ```
     pub fn close(&mut self) -> Result<()> {
@@ -275,10 +290,10 @@ impl Drop for Pulse {
             let _ = t.shutdown();
         }
 
-        if let Some(writer) = self.mcap_writer.take() {
-            if let Ok(mut w) = writer.lock() {
-                let _ = w.close();
-            }
+        if let Some(writer) = self.mcap_writer.take()
+            && let Ok(mut w) = writer.lock()
+        {
+            let _ = w.close();
         }
     }
 }

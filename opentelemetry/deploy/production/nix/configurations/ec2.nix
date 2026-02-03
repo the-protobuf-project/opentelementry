@@ -11,7 +11,7 @@
 
   # System settings
   system.stateVersion = "24.05";
-  
+
   # Enable Pulse Telemetry
   services.pulse-telemetry = {
     enable = true;

@@ -168,33 +168,33 @@ locals {
   user_data = <<-EOF
     #!/bin/bash
     set -ex
-    
+
     # Update system
     dnf update -y
-    
+
     # Install Docker
     dnf install -y docker git
     systemctl enable docker
     systemctl start docker
     usermod -aG docker ec2-user
-    
+
     # Install Docker Compose
     curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
     chmod +x /usr/local/bin/docker-compose
     ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
-    
+
     # Create pulse directory structure
     mkdir -p /opt/pulse/{config,certs,envoy,dashboards}
-    
+
     # Generate self-signed certs (replace with Let's Encrypt later)
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
       -keyout /opt/pulse/certs/privkey.pem \
       -out /opt/pulse/certs/fullchain.pem \
       -subj "/CN=${var.domain_name}"
-    
+
     # Set permissions
     chown -R ec2-user:ec2-user /opt/pulse
-    
+
     echo "Setup complete! Copy files via SCP then run docker-compose"
   EOF
 }

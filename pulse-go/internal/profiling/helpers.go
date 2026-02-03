@@ -22,7 +22,7 @@ func (p *Profiler) ProfiledFunc(ctx context.Context, operation string, fn func()
 	})
 
 	duration := time.Since(start)
-	
+
 	// Add error tag if function failed
 	if err != nil {
 		p.TagWrapper(ctx, map[string]string{
@@ -55,13 +55,13 @@ func (p *Profiler) ProfiledFuncWithTiming(ctx context.Context, operation string,
 	})
 
 	duration := time.Since(start)
-	
+
 	// Add timing and status tags
 	status := "success"
 	if err != nil {
 		status = "error"
 	}
-	
+
 	p.TagWrapper(ctx, map[string]string{
 		"operation": operation,
 		"status":    status,
@@ -108,7 +108,7 @@ func (p *Profiler) ProfileDatabaseQuery(ctx context.Context, queryType string, t
 	})
 
 	duration := time.Since(start)
-	
+
 	status := "success"
 	if err != nil {
 		status = "error"
@@ -144,7 +144,7 @@ func (p *Profiler) ProfileCacheOperation(ctx context.Context, operation string, 
 	})
 
 	duration := time.Since(start)
-	
+
 	status := "success"
 	if err != nil {
 		status = "error"
@@ -179,7 +179,7 @@ func (p *Profiler) ProfileHTTPRequest(ctx context.Context, method string, path s
 	})
 
 	duration := time.Since(start)
-	
+
 	status := "success"
 	statusCode := 200
 	if err != nil {
@@ -218,7 +218,7 @@ func (p *Profiler) ProfileExternalAPI(ctx context.Context, service string, endpo
 	})
 
 	duration := time.Since(start)
-	
+
 	status := "success"
 	if err != nil {
 		status = "error"

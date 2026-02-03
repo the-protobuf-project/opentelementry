@@ -4,7 +4,7 @@ with lib;
 
 let
   cfg = config.services.pulse-telemetry;
-  
+
   # OCI container images
   images = {
     grafana = "grafana/grafana:11.0.0";
@@ -121,7 +121,7 @@ in {
     systemd.services.pulse-network = {
       description = "Create Pulse Telemetry network";
       wantedBy = [ "multi-user.target" ];
-      before = [ 
+      before = [
         "podman-grafana.service"
         "podman-loki.service"
         "podman-tempo.service"
@@ -252,7 +252,7 @@ in {
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
-      
+
       virtualHosts.${cfg.domain} = {
         forceSSL = true;
         enableACME = true;

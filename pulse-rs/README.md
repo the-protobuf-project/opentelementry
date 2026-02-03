@@ -18,7 +18,7 @@ integration and MCAP recording for Foxglove Studio.
 
 ```toml
 [dependencies]
-pulse = { git = "https://github.com/machanirobotics/pulse.git", subdirectory = "pulse-rs/pulse" }
+pulse = { git = "https://github.com/machanirobotics/pulse.git" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 anyhow = "1.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -38,11 +38,11 @@ async fn main() -> anyhow::Result<()> {
         .with_service("my-service", "1.0.0")
         .environment(Environment::Production)
         .build()?;
-    
+
     logger::info!("Service started");
     logger::warn!("Warning message");
     logger::error!("Error occurred");
-    
+
     Ok(())
 }
 ```
@@ -59,7 +59,7 @@ flowchart TB
         C["2. Config File<br/>(pulse.toml / pulse.yaml / pulse.json)"]
         E["3. Environment Variables<br/>(PULSE_*)"]
         B["4. Code-based<br/>(builder methods - highest priority)"]
-        
+
         D --> C --> E --> B
     end
 ```
@@ -67,6 +67,7 @@ flowchart TB
 ### Config File (pulse.toml)
 
 Auto-discovered from:
+
 1. `PULSE_CONFIG_PATH` environment variable
 2. `pulse.toml` in current directory
 3. `.config/pulse.toml`
@@ -235,7 +236,7 @@ cargo run --example tracing
 
 ## Project Structure
 
-```
+```text
 pulse-rs/
 ├── pulse/                    # Main library
 │   ├── src/
@@ -263,6 +264,7 @@ docker compose up -d
 ```
 
 Provides:
+
 - **Grafana** - `http://localhost:3000`
 - **Loki** - Log aggregation
 - **Tempo** - Distributed tracing

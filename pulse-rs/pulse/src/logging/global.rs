@@ -24,13 +24,13 @@
 //! info!("Application started");
 //! ```
 
-use std::sync::OnceLock;
-use std::sync::Arc;
-use serde_json::Value;
-use opentelemetry::KeyValue;
-use opentelemetry::logs::Severity;
 use chrono::Local;
 use colored::Colorize;
+use opentelemetry::KeyValue;
+use opentelemetry::logs::Severity;
+use serde_json::Value;
+use std::sync::Arc;
+use std::sync::OnceLock;
 
 use super::{LogMcapWriter, OtelLogger, formatter};
 
@@ -159,7 +159,8 @@ impl GlobalLogger {
         let service_info = format!(
             "{} ({} | {})",
             self.service_name, self.service_version, self.service_environment
-        ).cyan();
+        )
+        .cyan();
 
         println!(
             "{} {}: <{}:{}> {}: {}",
@@ -175,7 +176,11 @@ impl GlobalLogger {
         }
 
         if let Some(ref otel) = self.otel_logger {
-            otel.log(level, &message, self.otel_attributes(data.as_ref(), file, line));
+            otel.log(
+                level,
+                &message,
+                self.otel_attributes(data.as_ref(), file, line),
+            );
         }
     }
 }
@@ -285,5 +290,5 @@ macro_rules! log_error {
 
 pub use debug;
 pub use info;
-pub use log_warn as warn;
 pub use log_error as error;
+pub use log_warn as warn;

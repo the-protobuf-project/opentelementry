@@ -1,7 +1,7 @@
 //! Profiling configuration options for Pyroscope integration.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Profiling options for continuous profiling with Pyroscope.
 #[derive(Debug, Clone, Serialize, Deserialize)]

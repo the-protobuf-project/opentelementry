@@ -27,9 +27,9 @@
 //! info!("User action recorded").with_data(&data);
 //! ```
 
+use opentelemetry::logs::Severity;
 use serde::Serialize;
 use serde_json::Value;
-use opentelemetry::logs::Severity;
 
 /// Builder for creating log entries with optional structured data.
 ///

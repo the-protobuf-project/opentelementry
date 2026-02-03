@@ -6,20 +6,20 @@
 let
   deployScript = pkgs.writeShellScriptBin "pulse-deploy" ''
     set -e
-    
+
     # Colors
     RED='\033[0;31m'
     GREEN='\033[0;32m'
     YELLOW='\033[1;33m'
     NC='\033[0m'
-    
+
     SCRIPT_DIR="$(cd "$(dirname "''${BASH_SOURCE[0]}")" && pwd)"
-    
+
     # Load .env if exists
     if [ -f ".env" ]; then
       source .env
     fi
-    
+
     # Configuration from environment
     SSH_KEY="''${SSH_KEY_PATH:-~/.ssh/id_ed25519}"
     DOMAIN="''${DOMAIN:-telemetry.example.com}"
@@ -27,13 +27,13 @@ let
     GRAFANA_USER="''${GRAFANA_ADMIN_USER:-admin}"
     GRAFANA_PASS="''${GRAFANA_ADMIN_PASSWORD:-changeme}"
     ACME_EMAIL="''${ACME_EMAIL:-}"
-    
+
     # Generate OTLP token if not set
     if [ -z "''${OTLP_AUTH_TOKEN:-}" ]; then
       OTLP_AUTH_TOKEN=$(${pkgs.openssl}/bin/openssl rand -hex 32)
       echo -e "''${YELLOW}Generated OTLP auth token: $OTLP_AUTH_TOKEN''${NC}"
     fi
-    
+
     usage() {
       echo "Usage: pulse-deploy <command> [options]"
       echo ""
@@ -54,7 +54,7 @@ let
       echo "  OTLP_AUTH_TOKEN"
       echo "  ACME_EMAIL       - Email for Let's Encrypt"
     }
-    
+
     wait_for_ssh() {
       local ip=$1
       echo "Waiting for SSH to be available..."
@@ -69,13 +69,13 @@ let
       echo -e "''${RED}Timeout waiting for SSH''${NC}"
       return 1
     }
-    
+
     provision() {
       local ip=$1
       echo -e "''${GREEN}=== Provisioning NixOS on $ip ===${NC}"
-      
+
       wait_for_ssh "$ip"
-      
+
       # Check if already NixOS
       if ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "test -f /etc/NIXOS" 2>/dev/null; then
         echo "Instance is already running NixOS"
@@ -83,29 +83,29 @@ let
         echo -e "''${YELLOW}Installing NixOS...''${NC}"
         # Use nixos-infect for Amazon Linux -> NixOS conversion
         ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "curl https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect | NIX_CHANNEL=nixos-24.05 bash -x"
-        
+
         echo "Waiting for reboot..."
         sleep 30
         wait_for_ssh "$ip"
       fi
-      
+
       deploy "$ip"
     }
-    
+
     deploy() {
       local ip=$1
       echo -e "''${GREEN}=== Deploying Pulse Telemetry to $ip ===${NC}"
-      
+
       # Create configuration
       local config_dir=$(mktemp -d)
       trap "rm -rf $config_dir" EXIT
-      
+
       # Generate NixOS configuration
       cat > "$config_dir/configuration.nix" << EOF
     { config, pkgs, ... }:
     {
       imports = [ ./hardware-configuration.nix ];
-      
+
       services.pulse-telemetry = {
         enable = true;
         domain = "$DOMAIN";
@@ -113,32 +113,32 @@ let
         grafanaAdminUser = "$GRAFANA_USER";
         $([ -n "$ACME_EMAIL" ] && echo "acmeEmail = \"$ACME_EMAIL\";")
       };
-      
+
       # SSH keys
       users.users.root.openssh.authorizedKeys.keys = [
         "$(cat ''${SSH_KEY}.pub 2>/dev/null || echo "")"
       ];
-      
+
       system.stateVersion = "24.05";
     }
     EOF
-      
+
       # Copy module
       ${pkgs.openssh}/bin/scp -i "$SSH_KEY" -r ./nix/modules "root@$ip:/etc/nixos/"
       ${pkgs.openssh}/bin/scp -i "$SSH_KEY" "$config_dir/configuration.nix" "root@$ip:/etc/nixos/"
-      
+
       # Copy config files
       ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "mkdir -p /var/lib/pulse/config"
       ${pkgs.openssh}/bin/scp -i "$SSH_KEY" -r ./config/* "root@$ip:/var/lib/pulse/config/"
-      
+
       # Create secrets
       echo "$GRAFANA_PASS" | ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "cat > /var/lib/pulse/grafana-password"
       echo "$OTLP_AUTH_TOKEN" | ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "cat > /var/lib/pulse/otlp-token"
-      
+
       # Rebuild NixOS
       echo "Rebuilding NixOS configuration..."
       ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "nixos-rebuild switch"
-      
+
       echo ""
       echo -e "''${GREEN}=== Deployment Complete ===${NC}"
       echo "Public IP: $ip"
@@ -160,7 +160,7 @@ let
       echo "  $DOMAIN -> $ip"
       echo "  $OTEL_DOMAIN -> $ip"
     }
-    
+
     status() {
       local ip=$1
       echo -e "''${GREEN}=== Service Status on $ip ===${NC}"
@@ -168,7 +168,7 @@ let
       echo ""
       ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "podman ps"
     }
-    
+
     logs() {
       local ip=$1
       local svc=''${2:-}
@@ -178,16 +178,16 @@ let
         ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "journalctl -f -u 'podman-*'"
       fi
     }
-    
+
     setup_certs() {
       local ip=$1
       echo -e "''${GREEN}=== Setting up Let's Encrypt certificates ===${NC}"
-      
+
       if [ -z "$ACME_EMAIL" ]; then
         echo -e "''${RED}Error: ACME_EMAIL not set''${NC}"
         exit 1
       fi
-      
+
       ${pkgs.openssh}/bin/ssh -i "$SSH_KEY" "root@$ip" "
         systemctl stop podman-envoy || true
         certbot certonly --standalone --non-interactive --agree-tos \
@@ -198,10 +198,10 @@ let
         cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /var/lib/pulse/certs/
         systemctl start podman-envoy
       "
-      
+
       echo -e "''${GREEN}Certificates installed!''${NC}"
     }
-    
+
     # Main
     case "''${1:-}" in
       provision)

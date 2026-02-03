@@ -22,8 +22,11 @@ import random
 # No prefix needed - uses service name from pulse.toml automatically
 class LLMMetrics(MetricsBaseModel):
     """LLM processing metrics"""
+
     tokens_processed: int = pulse.Counter(description="Total tokens processed by LLM")
-    response_time: float = pulse.Histogram(description="LLM response time in milliseconds")
+    response_time: float = pulse.Histogram(
+        description="LLM response time in milliseconds"
+    )
     active_requests: int = pulse.Gauge(description="Number of active LLM requests")
     cache_hit_rate: float = pulse.Gauge(description="LLM cache hit rate (0.0-1.0)")
 
@@ -32,8 +35,11 @@ class LLMMetrics(MetricsBaseModel):
 # No prefix needed - uses service name from pulse.toml automatically
 class TranscriptionMetrics(MetricsBaseModel):
     """Speech-to-text transcription metrics"""
+
     audio_duration: float = pulse.Histogram(description="Audio duration in seconds")
-    confidence: float = pulse.Gauge(description="Transcription confidence score (0.0-1.0)")
+    confidence: float = pulse.Gauge(
+        description="Transcription confidence score (0.0-1.0)"
+    )
     word_count: int = pulse.Counter(description="Total words transcribed")
 
 
@@ -56,10 +62,13 @@ def main():
             # Record metrics automatically from field metadata
             p.metrics.record(llm_metrics)
 
-            p.logger.info("LLM request processed", {
-                "tokens": llm_metrics.tokens_processed,
-                "response_time": llm_metrics.response_time,
-            })
+            p.logger.info(
+                "LLM request processed",
+                {
+                    "tokens": llm_metrics.tokens_processed,
+                    "response_time": llm_metrics.response_time,
+                },
+            )
 
             # Transcription metrics every 3rd iteration
             if i % 3 == 0:
@@ -71,10 +80,13 @@ def main():
 
                 p.metrics.record(trans_metrics)
 
-                p.logger.info("Audio transcribed", {
-                    "duration": trans_metrics.audio_duration,
-                    "confidence": trans_metrics.confidence,
-                })
+                p.logger.info(
+                    "Audio transcribed",
+                    {
+                        "duration": trans_metrics.audio_duration,
+                        "confidence": trans_metrics.confidence,
+                    },
+                )
 
             time.sleep(0.3)  # 300ms
 

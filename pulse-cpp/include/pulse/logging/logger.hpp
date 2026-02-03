@@ -68,7 +68,7 @@ public:
     Logger(const std::string& service_name,
            const std::string& service_version,
            const std::string& environment);
-    
+
     Logger(const std::string& service_name,
            const std::string& service_version,
            const std::string& environment,
@@ -77,7 +77,7 @@ public:
            , otel::OtelExporter* otel_exporter = nullptr
 #endif
     );
-    
+
     ~Logger();
 
     Logger(const Logger&) = delete;
@@ -115,7 +115,7 @@ public:
     const std::string& environment() const { return environment_; }
 
 private:
-    void log(Level level, const char* message, const char* file, uint32_t line, 
+    void log(Level level, const char* message, const char* file, uint32_t line,
              const std::string& data_json = "");
     void log_to_console(const LogEntry& entry);
     void log_to_mcap(const LogEntry& entry);
@@ -127,10 +127,10 @@ private:
     std::string service_version_;
     std::string environment_;
     Level level_ = Level::Info;
-    
+
     std::shared_ptr<mcap::McapWriter> mcap_writer_;
     std::vector<LogSink> sinks_;
-    
+
 #if !PULSE_PLATFORM_FREERTOS
     std::shared_ptr<spdlog::logger> spdlog_logger_;
 #endif

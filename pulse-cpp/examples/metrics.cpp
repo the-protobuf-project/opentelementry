@@ -11,7 +11,7 @@ std::pair<std::string, uint16_t> get_otel_endpoint() {
         std::string endpoint(env);
         auto pos = endpoint.find(':');
         if (pos != std::string::npos) {
-            return {endpoint.substr(0, pos), 
+            return {endpoint.substr(0, pos),
                     static_cast<uint16_t>(std::stoi(endpoint.substr(pos + 1)))};
         }
         return {endpoint, 4317};
@@ -30,7 +30,7 @@ struct LlmMetrics : public pulse::metrics::RecordMetrics {
 
     std::vector<pulse::metrics::MetricField> metric_fields() const override {
         return {
-            {"llm.requests.total", pulse::metrics::MetricType::Counter, 
+            {"llm.requests.total", pulse::metrics::MetricType::Counter,
              "Total number of LLM requests", static_cast<double>(request_count)},
             {"llm.response.latency_ms", pulse::metrics::MetricType::Histogram,
              "LLM response latency in milliseconds", latency_ms},
@@ -42,7 +42,7 @@ struct LlmMetrics : public pulse::metrics::RecordMetrics {
 
 int main() {
     auto [otel_host, otel_port] = get_otel_endpoint();
-    
+
     auto pulse = pulse::Pulse::builder("metrics-example", "1.0.0")
         .description("Metrics example service")
         .environment(pulse::Environment::Development)

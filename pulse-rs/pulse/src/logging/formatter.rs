@@ -27,6 +27,12 @@ impl std::fmt::Debug for PulseFormatter {
     }
 }
 
+impl Default for PulseFormatter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PulseFormatter {
     /// Creates a new formatter instance.
     ///
@@ -65,7 +71,7 @@ impl Encode for PulseFormatter {
         let level = record.level();
         let file_path = record.file().unwrap_or("unknown");
         let line = record.line().unwrap_or(0);
-        
+
         let relative_path = if let Some(idx) = file_path.rfind("/pulse-rs/") {
             &file_path[idx + 10..]
         } else if let Some(idx) = file_path.rfind("/src/") {
@@ -75,11 +81,11 @@ impl Encode for PulseFormatter {
         } else {
             file_path
         };
-        
+
         let service_name = self.service_name.lock().unwrap();
         let service_version = self.service_version.lock().unwrap();
         let service_environment = self.service_environment.lock().unwrap();
-        
+
         let level_colored = match level {
             Level::Error => "ERROR".red().bold(),
             Level::Warn => "WARNING".yellow().bold(),
@@ -87,12 +93,16 @@ impl Encode for PulseFormatter {
             Level::Debug => "DEBUG".blue().bold(),
             Level::Trace => "TRACE".purple().bold(),
         };
-        
-        let service_info = format!("{} ({} | {})", service_name, service_version, service_environment).cyan();
-        
-        write!(
+
+        let service_info = format!(
+            "{} ({} | {})",
+            service_name, service_version, service_environment
+        )
+        .cyan();
+
+        writeln!(
             w,
-            "{} {}: <{}:{}> {}: {}\n",
+            "{} {}: <{}:{}> {}: {}",
             timestamp,
             level_colored,
             relative_path,
@@ -100,7 +110,7 @@ impl Encode for PulseFormatter {
             service_info,
             record.args()
         )?;
-        
+
         Ok(())
     }
 }
@@ -125,12 +135,12 @@ impl Encode for PulseFormatter {
 pub fn format_data_output(data: &Value) -> String {
     let json_str = serde_json::to_string_pretty(data).unwrap_or_default();
     let mut output = String::from("  data=\n");
-    
+
     for line in json_str.lines() {
         output.push_str("  │ ");
         output.push_str(line);
         output.push('\n');
     }
-    
+
     output
 }

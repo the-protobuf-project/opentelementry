@@ -2,24 +2,19 @@
 //!
 //! This module defines service metadata and deployment environment configuration.
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// Deployment environment types.
 ///
 /// Represents different deployment environments for service configuration.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub enum Environment {
+    #[default]
     Development,
     Staging,
     Production,
     Jetson,
-}
-
-impl Default for Environment {
-    fn default() -> Self {
-        Environment::Development
-    }
 }
 
 impl std::fmt::Display for Environment {

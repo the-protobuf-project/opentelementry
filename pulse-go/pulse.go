@@ -118,7 +118,7 @@ func (b *Builder) WithOTLP(host string, port int) *Builder {
 	if b.err != nil {
 		return b
 	}
-	b.pulseOpts.Telemetry.OTLP.Host = host
+	b.pulseOpts.Telemetry.OTLP.Host = host //nolint:staticcheck // Deprecated but kept for backward compatibility
 	b.pulseOpts.Telemetry.OTLP.Port = port
 	b.pulseOpts.Telemetry.OTLP.Enabled = true
 
@@ -273,19 +273,21 @@ func isLocalHost(host string) bool {
 
 // autoConfigureOTLP automatically configures OTLP settings based on the host.
 func autoConfigureOTLP(otlp *options.OTLPOptions) {
+	//nolint:staticcheck // Deprecated but kept for backward compatibility
 	if otlp.Host == "" {
 		return
 	}
 
-	isLocal := isLocalHost(otlp.Host)
+	isLocal := isLocalHost(otlp.Host) //nolint:staticcheck // Deprecated but kept for backward compatibility
 
 	// Auto-set secure based on host (unless explicitly set)
 	if !otlp.Secure && !isLocal {
 		// Remote host on standard OTLP ports - check if it needs TLS
-		if otlp.Port == 443 || otlp.Port == 4318 {
+		switch otlp.Port {
+		case 443, 4318:
 			otlp.Secure = true
 			otlp.UseHTTP = true // Port 443 typically needs HTTP
-		} else if otlp.Port == 4317 {
+		case 4317:
 			// Standard gRPC port - may or may not need TLS
 			// Keep as-is, user should configure if needed
 		}

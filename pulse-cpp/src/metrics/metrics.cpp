@@ -32,7 +32,7 @@ void Histogram::record(double value) {
     platform::ScopedLock lock(mutex_);
     count_++;
     sum_ += value;
-    
+
     for (size_t i = 0; i < buckets_.size(); ++i) {
         if (value <= buckets_[i]) {
             bucket_counts_[i]++;
@@ -185,17 +185,17 @@ void Metrics::record_dynamic(const std::string& name, MetricType type, double va
 
 void Metrics::write_to_mcap(const std::string& name, MetricType type, double value) {
     if (!mcap_writer_) return;
-    mcap_writer_->write_metric(name, metric_type_to_string(type), value, 
+    mcap_writer_->write_metric(name, metric_type_to_string(type), value,
                                 platform::get_timestamp_ns());
 }
 
 #if PULSE_USE_OTEL
 void Metrics::write_to_otel(const std::string& name, MetricType type, double value) {
     if (!otel_exporter_) return;
-    
+
     auto meter = otel_exporter_->get_meter();
     if (!meter) return;
-    
+
     switch (type) {
         case MetricType::Counter: {
             auto counter = meter->CreateDoubleCounter(name);

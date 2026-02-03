@@ -18,7 +18,7 @@ service:
   version: "1.0.0"              # Service version
   environment: development      # development | staging | production
   description: My awesome service
-  
+
   # Global attributes added to ALL telemetry (logs, metrics, traces)
   # Useful for robot IDs, device IDs, fleet IDs, etc.
   attributes:
@@ -31,7 +31,7 @@ service:
 # -----------------------------------------------------------------------------
 telemetry:
   enabled: true                 # Master switch: enables logging, metrics, tracing
-  
+
   # OTLP Exporter - sends telemetry to any OpenTelemetry-compatible backend
   otlp:
     enabled: true
@@ -39,7 +39,7 @@ telemetry:
     # auth_token: ""            # Bearer token for authentication (optional)
     # secure: false             # Use TLS (auto-detected for non-localhost)
     # use_http: false           # Use HTTP instead of gRPC (default: gRPC)
-  
+
   metrics:
     export_interval_seconds: 10
 

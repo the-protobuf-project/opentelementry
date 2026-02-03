@@ -106,6 +106,8 @@ auth_token = "your-token"
 
 **Priority:** Defaults → `pulse.toml` → `.env` / `PULSE_*` env vars → Code (builder methods)
 
+**[Configuration Guide →](docs/configuration.md)**
+
 ## Observability Stack
 
 Pulse includes a complete, pre-configured observability stack powered by

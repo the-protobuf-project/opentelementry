@@ -57,10 +57,32 @@ Deploy to AWS EC2, EKS, or run locally with Docker Compose.
 
 ## Quick Start
 
+### Prerequisites (Nix)
+
+The easiest way to get all dependencies is with Nix:
+
+```bash
+cd deploy/production
+
+# Option 1: Using nix develop (flakes)
+nix develop
+
+# Option 2: Using nix-shell (legacy)
+nix-shell
+
+# Option 3: Using direnv (auto-activates on cd)
+direnv allow
+```
+
+This provides: `terraform`, `awscli`, `docker-compose`, `kubectl`, `openssl`, etc.
+
 ### Option 1: Local Docker (Development)
 
 ```bash
 cd deploy/production
+
+# Enter nix shell (or ensure dependencies are installed)
+nix develop
 
 # Configure
 cp .env.example .env
@@ -72,26 +94,54 @@ nano .env  # Set your credentials
 
 Access at `https://localhost`
 
-### Option 2: AWS EC2 (Production)
+### Option 2: AWS EC2 with NixOS (Recommended)
 
 ```bash
 cd deploy/production
 
-# 1. Configure environment
+# Enter nix shell
+nix develop
+
+# Configure
+cp .env.example .env
+nano .env  # Set DOMAIN, OTEL_DOMAIN, credentials
+
+# Deploy infrastructure with Terraform
+cd terraform
+terraform init
+terraform apply
+cd ..
+
+# Provision NixOS and deploy (converts Amazon Linux to NixOS)
+pulse-deploy provision <EC2_PUBLIC_IP>
+
+# Or if already NixOS, just deploy updates:
+pulse-deploy deploy <EC2_PUBLIC_IP>
+```
+
+**Nix Deploy Commands:**
+```bash
+pulse-deploy provision <ip>  # Fresh instance: install NixOS + deploy
+pulse-deploy deploy <ip>     # Update existing NixOS instance
+pulse-deploy status <ip>     # Check container status
+pulse-deploy logs <ip>       # View logs
+pulse-deploy certs <ip>      # Setup Let's Encrypt
+pulse-deploy ssh <ip>        # SSH into instance
+```
+
+### Option 2b: AWS EC2 with Bash Scripts (Legacy)
+
+```bash
+cd deploy/production
+
+# Configure
 cp .env.example .env
 nano .env
 
-# 2. Configure Terraform
-cd terraform
-cp terraform.tfvars.example terraform.tfvars
-nano terraform.tfvars
+# Deploy infrastructure
+cd terraform && terraform init && terraform apply && cd ..
 
-# 3. Deploy infrastructure
-terraform init
-terraform apply
-
-# 4. Deploy services
-cd ..
+# Deploy services (bash script)
 ./scripts/deploy-ec2.sh
 ```
 

@@ -57,6 +57,8 @@ services:
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
       - ./config/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+    environment:
+      - OTLP_AUTH_TOKEN=${OTLP_AUTH_TOKEN:-changeme}
     depends_on:
       loki:
         condition: service_healthy

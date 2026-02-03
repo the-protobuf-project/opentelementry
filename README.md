@@ -49,7 +49,7 @@ func main() {
 }
 ```
 
-**[📖 Full Go SDK Documentation →](pulse-go/README.md)**
+**[Go SDK Docs →](pulse-go/README.md)**
 
 ### Python SDK
 
@@ -65,7 +65,7 @@ with Pulse.new().build() as pulse:
     pulse.logger.info("Service started")
 ```
 
-**[📖 Full Python SDK Documentation →](pulse-py/README.md)**
+**[Python SDK Docs →](pulse-py/README.md)**
 
 ### Rust SDK
 
@@ -87,7 +87,7 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-**[📖 Full Rust SDK Documentation →](pulse-rs/README.md)**
+**[Rust SDK Docs →](pulse-rs/README.md)**
 
 ### Configuration (`pulse.toml`)
 
@@ -127,9 +127,7 @@ docker compose up -d
 
 Access Grafana at `http://localhost:3000` with all datasources pre-configured.
 
-**[📖 OpenTelemetry Stack Documentation →](opentelemetry/README.md)**
-
-**[📖 Production Deployment Guide →](opentelemetry/deploy/production/README.md)**
+**[Observability Stack →](opentelemetry/README.md)** · **[Production Deployment →](opentelemetry/deploy/production/README.md)**
 
 ## Architecture
 

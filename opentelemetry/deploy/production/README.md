@@ -1,8 +1,6 @@
-# Pulse Telemetry - Production Deployment
+# Production Deployment
 
-An open-source observability stack with **Logs**, **Traces**, **Metrics**, and **Profiles** - all in one place.
-
-Deploy to AWS EC2, EKS, or run locally with Docker Compose.
+Deploy the observability stack to AWS EC2, EKS, or run locally with Docker Compose.
 
 ## Features
 

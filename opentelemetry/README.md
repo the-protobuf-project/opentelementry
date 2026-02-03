@@ -1,6 +1,6 @@
-# Pulse Observability Stack
+# Observability Stack
 
-Complete observability stack for Pulse applications with logging, tracing, metrics, and profiling.
+Logging, tracing, metrics, and profiling for Pulse applications.
 
 ## Features
 

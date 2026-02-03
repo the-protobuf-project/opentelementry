@@ -121,13 +121,15 @@ industry-standard tools:
 ### Running the Stack
 
 ```bash
-cd otel
+cd opentelemetry
 docker compose up -d
 ```
 
 Access Grafana at `http://localhost:3000` with all datasources pre-configured.
 
-**[📖 OpenTelemetry Stack Documentation →](opentelementry/README.md)**
+**[📖 OpenTelemetry Stack Documentation →](opentelemetry/README.md)**
+
+**[📖 Production Deployment Guide →](opentelemetry/deploy/production/README.md)**
 
 ## Architecture
 

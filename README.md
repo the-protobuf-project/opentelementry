@@ -114,16 +114,16 @@ use pulse::{Pulse, Environment, logger};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize Pulse with builder pattern
-    let _pulse = Pulse::builder("my-service", "1.0.0")
+    // Auto-discovers pulse.toml config file
+    let _pulse = Pulse::new()
+        .with_service("my-service", "1.0.0")
         .environment(Environment::Production)
-        .with_otlp("localhost", 4317)
         .build()?;
     
-    // Use it!
     logger::info!("Service started");
+    logger::warn!("Warning message");
+    logger::error!("Error occurred");
     
-    // Resources are automatically cleaned up when pulse goes out of scope
     Ok(())
 }
 ```

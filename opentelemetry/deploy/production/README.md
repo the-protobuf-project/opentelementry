@@ -17,34 +17,45 @@ Deploy to AWS EC2, EKS, or run locally with Docker Compose.
 
 ## Architecture
 
-```
-                    ┌─────────────────────────────────────┐
-                    │           Your Applications         │
-                    └──────────────┬──────────────────────┘
-                                   │ OTLP (traces, logs, metrics)
-                                   ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  otel.yourdomain.com:443        │  telemetry.yourdomain.com:443  │
-│  (OTLP ingestion + auth)        │  (Grafana dashboard)           │
-├─────────────────────────────────┴────────────────────────────────┤
-│                         Envoy Proxy                              │
-│              TLS termination, routing, auth                      │
-├──────────────────────────────────────────────────────────────────┤
-│                      Docker Network                              │
-│  ┌─────────┐  ┌─────────┐  ┌──────────┐  ┌──────────┐           │
-│  │  Loki   │  │  Tempo  │  │Prometheus│  │Pyroscope │           │
-│  │  Logs   │  │ Traces  │  │ Metrics  │  │ Profiles │           │
-│  └────┬────┘  └────┬────┘  └────┬─────┘  └────┬─────┘           │
-│       └────────────┴────────────┴─────────────┘                  │
-│                         │                                        │
-│              ┌──────────┴──────────┐                             │
-│              │   OTEL Collector    │◄── Bearer Token Auth        │
-│              └──────────┬──────────┘                             │
-│                         │                                        │
-│              ┌──────────┴──────────┐                             │
-│              │      Grafana        │◄── Username/Password        │
-│              └─────────────────────┘                             │
-└──────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    Apps["Your Applications"]
+    
+    subgraph External["External Access"]
+        OTEL_EP["otel.yourdomain.com:443<br/>(OTLP ingestion + auth)"]
+        GRAF_EP["telemetry.yourdomain.com:443<br/>(Grafana dashboard)"]
+    end
+    
+    subgraph Envoy["Envoy Proxy"]
+        direction LR
+        TLS["TLS termination, routing, auth"]
+    end
+    
+    subgraph Docker["Docker Network"]
+        subgraph Storage["Storage Backends"]
+            Loki["Loki<br/>Logs"]
+            Tempo["Tempo<br/>Traces"]
+            Prometheus["Prometheus<br/>Metrics"]
+            Pyroscope["Pyroscope<br/>Profiles"]
+        end
+        
+        OTEL["OTEL Collector<br/>◄ Bearer Token Auth"]
+        Grafana["Grafana<br/>◄ Username/Password"]
+    end
+    
+    Apps -->|"OTLP (traces, logs, metrics)"| External
+    OTEL_EP --> Envoy
+    GRAF_EP --> Envoy
+    Envoy --> OTEL
+    Envoy --> Grafana
+    OTEL --> Loki
+    OTEL --> Tempo
+    OTEL --> Prometheus
+    OTEL --> Pyroscope
+    Loki --> Grafana
+    Tempo --> Grafana
+    Prometheus --> Grafana
+    Pyroscope --> Grafana
 ```
 
 ## Deployment Options
@@ -330,4 +341,4 @@ curl -v https://otel.yourdomain.com/v1/traces \
 
 ## License
 
-Open source under the MIT License.
+Copyright © 2026 Machani Robotics. Apache License 2.0.

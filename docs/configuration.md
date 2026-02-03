@@ -89,16 +89,27 @@ telemetry:
 
 Configuration is loaded and merged in the following order (lowest to highest priority):
 
-```text
-┌───────────────────────────────────────────────────────┐
-│  4. Code (Builder Methods)       ← HIGHEST PRIORITY  │
-├───────────────────────────────────────────────────────┤
-│  3. Environment Variables (PULSE_*)                  │
-├───────────────────────────────────────────────────────┤
-│  2. Config File (pulse.toml / pulse.yaml / json)     │
-├───────────────────────────────────────────────────────┤
-│  1. Default Values               ← LOWEST PRIORITY   │
-└───────────────────────────────────────────────────────┘
+```mermaid
+stateDiagram-v2
+    direction TB
+
+    [*] --> Defaults: 1. Load Defaults
+    Defaults --> ConfigFile: 2. Merge Config File
+    ConfigFile --> EnvVars: 3. Apply Environment Variables
+    EnvVars --> BuilderMethods: 4. Apply Builder Methods
+    BuilderMethods --> [*]: Final Configuration
+
+    Defaults: Default Values
+    note right of Defaults: LOWEST PRIORITY
+
+    ConfigFile: Config File
+    note right of ConfigFile: pulse.toml / yaml / json
+
+    EnvVars: Environment Variables
+    note right of EnvVars: PULSE_* prefixed
+
+    BuilderMethods: Code (Builder Methods)
+    note right of BuilderMethods: HIGHEST PRIORITY
 ```
 
 **Key Points:**
@@ -119,68 +130,28 @@ configuration loading process:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> LoadDefaults: Pulse::new()
-
-    LoadDefaults: Load Default Values
-    note right of LoadDefaults
-        Initialize all options with sensible defaults
-        OTLP disabled, logging enabled, etc.
-    end note
-
+    [*] --> LoadDefaults
     LoadDefaults --> DiscoverConfig
-
-    DiscoverConfig: Discover Config File
-    note right of DiscoverConfig
-        Check PULSE_CONFIG_PATH env var
-        Search pulse.toml, pulse.yaml, pulse.json
-        Search .config/pulse.toml, etc.
-    end note
-
     DiscoverConfig --> ConfigFound: File exists
-    DiscoverConfig --> LoadEnvVars: No file found
-
+    DiscoverConfig --> LoadEnvVars: No file
     ConfigFound --> ParseConfig
-
-    ParseConfig: Parse & Merge Config File
-    note right of ParseConfig
-        Auto-detect format from extension
-        Parse file contents
-        Merge with defaults (file overrides defaults)
-    end note
-
     ParseConfig --> LoadEnvVars
-
-    LoadEnvVars: Load Environment Variables
-    note right of LoadEnvVars
-        Scan for PULSE_* prefixed variables
-        Transform keys (PULSE_TELEMETRY_OTLP_HOST → nested)
-        Merge with config (env vars override file)
-    end note
-
     LoadEnvVars --> ApplyBuilder
-
-    ApplyBuilder: Apply Builder Methods
-    note right of ApplyBuilder
-        .with_service(), .with_otlp(), etc.
-        Code-level overrides have highest priority
-    end note
-
     ApplyBuilder --> Validate
-
-    Validate: Validate & Build
-    note right of Validate
-        Validate required fields
-        Initialize telemetry providers
-    end note
-
     Validate --> Ready: Success
-    Validate --> Error: Validation failed
-
-    Ready: Pulse Instance Ready
-    Error: Configuration Error
-
+    Validate --> Error: Failed
     Ready --> [*]
     Error --> [*]
+
+    LoadDefaults: 1. Load Defaults
+    DiscoverConfig: 2. Discover Config
+    ConfigFound: Config Found
+    ParseConfig: 3. Parse Config
+    LoadEnvVars: 4. Load Env Vars
+    ApplyBuilder: 5. Apply Builder
+    Validate: 6. Validate
+    Ready: Ready
+    Error: Error
 ```
 
 ### 2. Runtime Behavior

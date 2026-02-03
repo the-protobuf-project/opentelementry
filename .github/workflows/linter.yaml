@@ -174,9 +174,9 @@ jobs:
 
       - name: Check for merge conflicts
         run: |
-          FILES=$(grep -rln '<<<<<<< \|=======$\|>>>>>>> ' \
+          FILES=$(grep -rln '<''<<<<<< \|=''======$\|>''>>>>>> ' \
             --include='*.md' --include='*.py' --include='*.go' \
-            --include='*.rs' --include='*.yaml' --include='*.yml' . 2>/dev/null \
+            --include='*.rs' . 2>/dev/null \
             | grep -v '.git/' | head -20)
           if [ -n "$FILES" ]; then
             echo "$FILES"

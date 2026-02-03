@@ -1,7 +1,7 @@
 # Pulse
 
 <p align="center">
-  <img src=".assets/logo.png" alt="Pulse Logo">
+  <img src=".assets/logo.png" alt="Pulse Logo" width="314" height="314">
 </p>
 
 **Unified Observability Framework** - Production-grade logging, metrics,

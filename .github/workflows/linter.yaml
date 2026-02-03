@@ -132,31 +132,54 @@ jobs:
 
       - name: Check for trailing whitespace
         run: |
-          if grep -rn '[[:blank:]]$' --include='*.md' --include='*.py' --include='*.go' --include='*.rs' --include='*.yaml' --include='*.yml' --include='*.toml' --include='*.json' . 2>/dev/null | grep -v '.git/' | grep -v 'node_modules/' | grep -v '_deps/' | grep -v '.venv/' | head -20; then
+          FILES=$(grep -rln '[[:blank:]]$' \
+            --include='*.md' --include='*.py' --include='*.go' \
+            --include='*.rs' --include='*.yaml' --include='*.yml' \
+            --include='*.toml' --include='*.json' . 2>/dev/null \
+            | grep -v '.git/' | grep -v 'node_modules/' \
+            | grep -v '_deps/' | grep -v '.venv/' | head -20)
+          if [ -n "$FILES" ]; then
+            echo "$FILES"
             echo "::error::Trailing whitespace found"
             exit 1
           fi
 
       - name: Check for missing newline at end of files
         run: |
-          find . -type f \( -name '*.md' -o -name '*.py' -o -name '*.go' -o -name '*.rs' -o -name '*.yaml' -o -name '*.yml' -o -name '*.toml' -o -name '*.json' \) \
-            ! -path './.git/*' ! -path './node_modules/*' ! -path './*/_deps/*' ! -path './.venv/*' \
-            -exec sh -c 'test -s "$1" && test "$(tail -c 1 "$1" | wc -l)" -eq 0 && echo "$1"' _ {} \; | head -20 | tee /tmp/missing_newlines
-          if [ -s /tmp/missing_newlines ]; then
+          FILES=$(find . -type f \
+            \( -name '*.md' -o -name '*.py' -o -name '*.go' \
+               -o -name '*.rs' -o -name '*.yaml' -o -name '*.yml' \
+               -o -name '*.toml' -o -name '*.json' \) \
+            ! -path './.git/*' ! -path './node_modules/*' \
+            ! -path './*/_deps/*' ! -path './.venv/*' \
+            -exec sh -c \
+              'test -s "$1" && test "$(tail -c 1 "$1" | wc -l)" -eq 0 && echo "$1"' \
+              _ {} \; | head -20)
+          if [ -n "$FILES" ]; then
+            echo "$FILES"
             echo "::error::Files missing newline at end"
             exit 1
           fi
 
       - name: Check for large files
         run: |
-          find . -type f -size +500k ! -path './.git/*' ! -path './node_modules/*' ! -path './*/_deps/*' ! -path './.venv/*' ! -path './*/target/*' ! -path './*/build/*' | head -20 | tee /tmp/large_files
-          if [ -s /tmp/large_files ]; then
+          FILES=$(find . -type f -size +500k \
+            ! -path './.git/*' ! -path './node_modules/*' \
+            ! -path './*/_deps/*' ! -path './.venv/*' \
+            ! -path './*/target/*' ! -path './*/build/*' | head -20)
+          if [ -n "$FILES" ]; then
+            echo "$FILES"
             echo "::warning::Large files detected (>500KB)"
           fi
 
       - name: Check for merge conflicts
         run: |
-          if grep -rn '<<<<<<< \|=======$\|>>>>>>> ' --include='*.md' --include='*.py' --include='*.go' --include='*.rs' --include='*.yaml' --include='*.yml' . 2>/dev/null | grep -v '.git/' | head -20; then
+          FILES=$(grep -rln '<<<<<<< \|=======$\|>>>>>>> ' \
+            --include='*.md' --include='*.py' --include='*.go' \
+            --include='*.rs' --include='*.yaml' --include='*.yml' . 2>/dev/null \
+            | grep -v '.git/' | head -20)
+          if [ -n "$FILES" ]; then
+            echo "$FILES"
             echo "::error::Merge conflict markers found"
             exit 1
           fi

@@ -20,6 +20,9 @@
     },
     {
       "pattern": "^#"
+    },
+    {
+      "pattern": "github.com/machanirobotics/pulse/releases/tag"
     }
   ],
   "replacementPatterns": [],

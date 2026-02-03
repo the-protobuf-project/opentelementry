@@ -109,9 +109,9 @@ def main():
         # Generate multiple log entries for better visualization
         for i in range(10):
             pulse.logger.info(
-                f"Request processed #{i+1}",
+                f"Request processed #{i + 1}",
                 {
-                    "request_id": f"req-{i+1:03d}",
+                    "request_id": f"req-{i + 1:03d}",
                     "endpoint": "/api/data",
                     "status_code": 200,
                     "duration_ms": 20 + (i * 5),
@@ -122,9 +122,9 @@ def main():
 
         for i in range(5):
             pulse.logger.warning(
-                f"Rate limit warning #{i+1}",
+                f"Rate limit warning #{i + 1}",
                 {
-                    "client_id": f"client-{i+1}",
+                    "client_id": f"client-{i + 1}",
                     "requests_count": 95 + i,
                     "limit": 100,
                     "window_seconds": 60,
@@ -134,9 +134,9 @@ def main():
 
         for i in range(3):
             pulse.logger.error(
-                f"Database query timeout #{i+1}",
+                f"Database query timeout #{i + 1}",
                 {
-                    "query_id": f"query-{i+1}",
+                    "query_id": f"query-{i + 1}",
                     "table": "users",
                     "timeout_ms": 5000,
                     "rows_affected": 0,

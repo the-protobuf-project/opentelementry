@@ -33,7 +33,7 @@ exporters:
   otlphttp/loki:
     endpoint: "http://loki:3100/otlp"
   otlp/tempo:
-    endpoint: tempo:3200
+    endpoint: tempo:4317
     tls:
       insecure: true
   prometheusremotewrite:

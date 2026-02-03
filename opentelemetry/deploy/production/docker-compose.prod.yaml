@@ -48,9 +48,7 @@ services:
     restart: unless-stopped
 
   otelcol:
-    build:
-      context: ../..
-      dockerfile: docker/otelcol.Dockerfile
+    image: otel/opentelemetry-collector-contrib:0.114.0
     deploy:
       resources:
         limits:
@@ -59,12 +57,6 @@ services:
     command: ["--config=/etc/otelcol/config.yaml"]
     volumes:
       - ./config/otel-collector.yaml:/etc/otelcol/config.yaml:ro
-    healthcheck:
-      test: ["CMD", "/usr/bin/curl", "-f", "http://localhost:13133"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 5s
     depends_on:
       loki:
         condition: service_healthy
@@ -131,19 +123,11 @@ services:
     restart: unless-stopped
 
   pyroscope:
-    build:
-      context: ../..
-      dockerfile: docker/pyroscope.Dockerfile
+    image: grafana/pyroscope:1.10.0
     volumes:
       - pyroscope-data:/data
     environment:
       - PYROSCOPE_STORAGE_PATH=/data
-    healthcheck:
-      test: ["CMD", "/usr/bin/curl", "-f", "http://localhost:4040/ready"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
     networks:
       - pulse-network
     restart: unless-stopped
@@ -174,9 +158,9 @@ services:
       start_period: 10s
     depends_on:
       otelcol:
-        condition: service_healthy
+        condition: service_started
       pyroscope:
-        condition: service_healthy
+        condition: service_started
       alertmanager:
         condition: service_healthy
     networks:

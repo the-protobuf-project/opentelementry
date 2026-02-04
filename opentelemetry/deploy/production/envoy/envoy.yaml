@@ -6,7 +6,7 @@ admin:
 
 static_resources:
   listeners:
-    # HTTP listener (redirects to HTTPS in production)
+    # HTTP listener - CloudFront terminates TLS, Envoy receives HTTP
     - name: http_listener
       address:
         socket_address:
@@ -22,51 +22,19 @@ static_resources:
                 route_config:
                   name: local_route
                   virtual_hosts:
-                    - name: telemetry
-                      domains: ["*"]
-                      routes:
-                        - match:
-                            prefix: "/"
-                          redirect:
-                            https_redirect: true
-                http_filters:
-                  - name: envoy.filters.http.router
-                    typed_config:
-                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-
-    # HTTPS listener - auth handled by Grafana
-    - name: https_listener
-      address:
-        socket_address:
-          address: 0.0.0.0
-          port_value: 443
-      filter_chains:
-        - filters:
-            - name: envoy.filters.network.http_connection_manager
-              typed_config:
-                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
-                stat_prefix: ingress_https
-                codec_type: AUTO
-                route_config:
-                  name: local_route
-                  virtual_hosts:
-                    # OTEL endpoint - redirect root to machanirobotics.com, pass through OTLP paths
                     - name: otel
                       domains: ["otel.machanirobotics.dev"]
                       routes:
-                        # OTLP paths go to collector
                         - match:
                             prefix: "/v1/"
                           route:
                             cluster: otelcol_http
                             timeout: 60s
-                        # Root and other paths redirect to main website
                         - match:
                             prefix: "/"
                           redirect:
                             host_redirect: "machanirobotics.com"
                             https_redirect: true
-                    # Grafana dashboard (has built-in auth)
                     - name: telemetry
                       domains: ["telemetry.machanirobotics.dev", "*"]
                       routes:
@@ -79,16 +47,6 @@ static_resources:
                   - name: envoy.filters.http.router
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
-          transport_socket:
-            name: envoy.transport_sockets.tls
-            typed_config:
-              "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.DownstreamTlsContext
-              common_tls_context:
-                tls_certificates:
-                  - certificate_chain:
-                      filename: /etc/envoy/certs/fullchain.pem
-                    private_key:
-                      filename: /etc/envoy/certs/privkey.pem
 
     # OTLP gRPC listener (no auth for telemetry ingestion)
     - name: otlp_grpc_listener

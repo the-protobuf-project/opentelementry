@@ -11,6 +11,7 @@ terraform/.terraform.lock.hcl
 
 # TLS Certificates
 certs/
+.auth/
 *.pem
 *.key
 *.crt

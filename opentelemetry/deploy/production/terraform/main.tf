@@ -16,6 +16,12 @@ provider "aws" {
   region = var.aws_region
 }
 
+# CloudFront requires ACM certificates in us-east-1
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+}
+
 variable "aws_region" {
   description = "AWS region"
   default     = "us-east-1"
@@ -29,6 +35,16 @@ variable "instance_type" {
 variable "domain_name" {
   description = "Domain for telemetry dashboard"
   default     = "telemetry.example.com"
+}
+
+variable "otel_domain_name" {
+  description = "Domain for OTLP ingestion endpoint"
+  default     = "otel.example.com"
+}
+
+variable "route53_zone_id" {
+  description = "Route53 hosted zone ID for DNS validation (leave empty to skip ACM)"
+  default     = ""
 }
 
 variable "grafana_password" {
@@ -153,14 +169,20 @@ data "aws_ami" "al2023" {
 }
 
 variable "ssh_public_key_content" {
-  description = "SSH public key content for EC2 access"
+  description = "SSH public key content for EC2 access (auto-read from .auth/ssh/id_ed25519.pub if empty)"
   type        = string
+  default     = ""
+}
+
+locals {
+  # Read SSH public key from .auth/ssh/ if not provided
+  ssh_public_key = var.ssh_public_key_content != "" ? var.ssh_public_key_content : file("${path.module}/../.auth/ssh/id_ed25519.pub")
 }
 
 # SSH Key
 resource "aws_key_pair" "pulse" {
   key_name   = "pulse-telemetry-key"
-  public_key = var.ssh_public_key_content
+  public_key = local.ssh_public_key
 }
 
 # User data script - installs Docker (files copied via SSH after)
@@ -224,6 +246,13 @@ resource "aws_spot_instance_request" "pulse" {
   }
 }
 
+# Name tag for the spot instance
+resource "aws_ec2_tag" "pulse_name" {
+  resource_id = aws_spot_instance_request.pulse.spot_instance_id
+  key         = "Name"
+  value       = "pulse-telemetry"
+}
+
 # Elastic IP for stable DNS pointing
 resource "aws_eip" "pulse" {
   domain = "vpc"
@@ -237,6 +266,17 @@ resource "aws_eip" "pulse" {
 resource "aws_eip_association" "pulse" {
   instance_id   = aws_spot_instance_request.pulse.spot_instance_id
   allocation_id = aws_eip.pulse.id
+}
+
+# Get instance details for public DNS
+data "aws_instance" "pulse" {
+  instance_id = aws_spot_instance_request.pulse.spot_instance_id
+  depends_on  = [aws_eip_association.pulse]
+}
+
+locals {
+  # CloudFront needs a domain, not IP. Use EC2 public DNS or create a subdomain
+  origin_domain = "origin.${var.domain_name}"
 }
 
 # Outputs
@@ -268,4 +308,259 @@ output "dns_instructions" {
 output "monthly_cost_estimate" {
   description = "Estimated monthly cost"
   value       = "~$15-20/month (t3.medium spot ~$10-15 + EIP $3.60)"
+}
+
+# =============================================================================
+# AWS Certificate Manager (ACM) - Optional, requires Route53 zone
+# =============================================================================
+
+# ACM Certificate for both domains (must be in us-east-1 for CloudFront)
+resource "aws_acm_certificate" "pulse" {
+  count    = var.route53_zone_id != "" ? 1 : 0
+  provider = aws.us_east_1
+
+  domain_name               = var.domain_name
+  subject_alternative_names = [var.otel_domain_name]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "pulse-telemetry"
+  }
+}
+
+# Route53 DNS validation records
+resource "aws_route53_record" "acm_validation" {
+  for_each = var.route53_zone_id != "" ? {
+    for dvo in aws_acm_certificate.pulse[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = var.route53_zone_id
+}
+
+# Wait for certificate validation
+resource "aws_acm_certificate_validation" "pulse" {
+  count    = var.route53_zone_id != "" ? 1 : 0
+  provider = aws.us_east_1
+
+  certificate_arn         = aws_acm_certificate.pulse[0].arn
+  validation_record_fqdns = [for record in aws_route53_record.acm_validation : record.fqdn]
+}
+
+# =============================================================================
+# CloudFront Distributions - TLS termination with ACM
+# =============================================================================
+
+# CloudFront distribution for Grafana dashboard (telemetry.machanirobotics.dev)
+resource "aws_cloudfront_distribution" "telemetry" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  comment             = "Pulse Telemetry Dashboard"
+  default_root_object = ""
+  aliases             = [var.domain_name]
+
+  origin {
+    domain_name = local.origin_domain
+    origin_id   = "ec2-origin"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ec2-origin"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Host", "Origin", "Authorization", "Accept", "Accept-Language"]
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+    compress               = true
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.pulse[0].certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  tags = {
+    Name = "pulse-telemetry"
+  }
+
+  depends_on = [aws_acm_certificate_validation.pulse]
+}
+
+# CloudFront distribution for OTLP endpoint (otel.machanirobotics.dev)
+resource "aws_cloudfront_distribution" "otel" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  enabled         = true
+  is_ipv6_enabled = true
+  comment         = "Pulse OTLP Ingestion Endpoint"
+  aliases         = [var.otel_domain_name]
+
+  origin {
+    domain_name = local.origin_domain
+    origin_id   = "ec2-otel-origin"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "ec2-otel-origin"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+
+      cookies {
+        forward = "all"
+      }
+    }
+
+    viewer_protocol_policy = "https-only"
+    min_ttl                = 0
+    default_ttl            = 0
+    max_ttl                = 0
+    compress               = true
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    acm_certificate_arn      = aws_acm_certificate_validation.pulse[0].certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+
+  tags = {
+    Name = "pulse-otel"
+  }
+
+  depends_on = [aws_acm_certificate_validation.pulse]
+}
+
+# =============================================================================
+# Route53 Records
+# =============================================================================
+
+# Origin subdomain pointing to EC2 (for CloudFront to use)
+resource "aws_route53_record" "origin" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = local.origin_domain
+  type    = "A"
+  ttl     = 300
+  records = [aws_eip.pulse.public_ip]
+}
+
+# Route53 A record for telemetry dashboard -> CloudFront
+resource "aws_route53_record" "telemetry" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.telemetry[0].domain_name
+    zone_id                = aws_cloudfront_distribution.telemetry[0].hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# Route53 A record for OTLP endpoint -> CloudFront
+resource "aws_route53_record" "otel" {
+  count = var.route53_zone_id != "" ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = var.otel_domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.otel[0].domain_name
+    zone_id                = aws_cloudfront_distribution.otel[0].hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# =============================================================================
+# Outputs
+# =============================================================================
+
+output "acm_certificate_arn" {
+  description = "ACM certificate ARN"
+  value       = var.route53_zone_id != "" ? aws_acm_certificate.pulse[0].arn : "N/A - set route53_zone_id to enable"
+}
+
+output "acm_certificate_status" {
+  description = "ACM certificate validation status"
+  value       = var.route53_zone_id != "" ? aws_acm_certificate_validation.pulse[0].id : "N/A"
+}
+
+output "cloudfront_telemetry_domain" {
+  description = "CloudFront distribution domain for telemetry dashboard"
+  value       = var.route53_zone_id != "" ? aws_cloudfront_distribution.telemetry[0].domain_name : "N/A"
+}
+
+output "cloudfront_otel_domain" {
+  description = "CloudFront distribution domain for OTLP endpoint"
+  value       = var.route53_zone_id != "" ? aws_cloudfront_distribution.otel[0].domain_name : "N/A"
+}
+
+output "telemetry_url" {
+  description = "Telemetry dashboard URL"
+  value       = var.route53_zone_id != "" ? "https://${var.domain_name}" : "https://${aws_eip.pulse.public_ip} (self-signed cert)"
+}
+
+output "otel_endpoint" {
+  description = "OTLP HTTP endpoint for sending telemetry"
+  value       = var.route53_zone_id != "" ? "https://${var.otel_domain_name}/v1/traces" : "http://${aws_eip.pulse.public_ip}:4318/v1/traces"
 }

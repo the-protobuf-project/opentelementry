@@ -233,21 +233,28 @@
           shellHook = ''
             echo "🚀 Pulse Telemetry Development Environment"
             echo ""
-            echo "Nix Commands:"
-            echo "  pulse-deploy provision <ip>  - Install NixOS + deploy"
-            echo "  pulse-deploy deploy <ip>     - Update deployment"
-            echo "  pulse-deploy status <ip>     - Check status"
-            echo "  pulse-deploy logs <ip>       - View logs"
-            echo "  pulse-deploy certs <ip>      - Setup Let's Encrypt"
+            echo "Unified Deploy (recommended):"
+            echo "  ./scripts/deploy.sh provision <ip>  - Full EC2 deployment"
+            echo "  ./scripts/deploy.sh deploy <ip>     - Update deployment"
+            echo "  ./scripts/deploy.sh status <ip>     - Check status"
+            echo "  ./scripts/deploy.sh logs <ip>       - View logs"
+            echo "  ./scripts/deploy.sh ssh <ip>        - SSH into instance"
             echo ""
-            echo "Legacy Scripts:"
+            echo "Other Scripts:"
             echo "  ./scripts/deploy-docker.sh   - Local Docker deployment"
-            echo "  ./scripts/deploy-ec2.sh      - EC2 bash deployment"
+            echo "  ./scripts/setup-otel-endpoint.sh - Generate OTLP token"
             echo ""
-            echo "Configuration: cp .env.example .env && edit .env"
+            echo "Terraform:"
+            echo "  cd terraform && terraform apply"
+            echo ""
+            echo "Configuration: cp .env.example .env && nano .env"
             echo ""
 
             export PATH="$PWD/scripts:$PATH"
+
+            # Aliases
+            alias deploy="./scripts/deploy.sh"
+            alias tf="terraform"
           '';
         };
 

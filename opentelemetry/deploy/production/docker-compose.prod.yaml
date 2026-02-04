@@ -58,7 +58,7 @@ services:
     volumes:
       - ./config/otel-collector.yaml:/etc/otelcol/config.yaml:ro
     environment:
-      - OTLP_AUTH_TOKEN=${OTLP_AUTH_TOKEN:-changeme}
+      - OTLP_AUTH_TOKEN=${OTLP_API_AUTH_TOKEN:-changeme}
     depends_on:
       loki:
         condition: service_healthy
@@ -135,15 +135,15 @@ services:
     restart: unless-stopped
 
   grafana:
-    image: grafana/grafana:11.3.1
+    image: grafana/grafana-enterprise:12.3.2
     volumes:
       - ./config/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - ./config/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
       - ./dashboards:/etc/grafana/provisioning/dashboards/json:ro
       - grafana-data:/var/lib/grafana
     environment:
-      - GF_SERVER_ROOT_URL=https://telemetry.machanirobotics.dev
-      - GF_SERVER_DOMAIN=telemetry.machanirobotics.dev
+      - GF_SERVER_ROOT_URL=https://${GRAFANA_DASHBOARD_DOMAIN:-telemetry.example.com}
+      - GF_SERVER_DOMAIN=${GRAFANA_DASHBOARD_DOMAIN:-telemetry.example.com}
       - GF_AUTH_ANONYMOUS_ENABLED=false
       - GF_AUTH_BASIC_ENABLED=true
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}

@@ -17,7 +17,9 @@ if [ ! -f "$PROD_DIR/.env" ]; then
         cat > "$PROD_DIR/.env" << 'EOF'
 GRAFANA_ADMIN_USER=admin
 GRAFANA_ADMIN_PASSWORD=changeme
-DOMAIN=telemetry.machanirobotics.dev
+GRAFANA_DASHBOARD_DOMAIN=localhost
+OTEL_API_DOMAIN=localhost
+OTLP_API_AUTH_TOKEN=
 EOF
     fi
     echo "⚠️  Please edit $PROD_DIR/.env with your credentials"
@@ -26,16 +28,16 @@ fi
 # Load environment variables
 source "$PROD_DIR/.env"
 
-DOMAIN="${DOMAIN:-localhost}"
-OTEL_DOMAIN="${OTEL_DOMAIN:-localhost}"
+GRAFANA_DOMAIN="${GRAFANA_DASHBOARD_DOMAIN:-localhost}"
+OTEL_DOMAIN="${OTEL_API_DOMAIN:-localhost}"
 GRAFANA_ADMIN_USER="${GRAFANA_ADMIN_USER:-admin}"
 GRAFANA_ADMIN_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-changeme}"
-OTLP_AUTH_TOKEN="${OTLP_AUTH_TOKEN:-}"
+OTLP_API_AUTH_TOKEN="${OTLP_API_AUTH_TOKEN:-}"
 
 # Generate OTLP token if not set
-if [ -z "$OTLP_AUTH_TOKEN" ]; then
-    OTLP_AUTH_TOKEN=$(openssl rand -hex 32)
-    echo "Generated OTLP auth token: $OTLP_AUTH_TOKEN"
+if [ -z "$OTLP_API_AUTH_TOKEN" ]; then
+    OTLP_API_AUTH_TOKEN=$(openssl rand -hex 32)
+    echo "Generated OTLP auth token: $OTLP_API_AUTH_TOKEN"
 fi
 
 # Create required directories
@@ -48,21 +50,28 @@ if [ ! -f "$PROD_DIR/dashboards/metrics.dashboard.json" ]; then
     cp -r "$OTEL_DIR/dashboards/"* "$PROD_DIR/dashboards/" 2>/dev/null || true
 fi
 
-# Check for TLS certificates
-if [ ! -f "$PROD_DIR/certs/fullchain.pem" ] || [ ! -f "$PROD_DIR/certs/privkey.pem" ]; then
-    echo "⚠️  TLS certificates not found in $PROD_DIR/certs/"
-    echo "For production, obtain certificates from Let's Encrypt or your CA"
-    echo "For testing, generating self-signed certificates..."
+# Check for TLS certificates in .auth folder
+AUTH_DIR="$PROD_DIR/.auth/certs"
+mkdir -p "$AUTH_DIR"
+
+if [ ! -f "$AUTH_DIR/fullchain.pem" ] || [ ! -f "$AUTH_DIR/privkey.pem" ]; then
+    echo "⚠️  TLS certificates not found in $AUTH_DIR"
+    echo "Generating self-signed certificates..."
 
     openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-        -keyout "$PROD_DIR/certs/privkey.pem" \
-        -out "$PROD_DIR/certs/fullchain.pem" \
-        -subj "/CN=$DOMAIN" \
-        -addext "subjectAltName=DNS:$DOMAIN,DNS:$OTEL_DOMAIN,DNS:localhost"
+        -keyout "$AUTH_DIR/privkey.pem" \
+        -out "$AUTH_DIR/fullchain.pem" \
+        -subj "/CN=$GRAFANA_DOMAIN" \
+        -addext "subjectAltName=DNS:$GRAFANA_DOMAIN,DNS:$OTEL_DOMAIN,DNS:localhost"
 
-    chmod 644 "$PROD_DIR/certs/privkey.pem"
-    echo "✓ Self-signed certificates generated"
+    chmod 644 "$AUTH_DIR/privkey.pem"
+    echo "✓ Self-signed certificates generated in .auth/certs"
 fi
+
+# Copy to certs folder for docker-compose
+mkdir -p "$PROD_DIR/certs"
+cp "$AUTH_DIR/fullchain.pem" "$PROD_DIR/certs/"
+cp "$AUTH_DIR/privkey.pem" "$PROD_DIR/certs/"
 
 # Check Docker is installed
 if ! command -v docker &> /dev/null; then
@@ -100,7 +109,7 @@ echo ""
 echo "=== Deployment Complete ==="
 echo ""
 echo "Access:"
-echo "  Dashboard: https://localhost (or https://$DOMAIN after DNS)"
+echo "  Dashboard: https://localhost (or https://$GRAFANA_DOMAIN after DNS)"
 echo "  Credentials: $GRAFANA_ADMIN_USER / $GRAFANA_ADMIN_PASSWORD"
 echo ""
 echo "OTLP Endpoints:"
@@ -109,10 +118,10 @@ echo "  HTTP: localhost:4318"
 echo "  After DNS: https://$OTEL_DOMAIN (port 443)"
 echo ""
 echo "OTLP Authentication:"
-echo "  Token: $OTLP_AUTH_TOKEN"
-echo "  Header: Authorization: Bearer $OTLP_AUTH_TOKEN"
+echo "  Token: $OTLP_API_AUTH_TOKEN"
+echo "  Header: Authorization: Bearer $OTLP_API_AUTH_TOKEN"
 echo ""
 echo "⚠️  Change the default password immediately!"
 echo ""
 echo "Save your OTLP token to .env:"
-echo "  OTLP_AUTH_TOKEN=$OTLP_AUTH_TOKEN"
+echo "  OTLP_API_AUTH_TOKEN=$OTLP_API_AUTH_TOKEN"

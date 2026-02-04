@@ -43,8 +43,8 @@ exporters:
       insecure: true
   debug:
     verbosity: detailed
-  # Cloud forwarding
-  otlp/cloud:
+  # Cloud forwarding (HTTP to production)
+  otlphttp/cloud:
     endpoint: ${env:OTEL_CLOUD_ENDPOINT}
     headers:
       Authorization: "Bearer ${env:OTEL_CLOUD_AUTH_TOKEN}"
@@ -99,7 +99,7 @@ service:
       processors:
         - batch/cloud
       exporters:
-        - otlp/cloud
+        - otlphttp/cloud
     metrics/cloud:
       receivers:
         - otlp
@@ -107,11 +107,11 @@ service:
       processors:
         - batch/cloud
       exporters:
-        - otlp/cloud
+        - otlphttp/cloud
     traces/cloud:
       receivers:
         - otlp
       processors:
         - batch/cloud
       exporters:
-        - otlp/cloud
+        - otlphttp/cloud

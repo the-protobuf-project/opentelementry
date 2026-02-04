@@ -47,7 +47,7 @@ services:
     volumes:
       - ./config/otel-collector.yaml:/etc/otelcol/config.yaml
     environment:
-      - OTEL_CLOUD_ENDPOINT=${OTEL_CLOUD_ENDPOINT:-otel.machanirobotics.dev:443}
+      - OTEL_CLOUD_ENDPOINT=${OTEL_CLOUD_ENDPOINT:-https://otel.machanirobotics.dev}
       - OTEL_CLOUD_AUTH_TOKEN=${OTEL_CLOUD_AUTH_TOKEN:-1234}
     ports:
       - 4317:4317

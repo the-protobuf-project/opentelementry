@@ -7,7 +7,13 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
-  batch: null
+  batch:
+    timeout: 1s
+    send_batch_size: 512
+  batch/cloud:
+    timeout: 30s
+    send_batch_size: 2048
+    send_batch_max_size: 4096
 
 connectors:
   spanmetrics:
@@ -24,6 +30,7 @@ connectors:
     namespace: traces
 
 exporters:
+  # Local backends
   otlphttp/loki:
     endpoint: "http://loki:3100/otlp"
   otlp/tempo:
@@ -36,6 +43,20 @@ exporters:
       insecure: true
   debug:
     verbosity: detailed
+  # Cloud forwarding
+  otlp/cloud:
+    endpoint: ${env:OTEL_CLOUD_ENDPOINT}
+    headers:
+      Authorization: "Bearer ${env:OTEL_CLOUD_AUTH_TOKEN}"
+    sending_queue:
+      enabled: true
+      num_consumers: 4
+      queue_size: 1000
+    retry_on_failure:
+      enabled: true
+      initial_interval: 5s
+      max_interval: 30s
+      max_elapsed_time: 300s
 
 extensions:
   health_check: null
@@ -44,6 +65,7 @@ service:
   extensions:
     - health_check
   pipelines:
+    # Local pipelines (immediate)
     logs:
       receivers:
         - otlp
@@ -70,3 +92,26 @@ service:
         - otlp/tempo
         - spanmetrics
         - debug
+    # Cloud pipelines (batched, 30s interval)
+    logs/cloud:
+      receivers:
+        - otlp
+      processors:
+        - batch/cloud
+      exporters:
+        - otlp/cloud
+    metrics/cloud:
+      receivers:
+        - otlp
+        - spanmetrics
+      processors:
+        - batch/cloud
+      exporters:
+        - otlp/cloud
+    traces/cloud:
+      receivers:
+        - otlp
+      processors:
+        - batch/cloud
+      exporters:
+        - otlp/cloud

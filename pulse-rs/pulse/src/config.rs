@@ -52,8 +52,8 @@ use figment::{
 use serde::{Deserialize, Serialize};
 
 use crate::options::{
-    Environment, FoxgloveOptions, LoggingOptions, OTLPOptions, ProfilingOptions, PulseOptions,
-    ServiceOptions, TelemetryOptions, TracingOptions,
+    Environment, FoxgloveOptions, LogLevel, LoggingOptions, ModuleOptions, OTLPOptions,
+    ProfilingOptions, PulseOptions, ServiceOptions, TelemetryOptions, TracingOptions,
 };
 
 /// Complete Pulse configuration loaded from files/environment.
@@ -192,6 +192,19 @@ impl Default for TracingConfig {
 #[serde(default)]
 pub struct LoggingConfig {
     pub log: LogConfig,
+    /// Global log level (1=Error, 2=Info, 3=Debug). Overrides environment-based default.
+    #[serde(default)]
+    pub level: u8,
+    /// Per-module log level overrides keyed by service name.
+    #[serde(default)]
+    pub modules: HashMap<String, ModuleConfig>,
+}
+
+/// Per-module config from TOML.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ModuleConfig {
+    pub level: u8,
 }
 
 /// Log output configuration.
@@ -352,7 +365,16 @@ impl PulseConfig {
             FoxgloveOptions::disabled()
         };
 
-        let logging = LoggingOptions::default();
+        let mut logging = LoggingOptions::default();
+        logging.level = LogLevel::from_u8(self.logging.level);
+        for (name, mod_cfg) in &self.logging.modules {
+            logging.modules.insert(
+                name.clone(),
+                ModuleOptions {
+                    level: LogLevel::from_u8(mod_cfg.level),
+                },
+            );
+        }
         let profiling = ProfilingOptions::default();
         let tracing = TracingOptions::default();
 

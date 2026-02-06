@@ -5,7 +5,13 @@ Main logging client integrating logbook, OTLP, and MCAP.
 from typing import Dict, Any, Optional
 from logbook import Logger as LogbookLogger, StderrHandler
 
-from ...options import ServiceOptions, LoggingOptions, OTLPOptions, Environment
+from ...options import (
+    ServiceOptions,
+    LoggingOptions,
+    OTLPOptions,
+    Environment,
+    LogLevel,
+)
 from .formatter import get_custom_formatter, format_data, get_caller_info, _caller_info
 from .otlp import OTLPLogger
 from .mcap import MCAPLogger
@@ -67,20 +73,52 @@ class PulseLogger:
                 service_environment=service_opts.environment.value,
             )
 
-    def _get_log_level(self, environment, configured_level: str):
-        """Determine log level based on SERVICE_ENVIRONMENT.
+    @staticmethod
+    def _log_level_to_logbook(level: LogLevel):
+        """Convert a pulse LogLevel to a logbook log level."""
+        from logbook import DEBUG, INFO, ERROR
 
-        Log levels by environment:
-        - development: DEBUG
+        if level == LogLevel.MODULE_LEVEL_1:
+            return ERROR
+        elif level == LogLevel.MODULE_LEVEL_2:
+            return INFO
+        elif level == LogLevel.MODULE_LEVEL_3:
+            return DEBUG
+        return INFO
+
+    def _get_log_level(self, environment, configured_level: str):
+        """Determine log level using the priority chain.
+
+        Priority (highest to lowest):
+            1. Per-module override from config [logging.modules.<service-name>]
+            2. Global logging.module_level
+            3. Environment-based default
+
+        Environment defaults:
+        - development/jetson: DEBUG
         - staging: INFO
         - production: INFO
         """
         from logbook import DEBUG, INFO
 
-        if environment == Environment.DEVELOPMENT:
-            return DEBUG
+        # 1. Start with environment-based default (lowest priority)
+        if environment in (Environment.DEVELOPMENT, Environment.JETSON):
+            level = DEBUG
         else:
-            return INFO
+            level = INFO
+
+        # 2. If global module_level is set, override
+        if self.logging_opts.module_level != LogLevel.UNSET:
+            level = self._log_level_to_logbook(self.logging_opts.module_level)
+
+        # 3. If per-module override exists for this service, it wins (highest)
+        service_name = self.service_opts.name
+        if service_name in self.logging_opts.modules:
+            mod_opts = self.logging_opts.modules[service_name]
+            if mod_opts.level != LogLevel.UNSET:
+                level = self._log_level_to_logbook(mod_opts.level)
+
+        return level
 
     def debug(self, message: str, data: Optional[Dict[str, Any]] = None):
         """Log debug message"""

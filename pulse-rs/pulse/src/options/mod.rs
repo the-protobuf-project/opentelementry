@@ -12,7 +12,7 @@ pub mod telemetry;
 pub mod tracing;
 
 pub use foxglove::FoxgloveOptions;
-pub use logging::{LogOptions, LoggingOptions, TimeFormat};
+pub use logging::{LogLevel, LogOptions, LoggingOptions, ModuleOptions, TimeFormat};
 pub use profiling::ProfilingOptions;
 pub use pulse::PulseOptions;
 pub use service::{Environment, ServiceOptions};

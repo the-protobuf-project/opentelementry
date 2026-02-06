@@ -24,8 +24,8 @@ Typical usage example:
 """
 
 from dataclasses import dataclass, field
-from enum import Enum
-from typing import Optional
+from enum import Enum, IntEnum
+from typing import Dict, Optional
 
 
 class Environment(str, Enum):
@@ -88,6 +88,37 @@ class OTLPOptions:
         return 443 if self.secure else 4317
 
 
+class LogLevel(IntEnum):
+    """Log level for a service or module.
+
+    Higher levels produce more verbose output.
+
+    Attributes:
+        UNSET: No explicit level; fall back to environment-based default.
+        LEVEL1: Error only — stable, production-ready module.
+        LEVEL2: Info — normal operation.
+        LEVEL3: Debug — active development, full observability.
+    """
+
+    UNSET = 0
+    MODULE_LEVEL_1 = 1
+    MODULE_LEVEL_2 = 2
+    MODULE_LEVEL_3 = 3
+
+
+@dataclass
+class ModuleOptions:
+    """Per-module logging overrides.
+
+    When set in config, these take highest priority (after env vars).
+
+    Attributes:
+        level: Log level override for this module.
+    """
+
+    level: LogLevel = LogLevel.UNSET
+
+
 @dataclass
 class LoggingOptions:
     """Logging configuration options.
@@ -97,10 +128,14 @@ class LoggingOptions:
     Attributes:
         enabled: Whether logging is enabled.
         level: Log level string. Can be: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+        module_level: Global LogLevel (overrides environment-based default).
+        modules: Per-module log level overrides keyed by service name.
     """
 
     enabled: bool = True
     level: str = "INFO"
+    module_level: LogLevel = LogLevel.UNSET
+    modules: Dict[str, ModuleOptions] = field(default_factory=dict)
 
 
 @dataclass
@@ -282,9 +317,29 @@ def from_config(
     )
 
     # Logging configuration
+    raw_module_level = cfg.get("logging.level", 0)
+    try:
+        module_level = LogLevel(int(raw_module_level))
+    except (ValueError, KeyError):
+        module_level = LogLevel.UNSET
+
+    # Parse per-module overrides from [logging.modules.<name>]
+    module_overrides: Dict[str, ModuleOptions] = {}
+    raw_modules = cfg.get("logging.modules", {})
+    if isinstance(raw_modules, dict):
+        for module_name, module_cfg in raw_modules.items():
+            if isinstance(module_cfg, dict):
+                try:
+                    mod_level = LogLevel(int(module_cfg.get("level", 0)))
+                except (ValueError, KeyError):
+                    mod_level = LogLevel.UNSET
+                module_overrides[module_name] = ModuleOptions(level=mod_level)
+
     logging_opts = LoggingOptions(
         enabled=True,
         level=cfg.get("logging.log.level", "INFO").upper(),
+        module_level=module_level,
+        modules=module_overrides,
     )
 
     # Metrics configuration

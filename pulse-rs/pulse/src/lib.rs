@@ -46,7 +46,7 @@ pub use config::PulseConfig;
 pub use logging::Logger;
 pub use logging::global as logger;
 pub use metrics::Metrics;
-pub use options::Environment;
+pub use options::{Environment, LogLevel};
 
 /// Main Pulse instance that manages all observability components.
 ///
@@ -137,12 +137,32 @@ impl Pulse {
             service_opts.environment.to_string(),
         );
 
-        // Set default log level to INFO to hide TRACE/DEBUG from dependencies
-        // Can be overridden with RUST_LOG environment variable
-        let default_level = std::env::var("RUST_LOG")
+        // Resolve log level using priority chain:
+        //   per-module override > global logging.level > RUST_LOG > environment default
+        let env_default = match service_opts.environment {
+            options::Environment::Development | options::Environment::Jetson => {
+                log::LevelFilter::Debug
+            }
+            options::Environment::Staging => log::LevelFilter::Warn,
+            options::Environment::Production => log::LevelFilter::Info,
+        };
+
+        let mut default_level = std::env::var("RUST_LOG")
             .ok()
             .and_then(|s| s.parse::<log::LevelFilter>().ok())
-            .unwrap_or(log::LevelFilter::Info);
+            .unwrap_or(env_default);
+
+        // Global logging.level overrides environment default
+        if pulse_opts.logging.level.is_set() {
+            default_level = pulse_opts.logging.level.to_level_filter();
+        }
+
+        // Per-module override for this service (highest priority)
+        if let Some(mod_opts) = pulse_opts.logging.modules.get(&service_opts.name)
+            && mod_opts.level.is_set()
+        {
+            default_level = mod_opts.level.to_level_filter();
+        }
 
         let _ = log4rs::init_file("log4rs.yaml", Default::default()).or_else(|_| {
             let stdout = log4rs::append::console::ConsoleAppender::builder()
@@ -330,6 +350,7 @@ pub struct PulseBuilder {
     config_path: Option<String>,
     tracing_enabled: bool,
     profiling_address: Option<String>,
+    log_level: Option<options::LogLevel>,
 }
 
 impl PulseBuilder {
@@ -350,6 +371,7 @@ impl PulseBuilder {
             config_path: None,
             tracing_enabled: false,
             profiling_address: None,
+            log_level: None,
         }
     }
 
@@ -376,6 +398,7 @@ impl PulseBuilder {
             config_path: None,
             tracing_enabled: false,
             profiling_address: None,
+            log_level: None,
         }
     }
 
@@ -443,6 +466,30 @@ impl PulseBuilder {
     /// Sets whether to use secure connection for OTLP.
     pub fn with_otlp_secure(mut self, secure: bool) -> Self {
         self.otlp_secure = Some(secure);
+        self
+    }
+
+    /// Sets the log level for this service/module.
+    ///
+    /// This acts as the code-level default. It can be overridden by the config file
+    /// via `[logging.modules.<service-name>]` or env vars.
+    ///
+    /// Priority chain (highest to lowest):
+    ///   env var > TOML per-module override > `with_log_level()` > environment default
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use pulse::{Pulse, LogLevel};
+    ///
+    /// let pulse = Pulse::new()
+    ///     .with_service("vision", "1.0.0")
+    ///     .with_log_level(LogLevel::ModuleLevel_3)
+    ///     .build()
+    ///     .unwrap();
+    /// ```
+    pub fn with_log_level(mut self, level: options::LogLevel) -> Self {
+        self.log_level = Some(level);
         self
     }
 
@@ -526,6 +573,16 @@ impl PulseBuilder {
 
         if let Some(secure) = self.otlp_secure {
             pulse_opts.telemetry.otlp.secure = secure;
+        }
+
+        // Apply code-level log level (only if config didn't already set a per-module override)
+        if let Some(level) = self.log_level
+            && !pulse_opts.logging.modules.contains_key(&service_opts.name)
+        {
+            pulse_opts
+                .logging
+                .modules
+                .insert(service_opts.name.clone(), options::ModuleOptions { level });
         }
 
         // Enable tracing if requested

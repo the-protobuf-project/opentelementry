@@ -34,7 +34,7 @@ type Logger struct {
 func NewLogger(serviceOpts options.ServiceOptions, opts options.LoggingOptions, unifiedWriter *foxglove.UnifiedMcapWriter, otelLogger otellog.Logger) *Logger {
 	loggerService := log.NewWithOptions(os.Stderr, log.Options{
 		Prefix:          formatPrefix(serviceOpts),
-		Level:           resolveLogLevel(serviceOpts.Environment),
+		Level:           resolveLogLevel(serviceOpts.Name, opts, serviceOpts.Environment),
 		ReportCaller:    true, // Always show file:line
 		ReportTimestamp: true, // Always show timestamp
 		TimeFormat:      resolveTimeFormat(opts),

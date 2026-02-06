@@ -17,6 +17,20 @@ import (
 // Span is a type alias for tracing.Span to avoid exposing internal packages
 type Span = tracing.Span
 
+// LogLevel is a type alias for options.LogLevel so modules can use pulse.Level1, etc.
+type LogLevel = options.LogLevel
+
+// Log level constants for modules.
+//
+//   - ModuleLevel_1 (Error)  — stable, production-ready module
+//   - ModuleLevel_2 (Info)   — normal operation
+//   - ModuleLevel_3 (Debug)  — active development, full observability
+const (
+	ModuleLevel_1 = options.ModuleLevel_1
+	ModuleLevel_2 = options.ModuleLevel_2
+	ModuleLevel_3 = options.ModuleLevel_3
+)
+
 // Pulse is the main framework struct that provides access to all telemetry services.
 // It supports both the legacy logging interface and the new unified OpenTelemetry-based telemetry.
 type Pulse struct {
@@ -109,6 +123,41 @@ func (b *Builder) WithEnvironment(env options.Environment) *Builder {
 		return b
 	}
 	b.serviceOpts.Environment = env
+	return b
+}
+
+// WithLogLevel sets the log level for this service/module.
+// This acts as the code-level default. It can be overridden by the config file
+// via [logging.modules.<service-name>] or env vars (PULSE_LOGGING_MODULES_<NAME>_LEVEL).
+//
+// Priority chain (highest to lowest):
+//
+//	env var > TOML per-module override > WithLogLevel() > environment-based default
+//
+// Example:
+//
+//	p, err := pulse.New().
+//	    WithService("vision", "1.0.0").
+//	    WithLogLevel(pulse.ModuleLevel_3). // "I'm a level 3 module"
+//	    Build()
+func (b *Builder) WithLogLevel(level LogLevel) *Builder {
+	if b.err != nil {
+		return b
+	}
+	// Store as a per-module override keyed by service name.
+	// This will be checked in resolveLogLevel via the Modules map.
+	// If the TOML also has a module override for this name, the TOML wins
+	// because config is loaded first and WithLogLevel is applied only
+	// when no config override exists.
+	if b.pulseOpts.Logging.Modules == nil {
+		b.pulseOpts.Logging.Modules = make(map[string]options.ModuleOptions)
+	}
+	// Only set if config didn't already provide a per-module override for this service
+	if _, exists := b.pulseOpts.Logging.Modules[b.serviceOpts.Name]; !exists {
+		b.pulseOpts.Logging.Modules[b.serviceOpts.Name] = options.ModuleOptions{
+			Level: level,
+		}
+	}
 	return b
 }
 

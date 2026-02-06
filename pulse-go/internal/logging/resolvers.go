@@ -39,8 +39,22 @@ func resolveTimeFormat(opts options.LoggingOptions) string {
 	}
 }
 
-// resolveLogLevel sets default log level based on environment.
-func resolveLogLevel(env options.Environment) log.Level {
+// logLevelToCharm converts a pulse LogLevel to a charmbracelet log.Level.
+func logLevelToCharm(level options.LogLevel) log.Level {
+	switch level {
+	case options.ModuleLevel_1:
+		return log.ErrorLevel
+	case options.ModuleLevel_2:
+		return log.InfoLevel
+	case options.ModuleLevel_3:
+		return log.DebugLevel
+	default:
+		return log.InfoLevel
+	}
+}
+
+// resolveLogLevelFromEnv sets default log level based on environment.
+func resolveLogLevelFromEnv(env options.Environment) log.Level {
 	switch env {
 	case options.Production:
 		return log.InfoLevel
@@ -51,6 +65,30 @@ func resolveLogLevel(env options.Environment) log.Level {
 	default:
 		return log.InfoLevel
 	}
+}
+
+// resolveLogLevel determines the effective log level using the priority chain:
+//
+//	per-module override (from config) > global logging.level > environment-based default
+//
+// The serviceName is used to look up per-module overrides in logging.modules.<name>.
+func resolveLogLevel(serviceName string, opts options.LoggingOptions, env options.Environment) log.Level {
+	// 1. Start with environment-based default (lowest priority)
+	level := resolveLogLevelFromEnv(env)
+
+	// 2. If global logging.level is set, override
+	if opts.Level != options.ModuleLevel_Unset {
+		level = logLevelToCharm(opts.Level)
+	}
+
+	// 3. If per-module override exists for this service, it wins (highest priority)
+	if opts.Modules != nil {
+		if moduleOpts, ok := opts.Modules[serviceName]; ok && moduleOpts.Level != options.ModuleLevel_Unset {
+			level = logLevelToCharm(moduleOpts.Level)
+		}
+	}
+
+	return level
 }
 
 // resolveCallerOffset returns the correct caller offset.

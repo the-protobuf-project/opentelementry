@@ -1,6 +1,13 @@
 from typing import Optional, Dict
 
-from .options import ServiceOptions, PulseOptions, Environment, from_config
+from .options import (
+    ServiceOptions,
+    PulseOptions,
+    Environment,
+    LogLevel,
+    ModuleOptions,
+    from_config,
+)
 from ._private.logging import PulseLogger
 from ._private.metrics import (
     PulseMetrics,
@@ -41,6 +48,7 @@ class PulseBuilder:
         self._otlp_use_http: Optional[bool] = None
         self._mcap_path: Optional[str] = None
         self._tracing_enabled: bool = False
+        self._log_level: Optional[LogLevel] = None
 
     def with_config(self, config_path: str) -> "PulseBuilder":
         """Load configuration from a specific file path."""
@@ -103,6 +111,24 @@ class PulseBuilder:
         self._mcap_path = path
         return self
 
+    def with_log_level(self, level: LogLevel) -> "PulseBuilder":
+        """Set the log level for this service/module.
+
+        This acts as the code-level default. It can be overridden by the
+        config file via [logging.modules.<service-name>] or env vars.
+
+        Priority chain (highest to lowest):
+            env var > TOML per-module override > with_log_level() > environment default
+
+        Example:
+            pulse = Pulse.new() \\
+                .with_service("vision", "1.0.0") \\
+                .with_log_level(LogLevel.MODULE_LEVEL_3) \\
+                .build()
+        """
+        self._log_level = level
+        return self
+
     def with_tracing(self) -> "PulseBuilder":
         """Enable distributed tracing."""
         self._tracing_enabled = True
@@ -139,6 +165,12 @@ class PulseBuilder:
 
         if self._otlp_use_http is not None:
             pulse_opts.telemetry.otlp.use_http = self._otlp_use_http
+
+        # Apply code-level log level (only if config didn't already set a per-module override)
+        if self._log_level is not None and self._name:
+            modules = pulse_opts.telemetry.logging.modules
+            if self._name not in modules:
+                modules[self._name] = ModuleOptions(level=self._log_level)
 
         # Enable tracing if requested
         if self._tracing_enabled:

@@ -49,10 +49,22 @@ export_interval_seconds = 10
 # =============================================================================
 # Logging Configuration
 # =============================================================================
+[logging]
+level = 2                     # Global log level: 1=Error, 2=Info, 3=Debug
+                              # Overrides environment-based default
+
 [logging.log]
 report_caller = true          # Include file:line in logs
 report_timestamp = true       # Include timestamp in logs
 caller_offset = 3             # Stack frame offset for caller info
+
+# Per-module log level overrides
+# These override both the global level AND the code-level WithLogLevel() default.
+# Key = service name used in WithService("name", ...)
+# [logging.modules.navigation]
+# level = 1                   # Stable module — errors only
+# [logging.modules.vision]
+# level = 3                   # Active development — full debug
 
 # =============================================================================
 # Foxglove MCAP Recording (Optional)

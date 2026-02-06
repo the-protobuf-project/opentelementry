@@ -86,6 +86,13 @@ endpoint = "otel.example.com"  # Port 4317 auto-added for gRPC
 auth_token = "your-token"
 secure = false                  # Use TLS
 
+[logging]
+level = 2                      # Global log level (1=Error, 2=Info, 3=Debug)
+
+# Per-module log level overrides
+# [logging.modules.nats-module]
+# level = 1                    # Error only for this module
+
 [foxglove]
 enabled = true
 file_path = "/tmp/telemetry.mcap"
@@ -129,6 +136,58 @@ with Pulse.new().build() as pulse:
     pulse.logger.info("User logged in", {"user_id": "123"})
     pulse.logger.warning("Rate limit", {"percent": 85})
     pulse.logger.error("Request failed", {"error": "timeout"})
+```
+
+### Per-Module Log Levels
+
+Pulse supports per-module log level control, allowing different services or
+modules to log at different verbosity levels within the same application.
+
+#### Log Levels
+
+| Constant                   | Value | Meaning                                    |
+| -------------------------- | ----- | ------------------------------------------ |
+| `LogLevel.UNSET`           | 0     | No explicit level; use environment default |
+| `LogLevel.MODULE_LEVEL_1`  | 1     | Error only — stable, production module     |
+| `LogLevel.MODULE_LEVEL_2`  | 2     | Info — normal operation                    |
+| `LogLevel.MODULE_LEVEL_3`  | 3     | Debug — active development                 |
+
+#### Priority Chain (Highest to Lowest)
+
+1. **Environment variable** — `PULSE_LOGGING_MODULES_<NAME>_LEVEL`
+2. **TOML per-module override** — `[logging.modules.<name>]`
+3. **Code-level** — `.with_log_level()`
+4. **Global config** — `[logging] level`
+5. **Environment-based default** — dev=Debug, prod=Info, staging=Warn
+
+#### Code Usage
+
+```python
+from pulse import Pulse, LogLevel
+
+pulse = Pulse.new() \
+    .with_service("vision-module", "1.0.0") \
+    .with_log_level(LogLevel.MODULE_LEVEL_3) \
+    .build()
+```
+
+#### TOML Configuration
+
+```toml
+[logging]
+level = 2  # Global default: Info
+
+[logging.modules.nats-module]
+level = 1  # Override: Error only (overrides code-level with_log_level)
+
+[logging.modules.vision-module]
+level = 3  # Override: Debug
+```
+
+#### Environment Variable Override
+
+```bash
+export PULSE_LOGGING_MODULES_NATS_MODULE_LEVEL=1  # Highest priority
 ```
 
 ### Metrics
@@ -179,6 +238,7 @@ with Pulse.new().build() as p:
 uv run python examples/logging/simple_example.py
 uv run python examples/metrics/simple_example.py
 uv run python examples/tracing/simple_example.py
+uv run python examples/modules/example.py
 ```
 
 ## Best Practices

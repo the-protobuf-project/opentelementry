@@ -237,6 +237,56 @@ func handleRequest(ctx context.Context, p *pulse.Pulse) {
 }
 ```
 
+### Per-Module Log Levels
+
+Pulse supports per-module log level control, allowing different services or
+modules to log at different verbosity levels within the same application.
+
+#### Log Levels
+
+| Constant           | Value | Meaning                                    |
+| ------------------ | ----- | ------------------------------------------ |
+| `ModuleLevel_Unset`| 0     | No explicit level; use environment default |
+| `ModuleLevel_1`    | 1     | Error only — stable, production module     |
+| `ModuleLevel_2`    | 2     | Info — normal operation                    |
+| `ModuleLevel_3`    | 3     | Debug — active development                 |
+
+#### Priority Chain (Highest to Lowest)
+
+1. **Environment variable** — `PULSE_LOGGING_MODULES_<NAME>_LEVEL`
+2. **TOML per-module override** — `[logging.modules.<name>]`
+3. **Code-level** — `WithLogLevel()`
+4. **Global config** — `[logging] level`
+5. **Environment-based default** — dev=Debug, prod=Info, staging=Warn
+
+#### Code Usage
+
+```go
+p, err := pulse.New().
+    WithService("vision-module", "1.0.0").
+    WithLogLevel(pulse.ModuleLevel_3). // Debug — full observability
+    Build()
+```
+
+#### TOML Configuration
+
+```toml
+[logging]
+level = 2  # Global default: Info
+
+[logging.modules.nats-module]
+level = 1  # Override: Error only (overrides code-level WithLogLevel)
+
+[logging.modules.vision-module]
+level = 3  # Override: Debug
+```
+
+#### Environment Variable Override
+
+```bash
+export PULSE_LOGGING_MODULES_NATS_MODULE_LEVEL=1  # Highest priority
+```
+
 ### Metrics
 
 Pulse supports OpenTelemetry metrics including counters, gauges, and histograms.
@@ -573,9 +623,16 @@ auth_token = "your-bearer-token"  # Optional authentication
 [telemetry.metrics]
 export_interval_seconds = 10
 
+[logging]
+level = 2                        # Global log level (1=Error, 2=Info, 3=Debug)
+
 [logging.log]
 report_caller = true
 report_timestamp = true
+
+# Per-module log level overrides
+# [logging.modules.nats-module]
+# level = 1                      # Error only for this module
 
 [foxglove]
 enabled = false

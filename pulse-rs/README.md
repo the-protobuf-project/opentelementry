@@ -102,6 +102,13 @@ export_interval_seconds = 10
 enabled = false
 file_path = "./recordings/session.mcap"
 
+[logging]
+level = 2                        # Global log level (1=Error, 2=Info, 3=Debug)
+
+# Per-module log level overrides
+# [logging.modules.nats-module]
+# level = 1                      # Error only for this module
+
 [profiling]
 enabled = false
 server_address = "http://localhost:4040"
@@ -170,6 +177,58 @@ let event = UserEvent { user_id: "123".into(), action: "login".into() };
 logger::info!("User action").with_data(&event);
 ```
 
+### Per-Module Log Levels
+
+Pulse supports per-module log level control, allowing different services or
+modules to log at different verbosity levels within the same application.
+
+#### Log Levels
+
+| Constant              | Value | Meaning                                    |
+| --------------------- | ----- | ------------------------------------------ |
+| `LogLevel::Unset`     | 0     | No explicit level; use environment default |
+| `LogLevel::ModuleLevel_1` | 1 | Error only — stable, production module     |
+| `LogLevel::ModuleLevel_2` | 2 | Info — normal operation                    |
+| `LogLevel::ModuleLevel_3` | 3 | Debug — active development                 |
+
+#### Priority Chain (Highest to Lowest)
+
+1. **Environment variable** — `PULSE_LOGGING_MODULES_<NAME>_LEVEL`
+2. **TOML per-module override** — `[logging.modules.<name>]`
+3. **Code-level** — `.with_log_level()`
+4. **Global config** — `[logging] level`
+5. **Environment-based default** — dev=Debug, prod=Info, staging=Warn
+
+#### Code Usage
+
+```rust
+use pulse::{Pulse, LogLevel};
+
+let _pulse = Pulse::new()
+    .with_service("vision-module", "1.0.0")
+    .with_log_level(LogLevel::ModuleLevel_3) // Debug — full observability
+    .build()?;
+```
+
+#### TOML Configuration
+
+```toml
+[logging]
+level = 2  # Global default: Info
+
+[logging.modules.nats-module]
+level = 1  # Override: Error only (overrides code-level with_log_level)
+
+[logging.modules.vision-module]
+level = 3  # Override: Debug
+```
+
+#### Environment Variable Override
+
+```bash
+export PULSE_LOGGING_MODULES_NATS_MODULE_LEVEL=1  # Highest priority
+```
+
 ## Metrics
 
 ### Derive Macro
@@ -232,6 +291,9 @@ cargo run --example metrics
 
 # Distributed tracing
 cargo run --example tracing
+
+# Per-module log levels
+cargo run --example module_levels
 ```
 
 ## Project Structure

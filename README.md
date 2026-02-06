@@ -24,6 +24,7 @@ observable, maintainable systems.
 ## Features
 
 - **Structured Logging** - Context-aware logging with automatic trace correlation
+- **Per-Module Log Levels** - Fine-grained verbosity control per service/module
 - **Metrics Collection** - Counters, histograms, and gauges with OpenTelemetry
 - **Distributed Tracing** - End-to-end request tracking across services
 - **Continuous Profiling** - Production performance analysis with Pyroscope
@@ -106,6 +107,12 @@ environment = "development"
 [telemetry.otlp]
 endpoint = "otel.example.com"  # Port 4317 auto-added
 auth_token = "your-token"
+
+[logging]
+level = 2                        # Global log level (1=Error, 2=Info, 3=Debug)
+
+[logging.modules.nats-module]
+level = 1                        # Override: Error only for this module
 ```
 
 **Priority:** Defaults → `pulse.toml` → `.env` / `PULSE_*` env vars → Code

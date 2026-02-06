@@ -318,12 +318,6 @@ flowchart TD
     B -->|not set| C[Code Builder<br/>WithLogLevel / with_log_level]
     C -->|not set| D[Global Config<br/>logging.level]
     D -->|not set| E[Environment Default<br/>dev=Debug, prod=Info, staging=Warn]
-
-    style A fill:#e74c3c,color:#fff
-    style B fill:#e67e22,color:#fff
-    style C fill:#f1c40f,color:#000
-    style D fill:#3498db,color:#fff
-    style E fill:#95a5a6,color:#fff
 ```
 
 ### Config File Setup

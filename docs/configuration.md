@@ -11,6 +11,7 @@ supported formats, and all available options.
 - [Configuration Lifecycle](#configuration-lifecycle)
 - [File Discovery](#file-discovery)
 - [Environment Variables](#environment-variables)
+- [Per-Module Log Levels](#per-module-log-levels)
 - [Complete Configuration Reference](#complete-configuration-reference)
 - [SDK-Specific Details](#sdk-specific-details)
 
@@ -282,6 +283,195 @@ PULSE_TELEMETRY__OTLP__ENDPOINT=otel.example.com:4317
 
 ---
 
+## Per-Module Log Levels
+
+Pulse supports per-module log level control, allowing each service/module in a
+multi-module system to have its own verbosity. This is especially useful in
+robotics, where stable modules (e.g., NATS transport) should be quiet while
+modules under active development (e.g., vision) need full debug output.
+
+### Log Level Values
+
+| Value | Name | Meaning | Use Case |
+|-------|------|---------|----------|
+| `0` | Unset | No explicit level; falls back to next source in the priority chain | Default |
+| `1` | Level 1 (Error) | Error messages only | Stable, production-ready modules |
+| `2` | Level 2 (Info) | Info + Error | Normal operation, standard telemetry |
+| `3` | Level 3 (Debug) | Debug + Info + Error | Active development, full observability |
+
+### Priority Chain
+
+The effective log level for a module is resolved using the following priority
+chain (highest to lowest):
+
+```text
+1. Environment variable   PULSE_LOGGING_MODULES_<NAME>_LEVEL   (highest)
+2. Config file            [logging.modules.<name>] level = N
+3. Code-level builder     WithLogLevel() / with_log_level()
+4. Global config level    [logging] level = N
+5. Environment default    dev=Debug, prod=Info, staging=Warn     (lowest)
+```
+
+```mermaid
+flowchart TD
+    A[Env Var<br/>PULSE_LOGGING_MODULES_&lt;NAME&gt;_LEVEL] -->|not set| B[Config File<br/>logging.modules.&lt;name&gt;.level]
+    B -->|not set| C[Code Builder<br/>WithLogLevel / with_log_level]
+    C -->|not set| D[Global Config<br/>logging.level]
+    D -->|not set| E[Environment Default<br/>dev=Debug, prod=Info, staging=Warn]
+
+    style A fill:#e74c3c,color:#fff
+    style B fill:#e67e22,color:#fff
+    style C fill:#f1c40f,color:#000
+    style D fill:#3498db,color:#fff
+    style E fill:#95a5a6,color:#fff
+```
+
+### Config File Setup
+
+Define per-module overrides under `[logging.modules.<service-name>]`:
+
+```toml
+# pulse.toml
+
+[logging]
+level = 2                          # Global default: Info
+
+[logging.modules.nats-module]
+level = 1                          # Override: Error only (stable module)
+
+[logging.modules.vision-module]
+level = 3                          # Override: Debug (active development)
+```
+
+**YAML equivalent:**
+
+```yaml
+logging:
+  level: 2
+  modules:
+    nats-module:
+      level: 1
+    vision-module:
+      level: 3
+```
+
+**JSON equivalent:**
+
+```json
+{
+  "logging": {
+    "level": 2,
+    "modules": {
+      "nats-module": { "level": 1 },
+      "vision-module": { "level": 3 }
+    }
+  }
+}
+```
+
+### Environment Variable Override
+
+Override any module's level at runtime without changing config files or code:
+
+```bash
+# Override nats-module to Debug (level 3)
+export PULSE_LOGGING_MODULES_NATS_MODULE_LEVEL=3
+
+# Override vision-module to Error only (level 1)
+export PULSE_LOGGING_MODULES_VISION_MODULE_LEVEL=1
+```
+
+> **Note:** Hyphens in service names are replaced with underscores in
+> environment variable names (e.g., `nats-module` → `NATS_MODULE`).
+
+### Code-Level Usage
+
+Each SDK provides a builder method to set the log level in code. This acts as
+the code-level default and can be overridden by config file or env vars.
+
+**Go:**
+
+```go
+p, err := pulse.New().
+    WithService("vision", "1.0.0").
+    WithLogLevel(pulse.ModuleLevel_3).  // Level 3 = Debug
+    Build()
+```
+
+**Python:**
+
+```python
+from pulse import Pulse
+from pulse.options import LogLevel
+
+pulse = Pulse.new() \
+    .with_service("vision", "1.0.0") \
+    .with_log_level(LogLevel.MODULE_LEVEL_3) \
+    .build()
+```
+
+**Rust:**
+
+```rust
+use pulse::{Pulse, LogLevel};
+
+let pulse = Pulse::new()
+    .with_service("vision", "1.0.0")
+    .with_log_level(LogLevel::ModuleLevel_3)
+    .build()?;
+```
+
+### Multi-Module Example
+
+A typical robotics system with multiple modules, each at a different log level:
+
+```toml
+# pulse.toml — shared config for all modules on this robot
+
+[service]
+name = "robot-core"
+environment = "development"
+
+[service.attributes]
+robot_id = "robot-001"
+
+[logging]
+level = 2                              # Global default: Info
+
+# Stable transport layer — errors only
+[logging.modules.nats-module]
+level = 1
+
+# Vision pipeline under active development — full debug
+[logging.modules.vision-module]
+level = 3
+
+# Motor controller — normal operation
+[logging.modules.motor-module]
+level = 2
+```
+
+With this config:
+
+| Module | Effective Level | Visible Messages |
+|--------|----------------|------------------|
+| `robot-core` | 2 (Info) — from global `logging.level` | Info, Warn, Error |
+| `nats-module` | 1 (Error) — from per-module override | Error only |
+| `vision-module` | 3 (Debug) — from per-module override | Debug, Info, Warn, Error |
+| `motor-module` | 2 (Info) — from per-module override | Info, Warn, Error |
+| `new-module` (no override) | 2 (Info) — falls back to global | Info, Warn, Error |
+
+### LogLevel Constants by SDK
+
+| Level | Go | Python | Rust |
+|-------|-----|--------|------|
+| Unset (0) | `pulse.ModuleLevel_Unset` | `LogLevel.UNSET` | `LogLevel::Unset` |
+| Error (1) | `pulse.ModuleLevel_1` | `LogLevel.MODULE_LEVEL_1` | `LogLevel::ModuleLevel_1` |
+| Info (2) | `pulse.ModuleLevel_2` | `LogLevel.MODULE_LEVEL_2` | `LogLevel::ModuleLevel_2` |
+| Debug (3) | `pulse.ModuleLevel_3` | `LogLevel.MODULE_LEVEL_3` | `LogLevel::ModuleLevel_3` |
+
+---
+
 ## Complete Configuration Reference
 
 ### Full `pulse.toml` Example
@@ -330,11 +520,23 @@ export_interval_seconds = 10
 # =============================================================================
 # Logging Configuration
 # =============================================================================
+[logging]
+level = 2                        # Global module log level (0=Unset, 1=Error, 2=Info, 3=Debug)
+
 [logging.log]
-report_caller = true          # Include file:line in logs
-report_timestamp = true       # Include timestamp in logs
-level = "info"                # debug | info | warn | error
-caller_offset = 3             # Stack frame offset for caller info
+report_caller = true             # Include file:line in logs
+report_timestamp = true          # Include timestamp in logs
+level = "info"                   # debug | info | warn | error
+caller_offset = 3                # Stack frame offset for caller info
+
+# Per-module log level overrides
+# Each module can have its own log level, keyed by service name.
+# These override the global logging.level for that specific module.
+[logging.modules.nats-module]
+level = 1                        # Error only — this module is stable
+
+[logging.modules.vision-module]
+level = 3                        # Debug — this module is in active development
 
 # =============================================================================
 # Foxglove MCAP Recording (Optional)
@@ -404,13 +606,26 @@ Key-value pairs added to all telemetry signals. Useful for:
 |--------|------|---------|-------------|
 | `export_interval_seconds` | int | `10` | Metrics export interval |
 
-#### `[logging.log]` - Logging Settings
+#### `[logging]` - Logging Settings
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `level` | int | `0` (Unset) | Global module log level (0=Unset, 1=Error, 2=Info, 3=Debug) |
+| `modules` | map | `{}` | Per-module log level overrides keyed by service name |
+
+#### `[logging.modules.<name>]` - Per-Module Overrides
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `level` | int | `0` (Unset) | Log level override for this module (1=Error, 2=Info, 3=Debug) |
+
+#### `[logging.log]` - Log Output Settings
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `report_caller` | bool | `true` | Include file:line in logs |
 | `report_timestamp` | bool | `true` | Include timestamp |
-| `level` | string | `"info"` | Log level |
+| `level` | string | `"info"` | Log level string (debug, info, warn, error) |
 | `caller_offset` | int | `3` | Stack frame offset |
 
 #### `[foxglove]` - MCAP Recording
@@ -457,6 +672,13 @@ func main() {
     p, _ := pulse.New().Build()
     defer p.Close()
 
+    // With per-module log level
+    vision, _ := pulse.New().
+        WithService("vision", "1.0.0").
+        WithLogLevel(pulse.ModuleLevel_3).  // Debug
+        Build()
+    defer vision.Close()
+
     // Or load config explicitly
     pulseOpts, serviceOpts, _ := options.LoadConfigWithDefaults("")
 
@@ -469,6 +691,7 @@ func main() {
 
 ```bash
 PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
+PULSE_LOGGING_MODULES_VISION_LEVEL=3
 ```
 
 ### Python SDK
@@ -477,11 +700,17 @@ PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
 
 ```python
 from pulse import Pulse
-from pulse.options import from_config
+from pulse.options import from_config, LogLevel
 
 # Auto-discover config
 with Pulse.new().build() as pulse:
     pulse.logger.info("Hello")
+
+# With per-module log level
+vision = Pulse.new() \
+    .with_service("vision", "1.0.0") \
+    .with_log_level(LogLevel.MODULE_LEVEL_3) \
+    .build()
 
 # Or load config explicitly
 service_opts, pulse_opts = from_config()
@@ -494,6 +723,7 @@ service_opts, pulse_opts = from_config("/path/to/config.toml")
 
 ```bash
 PULSE_TELEMETRY__OTLP__ENDPOINT=localhost:4317
+PULSE_LOGGING__MODULES__VISION__LEVEL=3
 ```
 
 **`.env` File Support:** Yes (auto-loaded)
@@ -503,12 +733,18 @@ PULSE_TELEMETRY__OTLP__ENDPOINT=localhost:4317
 **Config Library:** [figment](https://docs.rs/figment)
 
 ```rust
-use pulse::{Pulse, PulseConfig};
+use pulse::{Pulse, PulseConfig, LogLevel};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Auto-discover config
     let _pulse = Pulse::new().build()?;
+
+    // With per-module log level
+    let _vision = Pulse::new()
+        .with_service("vision", "1.0.0")
+        .with_log_level(LogLevel::ModuleLevel_3)  // Debug
+        .build()?;
 
     // Or load config explicitly
     let config = PulseConfig::load()?;
@@ -524,6 +760,7 @@ async fn main() -> anyhow::Result<()> {
 
 ```bash
 PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
+PULSE_LOGGING_MODULES_VISION_LEVEL=3
 ```
 
 ---

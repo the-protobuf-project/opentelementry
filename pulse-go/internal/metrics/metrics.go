@@ -79,28 +79,36 @@ func (m *Metrics) extractAndRecordMetrics(rv reflect.Value, attrs ...metric.AddO
 			continue
 		}
 
+		// Check if field has pulse tag for metric
 		tag := field.Tag.Get("pulse")
-		if tag == "" || !strings.HasPrefix(tag, "metric:") {
-			continue
+		if tag != "" && strings.HasPrefix(tag, "metric:") {
+			// Parse tag: "metric:type:name"
+			parts := strings.Split(tag, ":")
+			if len(parts) >= 3 {
+				metricType := parts[1]
+				metricName := parts[2]
+
+				// Prefix metric name with service name
+				if m.serviceName != "" {
+					metricName = m.serviceName + "." + metricName
+				}
+
+				// Record metric based on type
+				if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {
+					return err
+				}
+			}
 		}
 
-		// Parse tag: "metric:type:name"
-		parts := strings.Split(tag, ":")
-		if len(parts) < 3 {
-			continue
-		}
-
-		metricType := parts[1]
-		metricName := parts[2]
-
-		// Prefix metric name with service name
-		if m.serviceName != "" {
-			metricName = m.serviceName + "." + metricName
-		}
-
-		// Record metric based on type
-		if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {
-			return err
+		// Recursively process nested structs
+		if fieldValue.Kind() == reflect.Struct {
+			if err := m.extractAndRecordMetrics(fieldValue, attrs...); err != nil {
+				return err
+			}
+		} else if fieldValue.Kind() == reflect.Ptr && !fieldValue.IsNil() && fieldValue.Elem().Kind() == reflect.Struct {
+			if err := m.extractAndRecordMetrics(fieldValue.Elem(), attrs...); err != nil {
+				return err
+			}
 		}
 	}
 

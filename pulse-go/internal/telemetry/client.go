@@ -199,7 +199,8 @@ func (t *Telemetry) initTracing(ctx context.Context, opts options.TelemetryOptio
 			exporter, err = otlptracegrpc.New(ctx, grpcOpts...)
 		}
 	} else {
-		// No exporter in development - skip stdout to reduce noise
+		// No OTLP exporter - use no-op tracer to avoid nil panics
+		t.tracer = NewTracer(otel.GetTracerProvider().Tracer(t.serviceName))
 		return nil
 	}
 
@@ -261,7 +262,8 @@ func (t *Telemetry) initMetrics(ctx context.Context, opts options.TelemetryOptio
 			exporter, err = otlpmetricgrpc.New(ctx, grpcOpts...)
 		}
 	} else {
-		// No exporter in development - skip stdout to reduce noise
+		// No OTLP exporter - use no-op meter to avoid nil panics
+		t.Metrics = NewMetrics(otel.GetMeterProvider().Meter(t.serviceName))
 		return nil
 	}
 

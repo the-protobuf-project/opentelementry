@@ -320,11 +320,21 @@ func isLocalHost(host string) bool {
 	return false
 }
 
-// autoConfigureOTLP automatically configures OTLP settings based on the host.
+// autoConfigureOTLP automatically configures OTLP settings based on the endpoint or host.
 func autoConfigureOTLP(otlp *options.OTLPOptions) {
+	// Auto-enable OTLP when an endpoint is configured
+	if !otlp.Enabled && otlp.Endpoint != "" {
+		otlp.Enabled = true
+	}
+
 	//nolint:staticcheck // Deprecated but kept for backward compatibility
 	if otlp.Host == "" {
 		return
+	}
+
+	// Auto-enable OTLP when a host is configured (deprecated path)
+	if !otlp.Enabled {
+		otlp.Enabled = true
 	}
 
 	isLocal := isLocalHost(otlp.Host) //nolint:staticcheck // Deprecated but kept for backward compatibility

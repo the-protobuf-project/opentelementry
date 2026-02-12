@@ -75,7 +75,7 @@ impl TelemetryProvider {
                     .build()?
             };
 
-            // Build resource attributes including custom service attributes
+            // Build resource attributes including custom service labels
             let mut attrs = vec![
                 KeyValue::new("service.version", service_opts.version.clone()),
                 KeyValue::new(
@@ -83,7 +83,7 @@ impl TelemetryProvider {
                     service_opts.environment.to_string(),
                 ),
             ];
-            for (key, value) in &service_opts.attributes {
+            for (key, value) in &service_opts.labels {
                 attrs.push(KeyValue::new(key.clone(), value.clone()));
             }
 
@@ -143,7 +143,7 @@ impl TelemetryProvider {
                     .build()?
             };
 
-            // Build resource attributes including custom service attributes
+            // Build resource attributes including custom service labels
             let mut attrs = vec![
                 KeyValue::new("service.version", service_opts.version.clone()),
                 KeyValue::new(
@@ -151,7 +151,7 @@ impl TelemetryProvider {
                     service_opts.environment.to_string(),
                 ),
             ];
-            for (key, value) in &service_opts.attributes {
+            for (key, value) in &service_opts.labels {
                 attrs.push(KeyValue::new(key.clone(), value.clone()));
             }
 

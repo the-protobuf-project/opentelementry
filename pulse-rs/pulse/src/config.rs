@@ -22,7 +22,7 @@
 //! environment = "production"
 //! description = "My awesome service"
 //!
-//! [service.attributes]
+//! [service.labels]
 //! robot_id = "robot-001"
 //! fleet_id = "fleet-alpha"
 //!
@@ -79,9 +79,9 @@ pub struct ServiceConfig {
     pub version: String,
     pub environment: String,
     pub description: String,
-    /// Global attributes added to ALL telemetry (logs, metrics, traces).
+    /// Global labels added to ALL telemetry (logs, metrics, traces).
     #[serde(default)]
-    pub attributes: HashMap<String, String>,
+    pub labels: HashMap<String, String>,
 }
 
 impl Default for ServiceConfig {
@@ -91,7 +91,7 @@ impl Default for ServiceConfig {
             version: "0.0.0".to_string(),
             environment: "development".to_string(),
             description: String::new(),
-            attributes: HashMap::new(),
+            labels: HashMap::new(),
         }
     }
 }
@@ -332,7 +332,7 @@ impl PulseConfig {
         ServiceOptions::new(&self.service.name, &self.service.version)
             .with_description(&self.service.description)
             .with_environment(env)
-            .with_attributes(self.service.attributes.clone())
+            .with_labels(self.service.labels.clone())
     }
 
     /// Convert to PulseOptions for Pulse initialization.
@@ -441,15 +441,12 @@ mod tests {
         config.service.environment = "production".to_string();
         config
             .service
-            .attributes
+            .labels
             .insert("robot_id".to_string(), "robot-001".to_string());
 
         let opts = config.to_service_options();
         assert_eq!(opts.name, "test-service");
         assert_eq!(opts.version, "1.0.0");
-        assert_eq!(
-            opts.attributes.get("robot_id"),
-            Some(&"robot-001".to_string())
-        );
+        assert_eq!(opts.labels.get("robot_id"), Some(&"robot-001".to_string()));
     }
 }

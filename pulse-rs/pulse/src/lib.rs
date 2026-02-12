@@ -340,7 +340,7 @@ pub struct PulseBuilder {
     version: Option<String>,
     description: Option<String>,
     environment: Option<options::Environment>,
-    attributes: HashMap<String, String>,
+    labels: HashMap<String, String>,
     otlp_host: Option<String>,
     otlp_port: Option<u16>,
     otlp_auth_token: Option<String>,
@@ -361,7 +361,7 @@ impl PulseBuilder {
             version: Some(version.into()),
             description: None,
             environment: None,
-            attributes: HashMap::new(),
+            labels: HashMap::new(),
             otlp_host: None,
             otlp_port: None,
             otlp_auth_token: None,
@@ -388,7 +388,7 @@ impl PulseBuilder {
             version: None,
             description: None,
             environment: None,
-            attributes: HashMap::new(),
+            labels: HashMap::new(),
             otlp_host: None,
             otlp_port: None,
             otlp_auth_token: None,
@@ -427,15 +427,15 @@ impl PulseBuilder {
         self
     }
 
-    /// Sets global attributes that will be added to all telemetry.
-    pub fn with_attributes(mut self, attributes: HashMap<String, String>) -> Self {
-        self.attributes = attributes;
+    /// Sets global labels that will be added to all telemetry.
+    pub fn with_labels(mut self, labels: HashMap<String, String>) -> Self {
+        self.labels = labels;
         self
     }
 
-    /// Adds a single attribute.
-    pub fn with_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.attributes.insert(key.into(), value.into());
+    /// Adds a single label.
+    pub fn with_label(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.labels.insert(key.into(), value.into());
         self
     }
 
@@ -550,9 +550,9 @@ impl PulseBuilder {
             service_opts.environment = env;
         }
 
-        // Merge attributes (builder attributes override config)
-        for (k, v) in self.attributes {
-            service_opts.attributes.insert(k, v);
+        // Merge labels (builder labels override config)
+        for (k, v) in self.labels {
+            service_opts.labels.insert(k, v);
         }
 
         // Configure OTLP if specified via builder

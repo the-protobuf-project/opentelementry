@@ -96,8 +96,8 @@ func (t *Telemetry) createResource(serviceOpts options.ServiceOptions) (*resourc
 		attribute.String("environment", string(serviceOpts.Environment)),
 	}
 
-	// Add global attributes (e.g., robot.id, device.id)
-	for key, value := range serviceOpts.Attributes {
+	// Add global labels (e.g., robot.id, device.id)
+	for key, value := range serviceOpts.Labels {
 		attrs = append(attrs, attribute.String(key, value))
 	}
 

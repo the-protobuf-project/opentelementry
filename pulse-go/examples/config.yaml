@@ -19,9 +19,9 @@ service:
   environment: development      # development | staging | production
   description: My awesome service
 
-  # Global attributes added to ALL telemetry (logs, metrics, traces)
+  # Global labels added to ALL telemetry (logs, metrics, traces)
   # Useful for robot IDs, device IDs, fleet IDs, etc.
-  attributes:
+  labels:
     # robot_id: robot-001
     # fleet_id: fleet-alpha
     # region: us-west-2

@@ -41,7 +41,7 @@ class PulseBuilder:
         self._version: Optional[str] = None
         self._description: Optional[str] = None
         self._environment: Optional[Environment] = None
-        self._attributes: Dict[str, str] = {}
+        self._labels: Dict[str, str] = {}
         self._otlp_endpoint: Optional[str] = None
         self._otlp_auth_token: Optional[str] = None
         self._otlp_secure: Optional[bool] = None
@@ -71,14 +71,14 @@ class PulseBuilder:
         self._environment = env
         return self
 
-    def with_attribute(self, key: str, value: str) -> "PulseBuilder":
-        """Add a custom attribute to all telemetry."""
-        self._attributes[key] = value
+    def with_label(self, key: str, value: str) -> "PulseBuilder":
+        """Add a custom label to all telemetry."""
+        self._labels[key] = value
         return self
 
-    def with_attributes(self, attrs: Dict[str, str]) -> "PulseBuilder":
-        """Add multiple custom attributes to all telemetry."""
-        self._attributes.update(attrs)
+    def with_labels(self, labels: Dict[str, str]) -> "PulseBuilder":
+        """Add multiple custom labels to all telemetry."""
+        self._labels.update(labels)
         return self
 
     def with_otlp(self, host: str, port: int) -> "PulseBuilder":
@@ -149,8 +149,8 @@ class PulseBuilder:
         if self._environment:
             service_opts.environment = self._environment
 
-        # Merge attributes
-        # (builder attributes would need to be stored on service_opts if supported)
+        # Merge labels
+        # (builder labels would need to be stored on service_opts if supported)
 
         # Configure OTLP if specified via builder
         if self._otlp_endpoint:

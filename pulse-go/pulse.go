@@ -215,43 +215,43 @@ func (b *Builder) WithTracing() *Builder {
 	return b
 }
 
-// WithAttributes sets global attributes that are added to all telemetry data.
+// WithLabels sets global labels that are added to all telemetry data.
 // Use this for constant identifiers like robot.id, device.id, fleet.id, etc.
-// These attributes will appear on all logs, metrics, and traces.
+// These labels will appear on all logs, metrics, and traces.
 //
 // Example:
 //
 //	p, err := pulse.New().
 //	    WithService("robot-controller", "1.0.0").
-//	    WithAttributes(map[string]string{
+//	    WithLabels(map[string]string{
 //	        "robot.id":    "robot-001",
 //	        "fleet.id":    "fleet-alpha",
 //	        "location.id": "warehouse-1",
 //	    }).
 //	    Build()
-func (b *Builder) WithAttributes(attrs map[string]string) *Builder {
+func (b *Builder) WithLabels(labels map[string]string) *Builder {
 	if b.err != nil {
 		return b
 	}
-	if b.serviceOpts.Attributes == nil {
-		b.serviceOpts.Attributes = make(map[string]string)
+	if b.serviceOpts.Labels == nil {
+		b.serviceOpts.Labels = make(map[string]string)
 	}
-	for k, v := range attrs {
-		b.serviceOpts.Attributes[k] = v
+	for k, v := range labels {
+		b.serviceOpts.Labels[k] = v
 	}
 	return b
 }
 
-// WithAttribute sets a single global attribute.
-// Convenience method for adding one attribute at a time.
-func (b *Builder) WithAttribute(key, value string) *Builder {
+// WithLabel sets a single global label.
+// Convenience method for adding one label at a time.
+func (b *Builder) WithLabel(key, value string) *Builder {
 	if b.err != nil {
 		return b
 	}
-	if b.serviceOpts.Attributes == nil {
-		b.serviceOpts.Attributes = make(map[string]string)
+	if b.serviceOpts.Labels == nil {
+		b.serviceOpts.Labels = make(map[string]string)
 	}
-	b.serviceOpts.Attributes[key] = value
+	b.serviceOpts.Labels[key] = value
 	return b
 }
 

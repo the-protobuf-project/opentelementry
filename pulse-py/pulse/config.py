@@ -120,7 +120,7 @@ def get_service_config() -> Dict[str, Any]:
         "version": settings.get("service.version", "1.0.0"),
         "environment": settings.get("service.environment", "development"),
         "description": settings.get("service.description", ""),
-        "attributes": dict(settings.get("service.attributes", {})),
+        "labels": dict(settings.get("service.labels", {})),
     }
 
 

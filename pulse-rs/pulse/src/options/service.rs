@@ -47,9 +47,9 @@ pub struct ServiceOptions {
     pub description: String,
     pub version: String,
     pub environment: Environment,
-    /// Global attributes added to ALL telemetry (logs, metrics, traces).
+    /// Global labels added to ALL telemetry (logs, metrics, traces).
     #[serde(default)]
-    pub attributes: HashMap<String, String>,
+    pub labels: HashMap<String, String>,
 }
 
 impl ServiceOptions {
@@ -65,7 +65,7 @@ impl ServiceOptions {
             description: String::new(),
             version: version.into(),
             environment: Environment::default(),
-            attributes: HashMap::new(),
+            labels: HashMap::new(),
         }
     }
 
@@ -81,15 +81,15 @@ impl ServiceOptions {
         self
     }
 
-    /// Sets global attributes that will be added to all telemetry.
-    pub fn with_attributes(mut self, attributes: HashMap<String, String>) -> Self {
-        self.attributes = attributes;
+    /// Sets global labels that will be added to all telemetry.
+    pub fn with_labels(mut self, labels: HashMap<String, String>) -> Self {
+        self.labels = labels;
         self
     }
 
-    /// Adds a single attribute.
-    pub fn with_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.attributes.insert(key.into(), value.into());
+    /// Adds a single label.
+    pub fn with_label(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.labels.insert(key.into(), value.into());
         self
     }
 }

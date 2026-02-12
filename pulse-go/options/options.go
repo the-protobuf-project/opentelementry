@@ -25,7 +25,7 @@ type ServiceOptions struct {
 	Description string            `json:"description"` // Service description
 	Version     string            `json:"version"`     // Service version
 	Environment Environment       `json:"environment"` // Environment (e.g., "production", "development")
-	Attributes  map[string]string `json:"attributes"`  // Global attributes added to all telemetry (e.g., robot.id, device.id)
+	Labels      map[string]string `json:"labels"`      // Global labels added to all telemetry (e.g., robot.id, device.id)
 }
 
 // Environment is a string type that represents the environment in which the service is running.

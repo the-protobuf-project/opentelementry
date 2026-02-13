@@ -177,8 +177,9 @@ func (l *Logger) log(level log.Level, msg string, data ...any) {
 		}
 
 		// Convert user data to OTLP attributes if present
-		if len(data) > 0 {
-			attrs = append(attrs, dataToOtelAttributes(data[0])...)
+		// Iterate through all data items
+		for _, d := range data {
+			attrs = append(attrs, dataToOtelAttributes(d)...)
 		}
 
 		// Map charmbracelet log levels to OTLP

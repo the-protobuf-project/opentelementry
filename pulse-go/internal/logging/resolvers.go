@@ -124,10 +124,11 @@ func extractStructTagAttributes(rv reflect.Value) []otellog.KeyValue {
 			continue
 		}
 
-		// Parse tag format: "attribute:key_name"
-		if strings.HasPrefix(tag, "attribute:") {
-			attrName := strings.TrimPrefix(tag, "attribute:")
-			if attrName != "" {
+		// Parse tag format: "attribute:key_name" or "attribute:session.id trace:trace.id"
+		// Split by space and extract only items with "attribute:" prefix
+		// Other prefixes (e.g., "trace:") are ignored by this function
+		for _, tagPart := range strings.Fields(tag) {
+			if attrName, found := strings.CutPrefix(tagPart, "attribute:"); found {
 				// Convert field value to appropriate OTEL attribute
 				attrs = append(attrs, convertToOtelKeyValue(attrName, fieldValue.Interface()))
 			}

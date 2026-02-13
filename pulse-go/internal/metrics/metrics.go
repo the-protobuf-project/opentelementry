@@ -84,34 +84,30 @@ func (m *Metrics) extractAndRecordMetrics(rv reflect.Value, attrs ...metric.AddO
 
 		// Check if field has pulse tag for metric
 		tag := field.Tag.Get("pulse")
-		if tag != "" && strings.HasPrefix(tag, "metric:") {
-			// Parse tag: "metric:type:name"
-			parts := strings.Split(tag, ":")
-			if len(parts) >= 3 {
-				metricType := parts[1]
-				metricName := parts[2]
+		if tag == "" {
+			continue
+		}
 
-				// Prefix metric name with service name
-				if m.serviceName != "" {
-					metricName = m.serviceName + "." + metricName
-				}
+		// Parse tag format: "metric:type:name" or "metric:counter:requests attribute:session.id"
+		// Split by space and extract only items with "metric:" prefix
+		// Other prefixes (e.g., "attribute:", "trace:") are ignored by this function
+		for _, tagPart := range strings.Fields(tag) {
+			if metricDef, found := strings.CutPrefix(tagPart, "metric:"); found {
+				// Parse metric definition: "type:name"
+				parts := strings.Split(metricDef, ":")
+				if len(parts) >= 2 {
+					metricType := parts[0]
+					metricName := parts[1]
 
-				// Add service labels as attributes
-				allAttrs := make([]metric.AddOption, 0, len(attrs)+1)
-				allAttrs = append(allAttrs, attrs...)
+					// Prefix metric name with service name
+					if m.serviceName != "" {
+						metricName = m.serviceName + "." + metricName
+					}
 
-				// Convert labels to metric attributes
-				labelAttrs := make([]attribute.KeyValue, 0, len(m.labels))
-				for key, value := range m.labels {
-					labelAttrs = append(labelAttrs, attribute.String(key, value))
-				}
-				if len(labelAttrs) > 0 {
-					allAttrs = append(allAttrs, metric.WithAttributeSet(attribute.NewSet(labelAttrs...)))
-				}
-
-				// Record metric based on type
-				if err := m.recordMetric(metricType, metricName, fieldValue, allAttrs...); err != nil {
-					return err
+					// Record metric based on type
+					if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {
+						return err
+					}
 				}
 			}
 		}

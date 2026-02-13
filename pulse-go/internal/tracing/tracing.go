@@ -3,6 +3,7 @@ package tracing
 import (
 	"context"
 	"reflect"
+	"strings"
 
 	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
 	"github.com/machanirobotics/pulse/pulse-go/internal/telemetry"
@@ -191,19 +192,21 @@ func extractAttributes(data interface{}) []attribute.KeyValue {
 		field := t.Field(i)
 		value := v.Field(i)
 
-		// Get the pulse tag and check if it starts with "trace:"
+		// Get the pulse tag
 		tag := field.Tag.Get("pulse")
 		if tag == "" {
 			continue
 		}
 
-		// Parse the tag format: "trace:attribute.name"
-		if len(tag) > 6 && tag[:6] == "trace:" {
-			attrName := tag[6:] // Extract attribute name after "trace:"
-
-			// Convert field value to attribute
-			attr := convertToAttribute(attrName, value.Interface())
-			attrs = append(attrs, attr)
+		// Parse tag format: "trace:attribute.name" or "trace:session.id attribute:session.id"
+		// Split by space and extract only items with "trace:" prefix
+		// Other prefixes (e.g., "attribute:") are ignored by this function
+		for _, tagPart := range strings.Fields(tag) {
+			if attrName, found := strings.CutPrefix(tagPart, "trace:"); found {
+				// Convert field value to attribute
+				attr := convertToAttribute(attrName, value.Interface())
+				attrs = append(attrs, attr)
+			}
 		}
 	}
 

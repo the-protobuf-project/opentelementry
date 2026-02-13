@@ -49,6 +49,7 @@ class PulseBuilder:
         self._mcap_path: Optional[str] = None
         self._tracing_enabled: bool = False
         self._log_level: Optional[LogLevel] = None
+        self._service_from_code: bool = False
 
     def with_config(self, config_path: str) -> "PulseBuilder":
         """Load configuration from a specific file path."""
@@ -56,9 +57,15 @@ class PulseBuilder:
         return self
 
     def with_service(self, name: str, version: str) -> "PulseBuilder":
-        """Set service name and version."""
+        """Set service name and version.
+
+        When this is called, it indicates the user wants to configure service via code,
+        so we'll clear any service-level configuration from the config file to avoid collisions.
+        """
         self._name = name
         self._version = version
+        # Mark that service should be configured via code only
+        self._service_from_code = True
         return self
 
     def description(self, desc: str) -> "PulseBuilder":
@@ -139,18 +146,31 @@ class PulseBuilder:
         # Load config from file (auto-discovery or specified path)
         service_opts, pulse_opts = from_config(self._config_path)
 
-        # Override with builder values (highest priority)
-        if self._name:
-            service_opts.name = self._name
-        if self._version:
-            service_opts.version = self._version
-        if self._description:
-            service_opts.description = self._description
-        if self._environment:
-            service_opts.environment = self._environment
+        # If with_service was called, ignore service-level config from file
+        if self._service_from_code:
+            from .options import ServiceOptions, Environment
 
-        # Merge labels
-        # (builder labels would need to be stored on service_opts if supported)
+            service_opts = ServiceOptions(
+                name=self._name or "pulse-service",
+                version=self._version or "1.0.0",
+                description=self._description or "",
+                environment=self._environment or Environment.DEVELOPMENT,
+                labels=dict(self._labels),  # Copy builder labels
+            )
+        else:
+            # Override with builder values (highest priority)
+            if self._name:
+                service_opts.name = self._name
+            if self._version:
+                service_opts.version = self._version
+            if self._description:
+                service_opts.description = self._description
+            if self._environment:
+                service_opts.environment = self._environment
+
+            # Merge labels from builder with config
+            if self._labels:
+                service_opts.labels.update(self._labels)
 
         # Configure OTLP if specified via builder
         if self._otlp_endpoint:

@@ -99,12 +99,20 @@ func (b *Builder) WithConfig(configPath string) *Builder {
 }
 
 // WithService sets the service name and version.
+// When this is called, it clears any service-level configuration from the config file
+// to avoid collisions between config file and code-level settings.
 func (b *Builder) WithService(name, version string) *Builder {
 	if b.err != nil {
 		return b
 	}
-	b.serviceOpts.Name = name
-	b.serviceOpts.Version = version
+	// Reset service options to defaults, ignoring config file values
+	b.serviceOpts = options.ServiceOptions{
+		Name:        name,
+		Version:     version,
+		Description: "",
+		Environment: options.Development,
+		Labels:      make(map[string]string),
+	}
 	return b
 }
 

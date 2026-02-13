@@ -351,6 +351,7 @@ pub struct PulseBuilder {
     tracing_enabled: bool,
     profiling_address: Option<String>,
     log_level: Option<options::LogLevel>,
+    service_from_code: bool,
 }
 
 impl PulseBuilder {
@@ -372,6 +373,7 @@ impl PulseBuilder {
             tracing_enabled: false,
             profiling_address: None,
             log_level: None,
+            service_from_code: true,
         }
     }
 
@@ -399,6 +401,7 @@ impl PulseBuilder {
             tracing_enabled: false,
             profiling_address: None,
             log_level: None,
+            service_from_code: false,
         }
     }
 
@@ -536,23 +539,39 @@ impl PulseBuilder {
             )
         };
 
-        // Override with builder values (highest priority)
-        if let Some(name) = self.name {
-            service_opts.name = name;
-        }
-        if let Some(version) = self.version {
-            service_opts.version = version;
-        }
-        if let Some(desc) = self.description {
-            service_opts.description = desc;
-        }
-        if let Some(env) = self.environment {
-            service_opts.environment = env;
-        }
+        // If service was configured via code, ignore service-level config from file
+        if self.service_from_code {
+            let name = self
+                .name
+                .clone()
+                .unwrap_or_else(|| "pulse-service".to_string());
+            let version = self.version.clone().unwrap_or_else(|| "1.0.0".to_string());
+            service_opts = options::ServiceOptions::new(&name, &version)
+                .with_description(self.description.as_deref().unwrap_or(""))
+                .with_environment(
+                    self.environment
+                        .unwrap_or(options::Environment::Development),
+                )
+                .with_labels(self.labels.clone());
+        } else {
+            // Override with builder values (highest priority)
+            if let Some(name) = self.name {
+                service_opts.name = name;
+            }
+            if let Some(version) = self.version {
+                service_opts.version = version;
+            }
+            if let Some(desc) = self.description {
+                service_opts.description = desc;
+            }
+            if let Some(env) = self.environment {
+                service_opts.environment = env;
+            }
 
-        // Merge labels (builder labels override config)
-        for (k, v) in self.labels {
-            service_opts.labels.insert(k, v);
+            // Merge labels (builder labels override config)
+            for (k, v) in self.labels {
+                service_opts.labels.insert(k, v);
+            }
         }
 
         // Configure OTLP if specified via builder

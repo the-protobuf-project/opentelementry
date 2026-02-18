@@ -9,7 +9,6 @@ import (
 	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
 	"github.com/machanirobotics/pulse/pulse-go/internal/telemetry"
 	"github.com/machanirobotics/pulse/pulse-go/options"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
 
@@ -84,29 +83,27 @@ func (m *Metrics) extractAndRecordMetrics(rv reflect.Value, attrs ...metric.AddO
 
 		// Check if field has pulse tag for metric
 		tag := field.Tag.Get("pulse")
-		if tag == "" {
-			continue
-		}
+		if tag != "" {
+			// Parse tag format: "metric:type:name" or "metric:counter:requests attribute:session.id"
+			// Split by space and extract only items with "metric:" prefix
+			// Other prefixes (e.g., "attribute:", "trace:") are ignored by this function
+			for _, tagPart := range strings.Fields(tag) {
+				if metricDef, found := strings.CutPrefix(tagPart, "metric:"); found {
+					// Parse metric definition: "type:name"
+					parts := strings.Split(metricDef, ":")
+					if len(parts) >= 2 {
+						metricType := parts[0]
+						metricName := parts[1]
 
-		// Parse tag format: "metric:type:name" or "metric:counter:requests attribute:session.id"
-		// Split by space and extract only items with "metric:" prefix
-		// Other prefixes (e.g., "attribute:", "trace:") are ignored by this function
-		for _, tagPart := range strings.Fields(tag) {
-			if metricDef, found := strings.CutPrefix(tagPart, "metric:"); found {
-				// Parse metric definition: "type:name"
-				parts := strings.Split(metricDef, ":")
-				if len(parts) >= 2 {
-					metricType := parts[0]
-					metricName := parts[1]
+						// Prefix metric name with service name
+						if m.serviceName != "" {
+							metricName = m.serviceName + "." + metricName
+						}
 
-					// Prefix metric name with service name
-					if m.serviceName != "" {
-						metricName = m.serviceName + "." + metricName
-					}
-
-					// Record metric based on type
-					if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {
-						return err
+						// Record metric based on type
+						if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {
+							return err
+						}
 					}
 				}
 			}

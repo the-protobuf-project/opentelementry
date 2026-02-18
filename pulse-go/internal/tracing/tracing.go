@@ -170,7 +170,6 @@ func extractAttributes(data interface{}) []attribute.KeyValue {
 	}
 
 	v := reflect.ValueOf(data)
-	t := reflect.TypeOf(data)
 
 	// Handle pointers
 	if v.Kind() == reflect.Ptr {
@@ -178,7 +177,6 @@ func extractAttributes(data interface{}) []attribute.KeyValue {
 			return nil
 		}
 		v = v.Elem()
-		t = t.Elem()
 	}
 
 	// Only process structs
@@ -186,27 +184,33 @@ func extractAttributes(data interface{}) []attribute.KeyValue {
 		return nil
 	}
 
+	rt := v.Type()
 	attrs := make([]attribute.KeyValue, 0)
 
 	for i := 0; i < v.NumField(); i++ {
-		field := t.Field(i)
+		field := rt.Field(i)
 		value := v.Field(i)
 
 		// Get the pulse tag
 		tag := field.Tag.Get("pulse")
-		if tag == "" {
-			continue
+		if tag != "" {
+			// Parse tag format: "trace:attribute.name" or "trace:session.id attribute:session.id"
+			// Split by space and extract only items with "trace:" prefix
+			// Other prefixes (e.g., "attribute:") are ignored by this function
+			for _, tagPart := range strings.Fields(tag) {
+				if attrName, found := strings.CutPrefix(tagPart, "trace:"); found {
+					// Convert field value to attribute
+					attr := convertToAttribute(attrName, value.Interface())
+					attrs = append(attrs, attr)
+				}
+			}
 		}
 
-		// Parse tag format: "trace:attribute.name" or "trace:session.id attribute:session.id"
-		// Split by space and extract only items with "trace:" prefix
-		// Other prefixes (e.g., "attribute:") are ignored by this function
-		for _, tagPart := range strings.Fields(tag) {
-			if attrName, found := strings.CutPrefix(tagPart, "trace:"); found {
-				// Convert field value to attribute
-				attr := convertToAttribute(attrName, value.Interface())
-				attrs = append(attrs, attr)
-			}
+		// Recursively process nested structs
+		if value.Kind() == reflect.Struct {
+			attrs = append(attrs, extractAttributes(value.Interface())...)
+		} else if value.Kind() == reflect.Ptr && !value.IsNil() && value.Elem().Kind() == reflect.Struct {
+			attrs = append(attrs, extractAttributes(value.Interface())...)
 		}
 	}
 

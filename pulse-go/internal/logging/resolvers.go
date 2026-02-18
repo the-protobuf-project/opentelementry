@@ -120,18 +120,23 @@ func extractStructTagAttributes(rv reflect.Value) []otellog.KeyValue {
 
 		// Check for pulse struct tag
 		tag := field.Tag.Get("pulse")
-		if tag == "" {
-			continue
+		if tag != "" {
+			// Parse tag format: "attribute:key_name" or "attribute:session.id trace:trace.id"
+			// Split by space and extract only items with "attribute:" prefix
+			// Other prefixes (e.g., "trace:") are ignored by this function
+			for _, tagPart := range strings.Fields(tag) {
+				if attrName, found := strings.CutPrefix(tagPart, "attribute:"); found {
+					// Convert field value to appropriate OTEL attribute
+					attrs = append(attrs, convertToOtelKeyValue(attrName, fieldValue.Interface()))
+				}
+			}
 		}
 
-		// Parse tag format: "attribute:key_name" or "attribute:session.id trace:trace.id"
-		// Split by space and extract only items with "attribute:" prefix
-		// Other prefixes (e.g., "trace:") are ignored by this function
-		for _, tagPart := range strings.Fields(tag) {
-			if attrName, found := strings.CutPrefix(tagPart, "attribute:"); found {
-				// Convert field value to appropriate OTEL attribute
-				attrs = append(attrs, convertToOtelKeyValue(attrName, fieldValue.Interface()))
-			}
+		// Recursively process nested structs
+		if fieldValue.Kind() == reflect.Struct {
+			attrs = append(attrs, extractStructTagAttributes(fieldValue)...)
+		} else if fieldValue.Kind() == reflect.Ptr && !fieldValue.IsNil() && fieldValue.Elem().Kind() == reflect.Struct {
+			attrs = append(attrs, extractStructTagAttributes(fieldValue.Elem())...)
 		}
 	}
 

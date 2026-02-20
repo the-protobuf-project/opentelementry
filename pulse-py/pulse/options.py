@@ -214,12 +214,14 @@ class ServiceOptions:
         description: Optional service description.
         version: Service version string.
         environment: Deployment environment (development, staging, production, jetson).
+        labels: Optional dictionary of service labels for additional metadata.
     """
 
     name: str
     description: str = ""
     version: str = "1.0.0"
     environment: Environment = Environment.DEVELOPMENT
+    labels: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -294,6 +296,7 @@ def from_config(
         description=cfg.get("service.description", ""),
         version=cfg.get("service.version", "1.0.0"),
         environment=service_environment,
+        labels=dict(cfg.get("service.labels", {})),
     )
 
     # OTLP configuration - auto-enable if endpoint is set to non-localhost

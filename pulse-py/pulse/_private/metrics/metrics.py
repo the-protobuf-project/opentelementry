@@ -37,7 +37,8 @@ class PulseMetrics:
         self.meter = None
         self._counters: Dict[str, Any] = {}
         self._histograms: Dict[str, Any] = {}
-        self._gauges: Dict[str, Any] = {}
+        self._gauges: Dict[str, Any] = {}  # Stores UpDownCounter instruments
+        self._gauge_values: Dict[str, float] = {}  # Tracks current gauge values
 
         if otlp_opts and otlp_opts.enabled:
             self._setup_otel_metrics(service_opts, metrics_opts, otlp_opts)
@@ -105,11 +106,21 @@ class PulseMetrics:
             metric_name = json_schema_extra.get("metric_name", field_name)
             value = getattr(model, field_name)
 
+            # Skip gauge metrics with default value (0) to avoid resetting them
+            # This allows partial metric updates like JetStreamMetrics(api_requests_total=1)
+            # without resetting other gauge fields like 'enabled' or 'streams'
+            if metric_type == "gauge" and value == 0:
+                # Check if this field was explicitly set or is using default
+                if field_name not in model.model_fields_set:
+                    continue
+
             # Record based on type
             if metric_type == "counter":
                 self._record_counter(metric_name, float(value), labels)
             elif metric_type == "histogram":
-                self._record_histogram(metric_name, float(value), labels)
+                self._record_histogram(
+                    metric_name, float(value), labels, field_info=field_info
+                )
             elif metric_type == "gauge":
                 self._record_gauge(metric_name, float(value), labels)
 
@@ -134,13 +145,35 @@ class PulseMetrics:
             )
 
     def _record_histogram(
-        self, name: str, value: float, labels: Optional[Dict[str, Any]] = None
+        self,
+        name: str,
+        value: float,
+        labels: Optional[Dict[str, Any]] = None,
+        field_info: Optional[Any] = None,
     ):
         """Record a histogram metric"""
         # OTEL histogram
         if self.meter:
             if name not in self._histograms:
-                self._histograms[name] = self.meter.create_histogram(name)
+                # Extract buckets from field_info if available
+                buckets = None
+                if (
+                    field_info
+                    and hasattr(field_info, "json_schema_extra")
+                    and field_info.json_schema_extra
+                ):
+                    buckets = field_info.json_schema_extra.get("buckets")
+
+                # Create histogram with advisory buckets if provided
+                kwargs = {}
+                if buckets:
+                    kwargs["explicit_bucket_boundaries_advisory"] = buckets
+
+                self._histograms[name] = self.meter.create_histogram(
+                    name,
+                    description=(field_info.description or "") if field_info else "",
+                    **kwargs,
+                )
             self._histograms[name].record(value, attributes=labels or {})
 
         # MCAP
@@ -156,24 +189,33 @@ class PulseMetrics:
     def _record_gauge(
         self, name: str, value: float, labels: Optional[Dict[str, Any]] = None
     ):
-        """Record a gauge metric"""
-        # OTEL gauge (using observable gauge)
+        """Record a gauge metric using UpDownCounter (matches Go implementation)"""
+        # OTEL gauge (using UpDownCounter like Go does)
         if self.meter:
             if name not in self._gauges:
-                # Store the current value for the callback
-                self._gauges[name] = {"value": value, "labels": labels or {}}
+                # Create the UpDownCounter instrument
+                self._gauges[name] = self.meter.create_up_down_counter(
+                    name, unit="1", description=f"Gauge metric: {name}"
+                )
 
-                def callback(options):
-                    gauge_data = self._gauges.get(name, {})
-                    yield metrics.Observation(
-                        gauge_data.get("value", 0),
-                        attributes=gauge_data.get("labels", {}),
-                    )
+            # Create a unique key for tracking this gauge instance with its labels
+            label_key = name
+            if labels:
+                # Sort labels to ensure consistent key regardless of dictionary order
+                label_key = f"{name}:{sorted(labels.items())}"
 
-                self.meter.create_observable_gauge(name, callbacks=[callback])
-            else:
-                # Update stored value
-                self._gauges[name] = {"value": value, "labels": labels or {}}
+            if label_key not in self._gauge_values:
+                self._gauge_values[label_key] = 0.0
+
+            # Calculate delta to reach the target value
+            current_value = self._gauge_values[label_key]
+            delta = value - current_value
+
+            # Add the delta to reach the new value
+            self._gauges[name].add(delta, attributes=labels or {})
+
+            # Update tracked value
+            self._gauge_values[label_key] = value
 
         # MCAP
         if self.mcap_writer and not self.mcap_writer.is_closed():

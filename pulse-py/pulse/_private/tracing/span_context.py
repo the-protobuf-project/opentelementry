@@ -15,6 +15,8 @@ import time
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from opentelemetry.trace import Status, StatusCode
+from opentelemetry import trace, context
+
 
 from .context import get_trace_context, set_trace_context, reset_trace_context
 
@@ -72,28 +74,39 @@ class SpanContext:
         if not self.tracing.enabled or not self.tracing.tracer:
             return self
 
-        # Get current context
+        # Get current context and parent span
+        current_span = trace.get_current_span()
         ctx = get_trace_context()
         self.parent_span_id = ctx.get("span_id")
 
-        # Start span
-        self.span = self.tracing.tracer.start_span(self.name)
+        # Start span with proper context for parent-child relationships
+        if current_span and current_span.is_recording():
+            # Use the current context as parent
+            current_context = context.get_current()
+            self.span = self.tracing.tracer.start_span(
+                self.name, context=current_context
+            )
+        else:
+            self.span = self.tracing.tracer.start_span(self.name)
 
-        # Set attributes
-        for key, value in self.attributes.items():
-            self.span.set_attribute(key, value)
+        # Make this span the current span in the context
+        span_context = trace.set_span_in_context(self.span)
+        self.token = context.attach(span_context)
 
-        # Get span context
+        # Update our custom context
         span_ctx = self.span.get_span_context()
         self.trace_id = format(span_ctx.trace_id, "032x")
         self.span_id = format(span_ctx.span_id, "016x")
 
-        # Update context
         new_ctx = {
             "trace_id": self.trace_id,
             "span_id": self.span_id,
         }
-        self.token = set_trace_context(new_ctx)
+        self.custom_token = set_trace_context(new_ctx)
+
+        # Set attributes
+        for key, value in self.attributes.items():
+            self.span.set_attribute(key, value)
 
         # Write to MCAP
         if self.tracing.mcap_writer and not self.tracing.mcap_writer.is_closed():
@@ -131,8 +144,15 @@ class SpanContext:
 
             self.span.end()
 
+        # Restore OpenTelemetry context
         if self.token:
-            reset_trace_context(self.token)
+            from opentelemetry import context
+
+            context.detach(self.token)
+
+        # Restore our custom context
+        if hasattr(self, "custom_token") and self.custom_token:
+            reset_trace_context(self.custom_token)
 
         return False
 

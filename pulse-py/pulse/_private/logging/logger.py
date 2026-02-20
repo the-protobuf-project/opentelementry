@@ -58,6 +58,8 @@ class PulseLogger:
                 service_name=service_opts.name,
                 service_version=service_opts.version,
                 service_environment=service_opts.environment.value,
+                service_description=service_opts.description,
+                service_labels=service_opts.labels,
                 endpoint=otlp_opts.endpoint,
                 auth_token=otlp_opts.auth_token,
                 secure=otlp_opts.secure,

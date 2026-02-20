@@ -52,6 +52,8 @@ class OTLPLogger:
         endpoint: str,
         auth_token: str = "",
         secure: bool = False,
+        service_description: str = "",
+        service_labels: Dict[str, str] = None,
     ):
         """Initialize the OTLP logger.
 
@@ -68,12 +70,20 @@ class OTLPLogger:
             endpoint: OTLP endpoint (e.g., "localhost:4317" or "otel.example.com").
             auth_token: Bearer token for authentication.
             secure: Use TLS for connection.
+            service_description: Optional service description.
+            service_labels: Optional dictionary of service labels.
         """
+        # Store service description and labels for use in log attributes
+        self.service_description = service_description
+        self.service_labels = service_labels or {}
+
         resource = Resource.create(
             {
                 "service.name": service_name,
                 "service.version": service_version,
                 "service.environment": service_environment,
+                "service.description": service_description,
+                **self.service_labels,
             }
         )
 
@@ -113,10 +123,13 @@ class OTLPLogger:
             logger_provider=logger_provider,
         )
 
-        # Ensure root logger level allows all logs to pass through to handler
-        root_logger = logging.getLogger()
-        root_logger.setLevel(logging.DEBUG)
-        root_logger.addHandler(handler)
+        # Create a named logger instead of using root logger to avoid cross-service contamination
+        logger = logging.getLogger(f"{service_name}")
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(handler)
+
+        # Don't propagate to root logger to prevent duplicate logs
+        logger.propagate = False
         self.logger = logger_provider.get_logger(service_name)
         self.service_name = service_name
         self.service_version = service_version
@@ -174,14 +187,19 @@ class OTLPLogger:
             "CRITICAL": std_logging.CRITICAL,
         }
 
-        # Build extra attributes with service metadata and code location
+        # Build extra attributes with service metadata, code location, and service labels
         extra_attrs = {
             "service.name": self.service_name,
             "service.version": self.service_version,
             "service.environment": self.service_environment,
+            "service.description": self.service_description,
             "code.filepath": caller_file,
             "code.lineno": caller_line,
         }
+
+        # Add service labels as direct attributes
+        if self.service_labels:
+            extra_attrs.update(self.service_labels)
 
         # Add structured data as a nested 'data' attribute
         if data:
@@ -217,6 +235,7 @@ class OTLPLogger:
                 else:
                     extra_attrs[attr_key] = value
 
-        # Emit to standard logging
+        # Emit to service-specific logger instead of root logger
+        service_logger = logging.getLogger(f"{self.service_name}")
         std_level = level_map.get(level, std_logging.INFO)
-        std_logging.log(std_level, message, extra=extra_attrs)
+        service_logger.log(std_level, message, extra=extra_attrs)

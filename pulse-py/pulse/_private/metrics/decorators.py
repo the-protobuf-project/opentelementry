@@ -61,7 +61,9 @@ def counter(name: str, description: str = "") -> Any:
     )
 
 
-def histogram(name: str, description: str = "") -> Any:
+def histogram(
+    name: str, description: str = "", buckets: Optional[list[float]] = None
+) -> Any:
     """Decorator for histogram metric fields.
 
     Histograms track the distribution of values over time.
@@ -70,13 +72,14 @@ def histogram(name: str, description: str = "") -> Any:
     Args:
         name: Metric name (e.g., "response.time", "request.size").
         description: Human-readable description of the metric.
+        buckets: Optional explicit bucket boundaries for the histogram.
 
     Returns:
         A Pydantic Field with histogram metric metadata.
 
     Example:
         class Metrics(BaseModel):
-            latency: float = histogram("api.latency", "API latency in ms")
+            latency: float = histogram("api.latency", "API latency in ms", buckets=[10, 50, 100, 500])
     """
     return Field(
         default=0.0,
@@ -84,6 +87,7 @@ def histogram(name: str, description: str = "") -> Any:
             "metric_type": "histogram",
             "metric_name": name,
             "description": description,
+            "buckets": buckets,
         },
     )
 
@@ -290,6 +294,7 @@ def Counter(name: Optional[str] = None, description: str = "") -> Any:
     """
     return Field(
         default=0,
+        description=description,
         json_schema_extra={
             "metric_type": "counter",
             "metric_name": name,  # Will be set by MetricModel decorator if None
@@ -298,12 +303,17 @@ def Counter(name: Optional[str] = None, description: str = "") -> Any:
     )
 
 
-def Histogram(name: Optional[str] = None, description: str = "") -> Any:
+def Histogram(
+    name: Optional[str] = None,
+    description: str = "",
+    buckets: Optional[list[float]] = None,
+) -> Any:
     """Histogram field helper with automatic name inference.
 
     Args:
         name: Optional metric name. If not provided, uses field name.
         description: Human-readable description of the metric.
+        buckets: Optional explicit bucket boundaries for the histogram.
 
     Returns:
         A Pydantic Field with histogram metric metadata.
@@ -311,7 +321,7 @@ def Histogram(name: Optional[str] = None, description: str = "") -> Any:
     Example:
         @pulse.MetricModel
         class MyMetrics(BaseModel):
-            latency: float = Histogram(description="API latency in ms")
+            latency: float = Histogram(description="API latency in ms", buckets=[0.1, 0.5, 1.0])
     """
     return Field(
         default=0.0,
@@ -319,6 +329,7 @@ def Histogram(name: Optional[str] = None, description: str = "") -> Any:
             "metric_type": "histogram",
             "metric_name": name,
             "description": description,
+            "buckets": buckets,
         },
     )
 
@@ -364,6 +375,7 @@ class MetricsBaseModel(BaseModel):
             # With service name "my-service", generates:
             # - "my-service.tokens"
             # - "my-service.latency"
+            # - "my-service.errors"
 
         # Override prefix:
         class CustomMetrics(pulse.MetricsBaseModel, prefix="custom"):

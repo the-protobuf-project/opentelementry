@@ -243,3 +243,23 @@ class TracedOperation:
         """
         if self.span:
             self.span.add_event(event_name, attributes)
+
+    def set_attribute(self, key: str, value: Any):
+        """Set an attribute on the operation's span.
+
+        Args:
+            key: Attribute key.
+            value: Attribute value.
+        """
+        if self.span:
+            self.span.set_attribute(key, value)
+
+    def add_event(self, name: str, attributes: Optional[Dict[str, Any]] = None):
+        """Add an event to the operation's span.
+
+        Args:
+            name: Event name.
+            attributes: Optional event attributes.
+        """
+        if self.span:
+            self.span.add_event(name, attributes)

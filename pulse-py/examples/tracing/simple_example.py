@@ -48,41 +48,41 @@ def main():
         result = random_function()
         p.logger.info(f"Function result: {result}")
 
-        # Example 1: Using TracedOperation context manager
+        # Example 1: Using nested TracedOperation for sub-spans
         with TracedOperation(
             p.tracing, "data_pipeline", {"pipeline.version": "1.0"}
-        ) as op:
-            op.step("loading_data")
-            time.sleep(0.05)
+        ) as _:
+            with TracedOperation(p.tracing, "loading_data") as _:
+                time.sleep(0.05)
 
-            op.step("validating_data")
-            time.sleep(0.03)
+            with TracedOperation(p.tracing, "validating_data") as _:
+                time.sleep(0.03)
 
-            op.step("transforming_data")
-            time.sleep(0.08)
+            with TracedOperation(p.tracing, "transforming_data") as _:
+                time.sleep(0.08)
 
-            op.step("saving_results")
-            time.sleep(0.04)
+            with TracedOperation(p.tracing, "saving_results") as _:
+                time.sleep(0.04)
 
-        p.logger.info("✅ Pipeline completed with automatic event tracking!")
+        p.logger.info("✅ Pipeline completed with sub-spans!")
 
         # Example 2: Nested operations
-        with TracedOperation(p.tracing, "ml_inference", {"model": "gpt-4"}) as op:
-            op.step("loading_model")
-            time.sleep(0.02)
+        with TracedOperation(p.tracing, "ml_inference", {"model": "gpt-4"}) as _:
+            with TracedOperation(p.tracing, "loading_model") as _:
+                time.sleep(0.02)
 
-            op.step("preprocessing_input")
-            with TracedOperation(p.tracing, "tokenization") as tokenize_op:
-                tokenize_op.step("splitting_text")
-                time.sleep(0.01)
-                tokenize_op.step("encoding_tokens")
-                time.sleep(0.015)
+            with TracedOperation(p.tracing, "preprocessing_input") as _:
+                with TracedOperation(p.tracing, "tokenization") as tokenize_op:
+                    tokenize_op.step("splitting_text")
+                    time.sleep(0.01)
+                    tokenize_op.step("encoding_tokens")
+                    time.sleep(0.015)
 
-            op.step("running_inference")
-            time.sleep(0.15)
+            with TracedOperation(p.tracing, "running_inference") as _:
+                time.sleep(0.15)
 
-            op.step("postprocessing_output")
-            time.sleep(0.02)
+            with TracedOperation(p.tracing, "postprocessing_output") as _:
+                time.sleep(0.02)
 
         p.logger.info("✅ ML inference completed with nested tracing!")
 

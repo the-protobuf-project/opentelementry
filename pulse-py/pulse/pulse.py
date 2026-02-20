@@ -148,8 +148,6 @@ class PulseBuilder:
 
         # If with_service was called, ignore service-level config from file
         if self._service_from_code:
-            from .options import ServiceOptions, Environment
-
             service_opts = ServiceOptions(
                 name=self._name or "pulse-service",
                 version=self._version or "1.0.0",

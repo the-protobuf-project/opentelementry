@@ -19,6 +19,7 @@ type Tracing struct {
 	mcap    *foxglove.UnifiedMcapWriter
 	opts    options.TracingOptions
 	service options.ServiceOptions
+	labels  map[string]string // Service labels to add as span attributes
 }
 
 // NewTracing creates a new Tracing instance
@@ -28,6 +29,7 @@ func NewTracing(serviceOpts options.ServiceOptions, opts options.TracingOptions,
 		mcap:    mcap,
 		opts:    opts,
 		service: serviceOpts,
+		labels:  serviceOpts.Labels,
 	}
 }
 
@@ -73,6 +75,23 @@ func (s *Span) SetAttributes(attrs map[string]interface{}) {
 	s.span.SetAttributes(attributes...)
 }
 
+// SetAttributesWithLabels sets multiple attributes on the span including service labels
+func (s *Span) SetAttributesWithLabels(attrs map[string]interface{}, labels map[string]string) {
+	attributes := make([]attribute.KeyValue, 0, len(attrs)+len(labels))
+
+	// Add provided attributes
+	for k, v := range attrs {
+		attributes = append(attributes, convertToAttribute(k, v))
+	}
+
+	// Add service labels as attributes
+	for k, v := range labels {
+		attributes = append(attributes, attribute.String(k, v))
+	}
+
+	s.span.SetAttributes(attributes...)
+}
+
 // Start creates a new span with the given name and automatically extracts attributes from the provided struct
 // using the `pulse:"trace:attribute.name"` tag. Returns a new context with the span and the span itself.
 //
@@ -103,6 +122,15 @@ func (t *Tracing) Start(ctx context.Context, spanName string, data ...interface{
 		}
 	}
 
+	// Add service labels as attributes at trace level
+	if len(t.labels) > 0 {
+		labelAttrs := make([]attribute.KeyValue, 0, len(t.labels))
+		for k, v := range t.labels {
+			labelAttrs = append(labelAttrs, attribute.String(k, v))
+		}
+		otelSpan.SetAttributes(labelAttrs...)
+	}
+
 	return newCtx, &Span{span: otelSpan}
 }
 
@@ -114,11 +142,19 @@ func (t *Tracing) StartWithAttrs(ctx context.Context, spanName string, attrs map
 
 	newCtx, otelSpan := t.tracer.Start(ctx, spanName)
 
-	if len(attrs) > 0 {
-		attributes := make([]attribute.KeyValue, 0, len(attrs))
+	if len(attrs) > 0 || len(t.labels) > 0 {
+		attributes := make([]attribute.KeyValue, 0, len(attrs)+len(t.labels))
+
+		// Add provided attributes
 		for k, v := range attrs {
 			attributes = append(attributes, convertToAttribute(k, v))
 		}
+
+		// Add service labels as attributes
+		for k, v := range t.labels {
+			attributes = append(attributes, attribute.String(k, v))
+		}
+
 		otelSpan.SetAttributes(attributes...)
 	}
 
@@ -199,18 +235,24 @@ func extractAttributes(data interface{}) []attribute.KeyValue {
 			// Other prefixes (e.g., "attribute:") are ignored by this function
 			for _, tagPart := range strings.Fields(tag) {
 				if attrName, found := strings.CutPrefix(tagPart, "trace:"); found {
-					// Convert field value to attribute
-					attr := convertToAttribute(attrName, value.Interface())
-					attrs = append(attrs, attr)
+					// Convert field value to attribute only if field is exportable
+					if value.CanInterface() {
+						attr := convertToAttribute(attrName, value.Interface())
+						attrs = append(attrs, attr)
+					}
 				}
 			}
 		}
 
 		// Recursively process nested structs
 		if value.Kind() == reflect.Struct {
-			attrs = append(attrs, extractAttributes(value.Interface())...)
+			if value.CanInterface() {
+				attrs = append(attrs, extractAttributes(value.Interface())...)
+			}
 		} else if value.Kind() == reflect.Ptr && !value.IsNil() && value.Elem().Kind() == reflect.Struct {
-			attrs = append(attrs, extractAttributes(value.Interface())...)
+			if value.CanInterface() {
+				attrs = append(attrs, extractAttributes(value.Interface())...)
+			}
 		}
 	}
 

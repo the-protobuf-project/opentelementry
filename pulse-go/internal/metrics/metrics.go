@@ -9,8 +9,15 @@ import (
 	"github.com/machanirobotics/pulse/pulse-go/internal/foxglove"
 	"github.com/machanirobotics/pulse/pulse-go/internal/telemetry"
 	"github.com/machanirobotics/pulse/pulse-go/options"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
+
+// Export OpenTelemetry metric functions for public use
+var WithAttributes = metric.WithAttributes
+
+// Export OpenTelemetry attribute creation functions for convenience
+var StringAttribute = attribute.String
 
 // Metrics wraps OpenTelemetry metrics with struct tag support and MCAP export
 type Metrics struct {
@@ -99,9 +106,25 @@ func (m *Metrics) extractAndRecordMetrics(rv reflect.Value, attrs ...metric.AddO
 						if m.serviceName != "" {
 							metricName = m.serviceName + "." + metricName
 						}
+						// Add service labels as attributes
+
+						allAttrs := make([]metric.AddOption, 0, len(attrs)+1)
+
+						allAttrs = append(allAttrs, attrs...)
+
+						// Convert labels to metric attributes
+						labelAttrs := make([]attribute.KeyValue, 0, len(m.labels))
+
+						for key, value := range m.labels {
+							labelAttrs = append(labelAttrs, attribute.String(key, value))
+						}
+
+						if len(labelAttrs) > 0 {
+							allAttrs = append(allAttrs, metric.WithAttributeSet(attribute.NewSet(labelAttrs...)))
+						}
 
 						// Record metric based on type
-						if err := m.recordMetric(metricType, metricName, fieldValue, attrs...); err != nil {
+						if err := m.recordMetric(metricType, metricName, fieldValue, allAttrs...); err != nil {
 							return err
 						}
 					}

@@ -48,8 +48,13 @@ func main() {
 			CacheHitRate:    rand.Float64(),
 		}
 
-		// Record metrics automatically from struct tags
-		if err := p.Metrics.Record(llmMetrics); err != nil {
+		// Record metrics automatically from struct tags with per-metric attributes
+		if err := p.Metrics.Record(llmMetrics,
+			pulse.WithAttributes(
+				pulse.StringAttribute("model", "gpt-4"),
+				pulse.StringAttribute("user_type", "premium"),
+			),
+		); err != nil {
 			if err := p.Logger.Error("Failed to record LLM metrics", map[string]interface{}{"error": err.Error()}); err != nil {
 				return
 			}
@@ -68,7 +73,12 @@ func main() {
 				WordCount:     int64(rand.Intn(100) + 20),
 			}
 
-			if err := p.Metrics.Record(transMetrics); err != nil {
+			if err := p.Metrics.Record(transMetrics,
+				pulse.WithAttributes(
+					pulse.StringAttribute("language", "en"),
+					pulse.StringAttribute("audio_format", "wav"),
+				),
+			); err != nil {
 				if err := p.Logger.Error("Failed to record transcription metrics", map[string]interface{}{"error": err.Error()}); err != nil {
 					return
 				}

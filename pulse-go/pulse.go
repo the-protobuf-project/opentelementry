@@ -20,6 +20,12 @@ type Span = tracing.Span
 // LogLevel is a type alias for options.LogLevel so modules can use pulse.Level1, etc.
 type LogLevel = options.LogLevel
 
+// Re-export OpenTelemetry metric functions from internal metrics package
+var WithAttributes = metrics.WithAttributes
+
+// Re-export OpenTelemetry attribute creation functions from internal metrics package
+var StringAttribute = metrics.StringAttribute
+
 // Log level constants for modules.
 //
 //   - ModuleLevel_1 (Error)  — stable, production-ready module

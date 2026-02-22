@@ -47,9 +47,18 @@ type Telemetry struct {
 	shutdownFuncs []func(context.Context) error
 }
 
+// noopErrorHandler silently discards OpenTelemetry internal errors
+// (e.g. exporter connection refused) to avoid polluting application output.
+type noopErrorHandler struct{}
+
+func (n noopErrorHandler) Handle(_ error) {}
+
 // New creates a new Telemetry instance with OpenTelemetry SDK configured
 // based on the provided service and telemetry options.
 func New(ctx context.Context, serviceOpts options.ServiceOptions, telemetryOpts options.TelemetryOptions) (*Telemetry, error) {
+	// Suppress noisy OTel exporter errors (e.g. connection refused)
+	otel.SetErrorHandler(noopErrorHandler{})
+
 	t := &Telemetry{
 		serviceName:   serviceOpts.Name,
 		shutdownFuncs: make([]func(context.Context) error, 0),

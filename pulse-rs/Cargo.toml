@@ -33,10 +33,10 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 tracing-opentelemetry = "0.32"
 opentelemetry-prometheus = "0.31.0"
-prometheus = "0.13"
+prometheus = "0.14"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 chrono = "0.4"
-colored = "2.1"
+colored = "3.1"
 figment = { version = "0.10", features = ["toml", "yaml", "json", "env"] }
 syn = { version = "2", features = ["full"] }
 quote = "1"

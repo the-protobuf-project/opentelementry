@@ -16,13 +16,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer core.Close()
+	defer func() { _ = core.Close() }()
 
 	core.Logger.Info("=== Robot Core Started ===")
 	core.Logger.Info("Global level is 2 (Info) from pulse.toml")
 	core.Logger.Debug("This debug message is HIDDEN because global level=2 (Info)")
 	core.Logger.Info("Core system initialized")
-	core.Logger.Error("Core error test — always visible")
+	_ = core.Logger.Error("Core error test — always visible")
 
 	// ========================================
 	// 2. Module: nats-module — TOML overrides to Level 1 (Error only)
@@ -38,12 +38,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer nats.Close()
+	defer func() { _ = nats.Close() }()
 
 	nats.Logger.Debug("NATS debug — HIDDEN (TOML overrode to Level 1)")
 	nats.Logger.Info("NATS info — HIDDEN (TOML overrode to Level 1)")
 	nats.Logger.Warn("NATS warn — HIDDEN (TOML overrode to Level 1)")
-	nats.Logger.Error("NATS error — VISIBLE (Level 1 = Error only)")
+	_ = nats.Logger.Error("NATS error — VISIBLE (Level 1 = Error only)")
 
 	// ========================================
 	// 3. Module: vision-module — no TOML override, code sets Level 3 (Debug)
@@ -58,12 +58,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer vision.Close()
+	defer func() { _ = vision.Close() }()
 
 	vision.Logger.Debug("Vision debug — VISIBLE (Level 3)")
 	vision.Logger.Info("Vision info — VISIBLE (Level 3)")
 	vision.Logger.Warn("Vision warn — VISIBLE (Level 3)")
-	vision.Logger.Error("Vision error — VISIBLE (Level 3)")
+	_ = vision.Logger.Error("Vision error — VISIBLE (Level 3)")
 
 	// ========================================
 	// 4. Module: motor-module — no TOML override, no WithLogLevel
@@ -77,12 +77,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer motor.Close()
+	defer func() { _ = motor.Close() }()
 
 	motor.Logger.Debug("Motor debug — HIDDEN (global Level 2 = Info)")
 	motor.Logger.Info("Motor info — VISIBLE (Level 2)")
 	motor.Logger.Warn("Motor warn — VISIBLE (Level 2)")
-	motor.Logger.Error("Motor error — VISIBLE (Level 2)")
+	_ = motor.Logger.Error("Motor error — VISIBLE (Level 2)")
 
 	// ========================================
 	// Summary

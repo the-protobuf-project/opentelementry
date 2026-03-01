@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD041 -->
 <!-- markdownlint-disable MD033 MD013 -->
 <p align="center">
   <img src=".assets/logo.png" alt="Pulse Logo" width="314" height="314">

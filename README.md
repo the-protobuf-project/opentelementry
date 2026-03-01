@@ -140,7 +140,8 @@ docker compose up -d
 
 Access Grafana at `http://localhost:3000` with all datasources pre-configured.
 
-**[Observability Stack →](opentelemetry/README.md)** · **[Production Deployment →](opentelemetry/deploy/production/README.md)**
+**[Observability Stack →](opentelemetry/README.md)** ·
+**[Production Deployment →](opentelemetry/deploy/production/README.md)**
 
 ## Architecture
 

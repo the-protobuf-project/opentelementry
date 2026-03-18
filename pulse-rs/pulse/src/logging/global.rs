@@ -232,7 +232,7 @@ pub fn get() -> Option<&'static Arc<GlobalLogger>> {
 macro_rules! debug {
     ($($arg:tt)*) => {
         $crate::logging::global::LogBuilder::new(
-            ::opentelemetry::logs::Severity::Debug,
+            $crate::opentelemetry::logs::Severity::Debug,
             format!($($arg)*),
             file!(),
             line!(),
@@ -248,7 +248,7 @@ macro_rules! debug {
 macro_rules! info {
     ($($arg:tt)*) => {
         $crate::logging::global::LogBuilder::new(
-            ::opentelemetry::logs::Severity::Info,
+            $crate::opentelemetry::logs::Severity::Info,
             format!($($arg)*),
             file!(),
             line!(),
@@ -264,7 +264,7 @@ macro_rules! info {
 macro_rules! log_warn {
     ($($arg:tt)*) => {
         $crate::logging::global::LogBuilder::new(
-            ::opentelemetry::logs::Severity::Warn,
+            $crate::opentelemetry::logs::Severity::Warn,
             format!($($arg)*),
             file!(),
             line!(),
@@ -280,7 +280,7 @@ macro_rules! log_warn {
 macro_rules! log_error {
     ($($arg:tt)*) => {
         $crate::logging::global::LogBuilder::new(
-            ::opentelemetry::logs::Severity::Error,
+            $crate::opentelemetry::logs::Severity::Error,
             format!($($arg)*),
             file!(),
             line!(),

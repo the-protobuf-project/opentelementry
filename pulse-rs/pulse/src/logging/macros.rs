@@ -30,8 +30,8 @@ macro_rules! pulse_debug {
             otel.debug(
                 $msg,
                 vec![
-                    ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                    ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                    $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                    $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
                 ],
             );
         }
@@ -47,11 +47,11 @@ macro_rules! pulse_debug {
         }
         if let Some(ref otel) = $logger.otel_logger() {
             let mut attrs = vec![
-                ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
             ];
             if let Some(ref v) = data_value {
-                attrs.push(::opentelemetry::KeyValue::new("data", v.to_string()));
+                attrs.push($crate::opentelemetry::KeyValue::new("data", v.to_string()));
             }
             otel.debug($msg, attrs);
         }
@@ -66,8 +66,8 @@ macro_rules! pulse_info {
             otel.info(
                 $msg,
                 vec![
-                    ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                    ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                    $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                    $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
                 ],
             );
         }
@@ -83,11 +83,11 @@ macro_rules! pulse_info {
         }
         if let Some(ref otel) = $logger.otel_logger() {
             let mut attrs = vec![
-                ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
             ];
             if let Some(ref v) = data_value {
-                attrs.push(::opentelemetry::KeyValue::new("data", v.to_string()));
+                attrs.push($crate::opentelemetry::KeyValue::new("data", v.to_string()));
             }
             otel.info($msg, attrs);
         }
@@ -102,8 +102,8 @@ macro_rules! pulse_warn {
             otel.warn(
                 $msg,
                 vec![
-                    ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                    ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                    $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                    $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
                 ],
             );
         }
@@ -119,11 +119,11 @@ macro_rules! pulse_warn {
         }
         if let Some(ref otel) = $logger.otel_logger() {
             let mut attrs = vec![
-                ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
             ];
             if let Some(ref v) = data_value {
-                attrs.push(::opentelemetry::KeyValue::new("data", v.to_string()));
+                attrs.push($crate::opentelemetry::KeyValue::new("data", v.to_string()));
             }
             otel.warn($msg, attrs);
         }
@@ -138,8 +138,8 @@ macro_rules! pulse_error {
             otel.error(
                 $msg,
                 vec![
-                    ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                    ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                    $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                    $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
                 ],
             );
         }
@@ -155,11 +155,11 @@ macro_rules! pulse_error {
         }
         if let Some(ref otel) = $logger.otel_logger() {
             let mut attrs = vec![
-                ::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
-                ::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
+                $crate::opentelemetry::KeyValue::new("code.filepath", file!().to_string()),
+                $crate::opentelemetry::KeyValue::new("code.lineno", line!() as i64),
             ];
             if let Some(ref v) = data_value {
-                attrs.push(::opentelemetry::KeyValue::new("data", v.to_string()));
+                attrs.push($crate::opentelemetry::KeyValue::new("data", v.to_string()));
             }
             otel.error($msg, attrs);
         }

@@ -46,6 +46,7 @@ pub use config::PulseConfig;
 pub use logging::Logger;
 pub use logging::global as logger;
 pub use metrics::Metrics;
+pub use opentelemetry;
 pub use options::{Environment, LogLevel};
 
 /// Main Pulse instance that manages all observability components.

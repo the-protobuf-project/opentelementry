@@ -178,12 +178,28 @@ func dataToOtelAttributes(v any) []otellog.KeyValue {
 	// For all types, convert to JSON string and send as "data" attribute
 	switch rv.Kind() {
 	case reflect.Map, reflect.Struct, reflect.Slice, reflect.Array:
-		// Marshal complex types to JSON
-		if b, err := json.Marshal(v); err == nil {
-			attrs = append(attrs, otellog.String("data", string(b)))
+		// For maps, convert to map[string]interface{} first to handle interface{} keys properly
+		if rv.Kind() == reflect.Map {
+			convertedMap := convertToMap(v)
+			// Expand each map entry as its own OTLP attribute so Loki can index/query them individually
+			for k, val := range convertedMap {
+				attrs = append(attrs, convertToOtelKeyValue(k, val))
+			}
+			// Also keep full map as a "data" JSON blob for reference
+			if b, err := json.Marshal(convertedMap); err == nil {
+				attrs = append(attrs, otellog.String("data", string(b)))
+			} else {
+				// Fallback to string representation if marshal fails
+				attrs = append(attrs, otellog.String("data", fmt.Sprintf("%+v", v)))
+			}
 		} else {
-			// Fallback to string representation if marshal fails
-			attrs = append(attrs, otellog.String("data", fmt.Sprintf("%+v", v)))
+			// For structs, slices, arrays, marshal directly
+			if b, err := json.Marshal(v); err == nil {
+				attrs = append(attrs, otellog.String("data", string(b)))
+			} else {
+				// Fallback to string representation if marshal fails
+				attrs = append(attrs, otellog.String("data", fmt.Sprintf("%+v", v)))
+			}
 		}
 
 	default:
@@ -264,12 +280,22 @@ func formattedData(v any) any {
 	// Check if the type is a struct or map, which need to be marshaled.
 	switch rv.Kind() {
 	case reflect.Struct, reflect.Map:
-		// Marshal struct/map into a pretty-printed JSON.
-		if b, err := json.MarshalIndent(v, "", "  "); err == nil {
-			return string(b)
+		// For maps, convert to map[string]interface{} first to handle interface{} keys properly
+		if rv.Kind() == reflect.Map {
+			convertedMap := convertToMap(v)
+			if b, err := json.MarshalIndent(convertedMap, "", "  "); err == nil {
+				return string(b)
+			}
+			// Fallback to default formatting if marshal fails
+			return fmt.Sprintf("%+v", v)
+		} else {
+			// For structs, marshal directly
+			if b, err := json.MarshalIndent(v, "", "  "); err == nil {
+				return string(b)
+			}
+			// Fallback to default formatting if marshal fails
+			return fmt.Sprintf("%+v", v)
 		}
-		// Fallback to default formatting if marshal fails
-		return fmt.Sprintf("%+v", v)
 
 	case reflect.Slice, reflect.Array:
 		// Check if it's a byte slice
@@ -323,7 +349,7 @@ func convertToMap(v any) map[string]interface{} {
 	if rv.Kind() == reflect.Map {
 		result := make(map[string]interface{})
 		for _, key := range rv.MapKeys() {
-			keyStr := fmt.Sprintf("%v", key.Interface())
+			keyStr := convertKeyToString(key.Interface())
 			result[keyStr] = rv.MapIndex(key).Interface()
 		}
 		return result
@@ -343,6 +369,35 @@ func convertToMap(v any) map[string]interface{} {
 	// For other types, create a simple map with the value
 	return map[string]interface{}{
 		"value": v,
+	}
+}
+
+// convertKeyToString converts interface{} keys to consistent string representations
+// This ensures proper key-value mapping in logs sent to Grafana
+func convertKeyToString(key interface{}) string {
+	if key == nil {
+		return "<nil>"
+	}
+
+	rv := reflect.ValueOf(key)
+
+	switch rv.Kind() {
+	case reflect.String:
+		return rv.String()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return fmt.Sprintf("%d", rv.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return fmt.Sprintf("%d", rv.Uint())
+	case reflect.Float32, reflect.Float64:
+		return fmt.Sprintf("%f", rv.Float())
+	case reflect.Bool:
+		return fmt.Sprintf("%t", rv.Bool())
+	default:
+		// For other types, try JSON first, then fallback to fmt.Sprintf
+		if b, err := json.Marshal(key); err == nil {
+			return string(b)
+		}
+		return fmt.Sprintf("%v", key)
 	}
 }
 

@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -182,20 +183,32 @@ func (l *Logger) log(level log.Level, msg string, data ...any) {
 			attrs = append(attrs, dataToOtelAttributes(d)...)
 		}
 
+		// Build the log body: message first, then data as a JSON object on the same line.
+		// Format: "User joined room | {"user_id":"user-alice","room_id":"room-ai-chat"}"
+		// This keeps the message visible in the Grafana log list while showing structured data inline.
+		body := msg
+		if len(data) > 0 {
+			if b, err := json.Marshal(convertToMap(data[0])); err == nil {
+				body = fmt.Sprintf("%s | %s", msg, string(b))
+			} else {
+				body = fmt.Sprintf("%s | %v", msg, formattedData(data[0]))
+			}
+		}
+
 		// Map charmbracelet log levels to OTLP
 		switch level {
 		case log.DebugLevel:
-			otelLogger.Debug(msg, attrs...)
+			otelLogger.Debug(body, attrs...)
 		case log.InfoLevel:
-			otelLogger.Info(msg, attrs...)
+			otelLogger.Info(body, attrs...)
 		case log.WarnLevel:
-			otelLogger.Warn(msg, attrs...)
+			otelLogger.Warn(body, attrs...)
 		case log.ErrorLevel:
-			otelLogger.Error(msg, attrs...)
+			otelLogger.Error(body, attrs...)
 		case log.FatalLevel:
-			otelLogger.Fatal(msg, attrs...)
+			otelLogger.Fatal(body, attrs...)
 		default:
-			otelLogger.Info(msg, attrs...)
+			otelLogger.Info(body, attrs...)
 		}
 	}
 

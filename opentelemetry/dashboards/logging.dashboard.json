@@ -200,7 +200,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | message_type != \"\" [1m])",
+          "expr": "count_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | message_type != \"\" [1m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -265,7 +265,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | llm_tokens != \"\" | unwrap llm_tokens [5m])",
+          "expr": "sum_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | llm_tokens != \"\" | unwrap llm_tokens [5m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -321,7 +321,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | message_id != \"\" [5m])",
+          "expr": "count_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | message_id != \"\" [5m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -358,7 +358,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | message_id != \"\"",
+          "expr": "{service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | message_id != \"\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -458,7 +458,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | llm_status != \"\" [1m])",
+          "expr": "count_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | llm_status != \"\" [1m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -515,7 +515,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | transcription_status = \"success\" [5m])",
+          "expr": "count_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | transcription_status = \"success\" [5m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -571,7 +571,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | transcription_status = \"failed\" [5m])",
+          "expr": "count_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | transcription_status = \"failed\" [5m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -608,7 +608,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" | llm_request_id != \"\"",
+          "expr": "{service_name=~\"$service_name\"} | user_id =~ \"$user_id\" | llm_request_id != \"\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -708,7 +708,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "count_over_time({service_name=\"llm-chat-example\"} | user_id =~ \"$user_id\" [1m])",
+          "expr": "count_over_time({service_name=~\"$service_name\"} | user_id =~ \"$user_id\" [1m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -745,7 +745,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{service_name=\"llm-chat-example\"} | user_id = \"user-123\"",
+          "expr": "{service_name=~\"$service_name\"} | user_id = \"user-123\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -795,7 +795,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{service_name=\"llm-chat-example\"}",
+          "expr": "{service_name=~\"$service_name\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -845,7 +845,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "{service_name=\"llm-chat-example\"}",
+          "expr": "{service_name=~\"$service_name\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -862,6 +862,23 @@
     "list": [
       {
         "allValue": ".*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "loki", "uid": "loki" },
+        "definition": "label_values(service_name)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Service",
+        "multi": false,
+        "name": "service_name",
+        "query": "label_values(service_name)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
         "current": {
           "selected": false,
           "text": "All",
@@ -871,46 +888,15 @@
           "type": "loki",
           "uid": "loki"
         },
-        "definition": "",
+        "definition": "label_values({service_name=~\"$service_name\"}, user_id)",
         "hide": 0,
         "includeAll": true,
         "label": "User",
         "multi": false,
         "name": "user_id",
-        "options": [
-          {
-            "selected": true,
-            "text": "All",
-            "value": "$__all"
-          },
-          {
-            "selected": false,
-            "text": "user-alice",
-            "value": "user-alice"
-          },
-          {
-            "selected": false,
-            "text": "user-carlos",
-            "value": "user-carlos"
-          },
-          {
-            "selected": false,
-            "text": "user-yuki",
-            "value": "user-yuki"
-          },
-          {
-            "selected": false,
-            "text": "user-marie",
-            "value": "user-marie"
-          },
-          {
-            "selected": false,
-            "text": "assistant",
-            "value": "assistant"
-          }
-        ],
-        "query": "",
-        "refresh": 0,
+        "options": [],
+        "query": "label_values({service_name=~\"$service_name\"}, user_id)",
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,

@@ -4,13 +4,8 @@
 //! supporting both tokio-rs/tracing instrumentation and manual span management.
 
 use anyhow::Result;
-use opentelemetry::trace::{Status, TracerProvider as _};
-use opentelemetry::{KeyValue, global};
-use opentelemetry_otlp::WithExportConfig;
-use opentelemetry_sdk::Resource;
-use opentelemetry_sdk::trace::SdkTracerProvider;
-
-use crate::options::ServiceOptions;
+use opentelemetry::KeyValue;
+use opentelemetry::trace::Status;
 
 /// Initialize tokio-rs/tracing with OpenTelemetry integration.
 ///
@@ -18,60 +13,76 @@ use crate::options::ServiceOptions;
 /// via OTLP. Use the #[instrument] macro on functions to automatically create spans.
 ///
 /// Set ENABLE_TRACING_DEFAULT=true to show TRACE logs from dependencies.
-/// Default is to only show INFO and above.
-pub fn init_tokio_tracing(service_opts: &ServiceOptions) -> Result<()> {
+/// Default is to only show INFO and above on the console.
+///
+/// **Parent chain:** app `#[instrument]` spans must not sit under a globally filtered-out parent.
+/// We avoid a single global `EnvFilter` for that reason.
+///
+/// **OTLP noise:** gRPC export runs h2/hyper/tonic internally; those spans must not be sent to the
+/// collector (they show up as junk traces). We filter **only those targets** on the OTEL layer.
+pub fn init_tokio_tracing(tracer: opentelemetry_sdk::trace::Tracer) -> Result<()> {
     use tracing_subscriber::EnvFilter;
+    use tracing_subscriber::Layer;
     use tracing_subscriber::layer::SubscriberExt;
-    use tracing_subscriber::util::SubscriberInitExt;
 
-    // Create OTLP exporter for traces
-    let exporter = opentelemetry_otlp::SpanExporter::builder()
-        .with_tonic()
-        .with_endpoint("http://localhost:4317")
-        .build()?;
+    /// Drop infra spans from OTLP (they are not your app trace; often emitted during export).
+    fn otel_export_filter() -> EnvFilter {
+        const BLOCK: &str = "\
+            h2=off,\
+            hyper=off,\
+            hyper_util=off,\
+            tonic=off,\
+            tower=off,\
+            tower_http=off,\
+            reqwest=off,\
+            rustls=off,\
+            tokio_rustls=off,\
+            opentelemetry=off,\
+            opentelemetry_sdk=off,\
+            opentelemetry_http=off,\
+            opentelemetry_otlp=off";
+        EnvFilter::try_new(format!("trace,{BLOCK}")).unwrap_or_else(|_| EnvFilter::new("trace"))
+    }
 
-    let resource = Resource::builder()
-        .with_service_name(service_opts.name.clone())
-        .with_attributes(vec![
-            KeyValue::new("service.version", service_opts.version.clone()),
-            KeyValue::new(
-                "deployment.environment",
-                service_opts.environment.to_string(),
-            ),
-        ])
-        .build();
+    /// Console: respect `RUST_LOG` but keep h2/tonic/hyper quiet on stdout.
+    fn fmt_filter() -> EnvFilter {
+        const QUIET: &str = "opentelemetry=warn,opentelemetry_sdk=warn,h2=warn,tonic=warn,hyper=warn,tower=warn,reqwest=warn";
+        let user = std::env::var("RUST_LOG").unwrap_or_default();
+        let base = if std::env::var("ENABLE_TRACING_DEFAULT").is_ok() {
+            if user.is_empty() {
+                "trace".to_string()
+            } else {
+                user
+            }
+        } else if user.is_empty() {
+            format!("info,{QUIET}")
+        } else {
+            format!("{user},{QUIET}")
+        };
+        EnvFilter::try_new(&base).unwrap_or_else(|_| EnvFilter::new("info"))
+    }
 
-    let provider = SdkTracerProvider::builder()
-        .with_batch_exporter(exporter)
-        .with_resource(resource)
-        .build();
-
-    let tracer = provider.tracer(service_opts.name.clone());
-    global::set_tracer_provider(provider);
-
-    // Create OpenTelemetry tracing layer
-    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
-
-    // Set up env filter - default to INFO level unless ENABLE_TRACING_DEFAULT is set
-    // Hide OpenTelemetry, h2, tonic, and hyper internal logs by default
-    let filter = if std::env::var("ENABLE_TRACING_DEFAULT").is_ok() {
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("trace"))
-    } else {
-        EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new("info,opentelemetry=warn,opentelemetry_sdk=warn,h2=warn,tonic=warn,hyper=warn,tower=warn"))
-    };
-
-    // Set up console logging for tracing events
+    let telemetry = tracing_opentelemetry::layer()
+        .with_tracer(tracer)
+        .with_filter(otel_export_filter());
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_target(false)
-        .with_thread_ids(true);
+        .with_thread_ids(true)
+        .with_filter(fmt_filter());
 
-    // Use try_init to avoid panic if already initialized
-    let _ = tracing_subscriber::registry()
-        .with(filter)
+    // Do not use `try_init()`: it runs `LogTracer::init()` after `set_global_default`, which
+    // **always fails** when Pulse already called `log4rs::init_*` — returning Err even though
+    // the subscriber was installed. That looked like a broken trace pipeline.
+    let subscriber = tracing_subscriber::registry()
         .with(telemetry)
-        .with(fmt_layer)
-        .try_init();
+        .with(fmt_layer);
+    let dispatch: tracing::Dispatch = subscriber.into();
+    if tracing::dispatcher::set_global_default(dispatch).is_err() {
+        log::warn!(
+            "pulse: global tracing subscriber already set (second Pulse::build in this process); \
+             #[instrument] OTLP export applies only to the first Pulse instance"
+        );
+    }
 
     Ok(())
 }
@@ -99,42 +110,9 @@ pub struct PulseTracing {
 }
 
 impl PulseTracing {
-    /// Creates a new PulseTracing instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `service_opts` - Service configuration
-    /// * `otlp_endpoint` - Optional OTLP endpoint URL
-    pub fn new(service_opts: &ServiceOptions, otlp_endpoint: Option<String>) -> Result<Self> {
-        let tracer = if let Some(endpoint) = otlp_endpoint {
-            let exporter = opentelemetry_otlp::SpanExporter::builder()
-                .with_tonic()
-                .with_endpoint(endpoint)
-                .build()?;
-
-            let resource = Resource::builder()
-                .with_service_name(service_opts.name.clone())
-                .with_attributes(vec![
-                    KeyValue::new("service.version", service_opts.version.clone()),
-                    KeyValue::new(
-                        "deployment.environment",
-                        service_opts.environment.to_string(),
-                    ),
-                ])
-                .build();
-
-            let provider = SdkTracerProvider::builder()
-                .with_batch_exporter(exporter)
-                .with_resource(resource)
-                .build();
-
-            global::set_tracer_provider(provider.clone());
-            Some(provider.tracer(service_opts.name.clone()))
-        } else {
-            None
-        };
-
-        Ok(Self { tracer })
+    /// Creates a new PulseTracing instance from an existing telemetry tracer.
+    pub fn new(tracer: Option<opentelemetry_sdk::trace::Tracer>) -> Self {
+        Self { tracer }
     }
 
     /// Starts a new span.

@@ -212,8 +212,14 @@ impl OTLPOptions {
             // Port already specified
             format!("{}://{}", scheme, self.endpoint)
         } else {
-            // No port - use default (443 for secure, 4317 for insecure)
-            let port = if self.secure { 443 } else { 4317 };
+            // No port - use protocol-appropriate default (443 for secure, 4317 gRPC, 4318 HTTP)
+            let port = if self.secure {
+                443
+            } else if self.use_http {
+                4318
+            } else {
+                4317
+            };
             format!("{}://{}:{}", scheme, self.endpoint, port)
         }
     }

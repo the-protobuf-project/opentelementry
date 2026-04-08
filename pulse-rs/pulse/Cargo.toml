@@ -36,3 +36,7 @@ path = "examples/logging_mcap.rs"
 [[example]]
 name = "metrics"
 path = "examples/metrics.rs"
+
+[[example]]
+name = "tracing"
+path = "examples/tracing.rs"

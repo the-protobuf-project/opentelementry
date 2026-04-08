@@ -6,9 +6,10 @@
 #[allow(clippy::module_inception)]
 pub mod tracing;
 
+pub use ::tracing as reexport;
 pub use tracing::{PulseTracing, Span, init_tokio_tracing};
 
-/// Re-export the instrument macro from tracing crate.
+/// Re-export Pulse's instrument macro.
 ///
 /// Use this to automatically instrument functions with tracing spans.
 ///
@@ -22,4 +23,4 @@ pub use tracing::{PulseTracing, Span, init_tokio_tracing};
 ///     // Function body
 /// }
 /// ```
-pub use ::tracing::instrument;
+pub use pulse_derive::{instrument, trace};

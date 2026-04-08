@@ -137,8 +137,9 @@ pub fn derive_metrics(input: TokenStream) -> TokenStream {
 
 /// Attribute macro for automatic function tracing.
 ///
-/// Instruments a function to automatically create and manage tracing spans.
-/// Requires a global `PULSE_TRACING` static variable to be initialized.
+/// Instruments a function to automatically create and manage tracing spans
+/// using Pulse's tracing re-export path. This avoids requiring downstream
+/// applications to depend on the `tracing` crate directly.
 ///
 /// # Examples
 ///
@@ -156,7 +157,7 @@ pub fn derive_metrics(input: TokenStream) -> TokenStream {
 /// }
 /// ```
 #[proc_macro_attribute]
-pub fn trace(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn instrument(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemFn);
 
     let fn_name = &input.sig.ident;
@@ -172,39 +173,29 @@ pub fn trace(_attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! {
             #(#fn_attrs)*
             #fn_vis #fn_sig {
-                let __pulse_tracing = unsafe { PULSE_TRACING.as_ref() };
-
-                if let Some(tracing) = __pulse_tracing {
-                    let mut __span = tracing.start_span(#fn_name_str);
-
-                    let __result = async move #fn_block.await;
-
-                    __span.end();
-                    __result
-                } else {
-                    async move #fn_block.await
-                }
+                let __pulse_span = ::pulse::tracing::reexport::info_span!(#fn_name_str);
+                let __pulse_future = async move #fn_block;
+                ::pulse::tracing::reexport::Instrument::instrument(__pulse_future, __pulse_span).await
             }
         }
     } else {
         quote! {
             #(#fn_attrs)*
             #fn_vis #fn_sig {
-                let __pulse_tracing = unsafe { PULSE_TRACING.as_ref() };
-
-                if let Some(tracing) = __pulse_tracing {
-                    let mut __span = tracing.start_span(#fn_name_str);
-
-                    let __result = (|| #fn_block)();
-
-                    __span.end();
-                    __result
-                } else {
-                    (|| #fn_block)()
-                }
+                let __pulse_span = ::pulse::tracing::reexport::info_span!(#fn_name_str);
+                let __pulse_enter = __pulse_span.enter();
+                let __pulse_result = (|| #fn_block)();
+                drop(__pulse_enter);
+                __pulse_result
             }
         }
     };
 
     TokenStream::from(expanded)
+}
+
+/// Backward-compatible alias for `instrument`.
+#[proc_macro_attribute]
+pub fn trace(attr: TokenStream, item: TokenStream) -> TokenStream {
+    instrument(attr, item)
 }

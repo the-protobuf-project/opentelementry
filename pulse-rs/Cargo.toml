@@ -1,5 +1,5 @@
 [workspace]
-members = ["pulse", "pulse-derive"]
+members = ["pulse", "pulse-derive", "pulse-examples"]
 resolver = "2"
 
 [workspace.package]
@@ -27,7 +27,7 @@ opentelemetry-otlp = { version = "0.31.1", features = [
     "trace",
     "grpc-tonic",
     "http-proto",
-    "reqwest-client",
+    "reqwest-blocking-client",
 ] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

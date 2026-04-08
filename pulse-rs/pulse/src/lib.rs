@@ -38,7 +38,12 @@ pub mod telemetry;
 pub mod tracing;
 pub mod traits;
 
-use anyhow::Result;
+#[doc(inline)]
+pub use crate::macros::DEFAULT_OTEL_COLLECTOR_OTLP_PORT;
+
+mod macros;
+
+use anyhow::{Result, anyhow};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -59,6 +64,7 @@ pub struct Pulse {
     pub metrics: Metrics,
     mcap_writer: Option<Arc<Mutex<foxglove::UnifiedMcapWriter>>>,
     telemetry: Option<telemetry::TelemetryProvider>,
+    closed: bool,
 }
 
 impl Pulse {
@@ -195,8 +201,10 @@ impl Pulse {
             .map(|writer| logging::LogMcapWriter::new(&service_opts, Arc::clone(writer)))
             .transpose()?;
 
-        let telemetry =
-            telemetry::TelemetryProvider::new(&service_opts, &pulse_opts.telemetry).ok();
+        let telemetry = Some(telemetry::TelemetryProvider::new(
+            &service_opts,
+            &pulse_opts.telemetry,
+        )?);
         let otel_logger = telemetry.as_ref().and_then(|t| t.get_logger("pulse"));
 
         let logger = Logger::new(
@@ -216,21 +224,18 @@ impl Pulse {
         );
         logging::init(global_logger);
 
-        // Initialize tokio-rs/tracing with OpenTelemetry if OTLP is enabled
-        if pulse_opts.telemetry.otlp.enabled {
-            let _ = tracing::init_tokio_tracing(&service_opts);
+        let tracing_tracer = telemetry
+            .as_ref()
+            .and_then(|t| t.get_tracer(&service_opts.name));
+
+        // Initialize tokio-rs/tracing with the same OpenTelemetry tracer provider
+        // used by Pulse telemetry, so shutdown/flush is centrally managed.
+        if let Some(tracer) = tracing_tracer.clone() {
+            tracing::init_tokio_tracing(tracer)?;
         }
 
-        // Initialize PulseTracing for manual span management if OTLP is enabled
-        let tracing_instance = if pulse_opts.telemetry.otlp.enabled {
-            let endpoint = format!(
-                "http://{}:{}",
-                pulse_opts.telemetry.otlp.host, pulse_opts.telemetry.otlp.port
-            );
-            tracing::PulseTracing::new(&service_opts, Some(endpoint)).ok()
-        } else {
-            None
-        };
+        // Initialize PulseTracing for manual span management.
+        let tracing_instance = Some(tracing::PulseTracing::new(tracing_tracer));
 
         // Initialize metrics
         let metrics = metrics::Metrics::new(
@@ -245,16 +250,18 @@ impl Pulse {
             metrics,
             mcap_writer,
             telemetry,
+            closed: false,
         })
     }
 
     /// Flushes all pending telemetry data.
     ///
     /// This should be called before shutting down to ensure all data is sent.
-    pub fn flush(&self) {
+    pub fn flush(&self) -> Result<()> {
         if let Some(ref t) = self.telemetry {
-            t.flush();
+            t.flush()?;
         }
+        Ok(())
     }
 
     /// Returns a reference to the MCAP writer if configured.
@@ -292,30 +299,44 @@ impl Pulse {
     /// // Otherwise, resources are cleaned up automatically when pulse goes out of scope
     /// ```
     pub fn close(&mut self) -> Result<()> {
-        if let Some(t) = self.telemetry.take() {
-            let _ = t.shutdown();
+        if self.closed {
+            return Ok(());
+        }
+        self.closed = true;
+
+        let mut errors = Vec::new();
+
+        // Flush + shutdown OTLP (batch processors); idempotent if already shut down
+        if let Some(t) = self.telemetry.take()
+            && let Err(err) = t.shutdown()
+        {
+            errors.push(format!("telemetry shutdown: {err}"));
         }
 
         if let Some(writer) = self.mcap_writer.take() {
-            let mut w = writer.lock().unwrap();
-            w.close()?;
+            match writer.lock() {
+                Ok(mut w) => {
+                    if let Err(err) = w.close() {
+                        errors.push(format!("mcap close: {err}"));
+                    }
+                }
+                Err(err) => {
+                    errors.push(format!("mcap lock poisoned: {err}"));
+                }
+            }
         }
 
-        Ok(())
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(anyhow!(errors.join("; ")))
+        }
     }
 }
 
 impl Drop for Pulse {
     fn drop(&mut self) {
-        if let Some(t) = self.telemetry.take() {
-            let _ = t.shutdown();
-        }
-
-        if let Some(writer) = self.mcap_writer.take()
-            && let Ok(mut w) = writer.lock()
-        {
-            let _ = w.close();
-        }
+        let _ = self.close();
     }
 }
 
@@ -354,6 +375,8 @@ pub struct PulseBuilder {
     log_level: Option<options::LogLevel>,
     service_from_code: bool,
 }
+
+pub use pulse_derive::{instrument, trace};
 
 impl PulseBuilder {
     /// Creates a new builder with service name and version.
@@ -448,11 +471,16 @@ impl PulseBuilder {
     /// # Arguments
     ///
     /// * `host` - OTLP collector host
-    /// * `port` - OTLP collector port
+    /// * `port` - OTLP collector port (gRPC default unless `with_otlp_http` / config `use_http`)
     pub fn with_otlp(mut self, host: impl Into<String>, port: u16) -> Self {
         self.otlp_host = Some(host.into());
         self.otlp_port = Some(port);
         self
+    }
+
+    /// OTLP to local collector on [`DEFAULT_OTEL_COLLECTOR_OTLP_PORT`] (gRPC), same as [`pulse_local_otel!`].
+    pub fn with_local_otel_collector(self) -> Self {
+        self.with_otlp("localhost", DEFAULT_OTEL_COLLECTOR_OTLP_PORT)
     }
 
     /// Sets OTLP authentication token.
@@ -575,8 +603,9 @@ impl PulseBuilder {
             }
         }
 
-        // Configure OTLP if specified via builder
-        if let (Some(host), Some(port)) = (self.otlp_host, self.otlp_port) {
+        // Configure OTLP if specified via builder (overrides file; ensures telemetry is on)
+        if let (Some(host), Some(port)) = (self.otlp_host.clone(), self.otlp_port) {
+            pulse_opts.telemetry.enabled = true;
             pulse_opts.telemetry.otlp.enabled = true;
             pulse_opts.telemetry.otlp.endpoint = format!("{}:{}", host, port);
             pulse_opts.telemetry.otlp.host = host;
@@ -605,9 +634,11 @@ impl PulseBuilder {
                 .insert(service_opts.name.clone(), options::ModuleOptions { level });
         }
 
-        // Enable tracing if requested
+        // Tracing export: match pulse-go — app tracing + OTLP must not disagree
         if self.tracing_enabled {
+            pulse_opts.telemetry.enabled = true;
             pulse_opts.telemetry.otlp.enabled = true;
+            pulse_opts.telemetry.tracing.enabled = true;
         }
 
         // Configure MCAP if specified

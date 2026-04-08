@@ -47,6 +47,40 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
+### OTLP to a local collector (port **12005**)
+
+Same defaults as the **`pulse-examples`** crate (gRPC OTLP on `localhost:12005`):
+
+```rust
+use pulse::{Environment, logger};
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let _pulse = pulse::pulse_local_otel!()
+        .with_service("my-service", "1.0.0")
+        .environment(Environment::Development)
+        .with_tracing() // traces + logs + metrics → collector
+        .build()?;
+
+    logger::info!("flushes on drop");
+    Ok(())
+}
+```
+
+Or: `.with_local_otel_collector()` on any builder. **`Pulse`’s `Drop`** calls `close()` → **flush + OTLP shutdown** (aligned with `pulse-go` `Close()`).
+
+## Runnable examples (`pulse-examples`)
+
+Standalone workspace package (mirrors `pulse-go/examples/`):
+
+```bash
+cargo run -p pulse-examples --bin tracing    # OTLP traces → localhost:12005
+cargo run -p pulse-examples --bin metrics
+cargo run -p pulse-examples --bin logging
+```
+
+See **`pulse-examples/README.md`** for collector config on port **12005**.
+
 ## Configuration
 
 ### Override Priority (Lowest to Highest)

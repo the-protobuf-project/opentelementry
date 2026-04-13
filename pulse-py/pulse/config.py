@@ -11,6 +11,10 @@ Environment variables use PULSE_ prefix with double underscores for nesting:
     PULSE_TELEMETRY__OTLP__ENDPOINT=otel.example.com
     PULSE_TELEMETRY__OTLP__AUTH_TOKEN=your-token
 
+Single underscores are also accepted and translated automatically:
+    PULSE_SERVICE_NAME=my-service
+    PULSE_TELEMETRY_OTLP_ENDPOINT=otel.example.com
+
 Auto-discovers config files from:
 1. PULSE_CONFIG_PATH environment variable
 2. pulse.toml in current directory
@@ -26,6 +30,7 @@ Example pulse.toml:
     auth_token = "your-token"
 """
 
+import os as _os
 from pathlib import Path
 from typing import Optional, Dict, Any
 from dynaconf import Dynaconf, Validator
@@ -54,40 +59,63 @@ def _find_config_files() -> list[str]:
     return config_files
 
 
+def _translate_single_underscore_env_vars(prefix: str, validators: list) -> None:
+    """Translate single-underscore PULSE_ env vars to double-underscore form.
+
+    Dynaconf uses __ as nesting delimiter. This allows callers to set
+    PULSE_TELEMETRY_OTLP_ENDPOINT instead of PULSE_TELEMETRY__OTLP__ENDPOINT.
+    Operates only on validator-known keys so unknown vars are untouched.
+    """
+    for v in validators:
+        for name in v.names:
+            if "." not in name:
+                continue
+            parts = name.upper().split(".")
+            single = f"{prefix}_" + "_".join(parts)
+            double = f"{prefix}_" + "__".join(parts)
+            if single in _os.environ and double not in _os.environ:
+                _os.environ[double] = _os.environ[single]
+
+
+_VALIDATORS = [
+    # Service validators
+    Validator("service.name", default="unnamed-service"),
+    Validator("service.version", default="1.0.0"),
+    Validator("service.environment", default="development"),
+    Validator("service.description", default=""),
+    # Telemetry validators
+    Validator("telemetry.enabled", default=True),
+    # OTLP validators
+    Validator("telemetry.otlp.endpoint", default="localhost:4317"),
+    Validator("telemetry.otlp.auth_token", default=""),
+    Validator("telemetry.otlp.secure", default=False),
+    Validator("telemetry.otlp.use_http", default=False),
+    # Metrics validators
+    Validator("telemetry.metrics.export_interval_seconds", default=10),
+    # Logging validators
+    Validator("logging.log.report_caller", default=True),
+    Validator("logging.log.report_timestamp", default=True),
+    # Foxglove validators
+    Validator("foxglove.enabled", default=False),
+    Validator("foxglove.file_path", default=""),
+    # Profiling validators
+    Validator("profiling.enabled", default=False),
+    Validator("profiling.server_address", default="http://localhost:4040"),
+    # Tracing validators
+    Validator("tracing.enabled", default=True),
+]
+
+_translate_single_underscore_env_vars("PULSE", _VALIDATORS)
+
 # Initialize Dynaconf settings
 settings = Dynaconf(
     envvar_prefix="PULSE",
+    envar_separator="_",
     settings_files=_find_config_files(),
     environments=False,  # Don't use [development], [production] sections
     load_dotenv=True,
     merge_enabled=True,
-    validators=[
-        # Service validators
-        Validator("service.name", default="unnamed-service"),
-        Validator("service.version", default="1.0.0"),
-        Validator("service.environment", default="development"),
-        Validator("service.description", default=""),
-        # Telemetry validators
-        Validator("telemetry.enabled", default=True),
-        # OTLP validators
-        Validator("telemetry.otlp.endpoint", default="localhost:4317"),
-        Validator("telemetry.otlp.auth_token", default=""),
-        Validator("telemetry.otlp.secure", default=False),
-        Validator("telemetry.otlp.use_http", default=False),
-        # Metrics validators
-        Validator("telemetry.metrics.export_interval_seconds", default=10),
-        # Logging validators
-        Validator("logging.log.report_caller", default=True),
-        Validator("logging.log.report_timestamp", default=True),
-        # Foxglove validators
-        Validator("foxglove.enabled", default=False),
-        Validator("foxglove.file_path", default=""),
-        # Profiling validators
-        Validator("profiling.enabled", default=False),
-        Validator("profiling.server_address", default="http://localhost:4040"),
-        # Tracing validators
-        Validator("tracing.enabled", default=True),
-    ],
+    validators=_VALIDATORS,
 )
 
 
@@ -105,6 +133,7 @@ def load_config(config_path: Optional[str] = None) -> Dynaconf:
         # Load from specific path
         return Dynaconf(
             envvar_prefix="PULSE",
+            envar_separator="_",
             settings_files=[config_path],
             environments=False,
             load_dotenv=True,

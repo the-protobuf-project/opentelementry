@@ -50,6 +50,12 @@ class PulseMetrics:
         otlp_opts: OTLPOptions,
     ):
         """Setup OpenTelemetry metrics with OTLP exporter"""
+        # If a real MeterProvider is already set, reuse it to avoid override warnings
+        current = metrics.get_meter_provider()
+        if isinstance(current, MeterProvider):
+            self.meter = metrics.get_meter(service_opts.name)
+            return
+
         resource = Resource.create(
             {
                 "service.name": service_opts.name,
@@ -88,6 +94,14 @@ class PulseMetrics:
         if not isinstance(model, BaseModel):
             raise ValueError("record() requires a Pydantic BaseModel instance")
 
+        # Auto-inject service labels from service_opts so callers don't have to
+        service_labels = getattr(self.service_opts, "labels", None) or {}
+        if service_labels:
+            merged = dict(service_labels)
+            if labels:
+                merged.update(labels)
+            labels = merged
+
         # If model is a MetricsBaseModel, resolve metric names with service name prefix
         if hasattr(model, "_resolve_metric_names"):
             model._resolve_metric_names(service_name=self.service_opts.name)
@@ -106,13 +120,11 @@ class PulseMetrics:
             metric_name = json_schema_extra.get("metric_name", field_name)
             value = getattr(model, field_name)
 
-            # Skip gauge metrics with default value (0) to avoid resetting them
-            # This allows partial metric updates like JetStreamMetrics(api_requests_total=1)
-            # without resetting other gauge fields like 'enabled' or 'streams'
-            if metric_type == "gauge" and value == 0:
-                # Check if this field was explicitly set or is using default
-                if field_name not in model.model_fields_set:
-                    continue
+            # Skip metrics with default value (0) that were not explicitly set.
+            # For gauges: avoids resetting unrelated fields in partial updates.
+            # For counters/histograms: avoids creating label-less ghost series when
+            if value == 0 and field_name not in model.model_fields_set:
+                continue
 
             # Record based on type
             if metric_type == "counter":

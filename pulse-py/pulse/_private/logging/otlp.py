@@ -26,7 +26,7 @@ from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
 from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter
 from opentelemetry.sdk.resources import Resource
-from opentelemetry._logs import set_logger_provider
+from opentelemetry._logs import set_logger_provider, get_logger_provider
 import logging
 
 
@@ -112,7 +112,10 @@ class OTLPLogger:
 
         logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_exporter))
 
-        set_logger_provider(logger_provider)
+        # Only set the global logger provider once to avoid override warnings.
+        # Each service still gets its own LoggerProvider with correct service.name resource.
+        if not isinstance(get_logger_provider(), LoggerProvider):
+            set_logger_provider(logger_provider)
 
         # Determine log level based on service environment
         log_level = self._get_log_level_for_environment(service_environment)

@@ -83,6 +83,12 @@ class PulseTracing:
             service_opts: Service configuration for resource attributes.
             otlp_opts: OTLP exporter configuration (host, port).
         """
+        # If a real TracerProvider is already set, reuse it to avoid override warnings
+        current = trace.get_tracer_provider()
+        if isinstance(current, TracerProvider):
+            self.tracer = trace.get_tracer(service_opts.name)
+            return
+
         resource = Resource.create(
             {
                 "service.name": service_opts.name,

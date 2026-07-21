@@ -130,7 +130,11 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
-      start_period: 10s
+      # Pyroscope 2.x reports ready only after staged readiness gates settle
+      # (metastore, ingester, segment-writer) which takes ~60-70s on a cold
+      # start. Keep the container in "starting" until then so it is not marked
+      # unhealthy prematurely and block dependents like Grafana.
+      start_period: 120s
 
   grafana:
     image: grafana/grafana:11.3.1

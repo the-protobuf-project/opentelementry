@@ -11,7 +11,7 @@ on:
 jobs:
   lint-go:
     name: Lint Go Code
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -30,7 +30,7 @@ jobs:
 
   lint-markdown:
     name: Lint Markdown
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -42,7 +42,7 @@ jobs:
 
   lint-yaml:
     name: Lint YAML
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -56,7 +56,7 @@ jobs:
 
   lint-rust:
     name: Lint Rust Code
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -87,7 +87,7 @@ jobs:
 
   lint-python:
     name: Lint Python Code
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -110,7 +110,7 @@ jobs:
 
   check-links:
     name: Check Markdown Links
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -125,7 +125,7 @@ jobs:
 
   check-formatting:
     name: Check Formatting
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6

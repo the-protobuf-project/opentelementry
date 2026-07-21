@@ -20,7 +20,7 @@ concurrency:
 jobs:
   build-python:
     name: Build Python distribution
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
     steps:
@@ -54,7 +54,7 @@ jobs:
 
   build-cpp:
     name: Build C++ artifact
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - name: Check out code
         uses: actions/checkout@v6
@@ -86,7 +86,7 @@ jobs:
 
   package-rust:
     name: Package Rust crate
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     env:
       CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
     steps:
@@ -117,7 +117,7 @@ jobs:
 
   release:
     name: Create GitHub Release
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     needs: [build-python, build-cpp, package-rust]
     steps:
       - name: Download all artifacts

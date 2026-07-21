@@ -12,14 +12,14 @@ modules:
     name: buf.build/the-protobuf-project/opentelementry
 
 deps:
-  - buf.build/googleapis/googleapis # google.api.resource, field_behavior, resource_reference
+  - buf.build/googleapis/googleapis  # google.api.resource, field_behavior, resource_reference
 
 lint:
   use:
     - STANDARD
   except:
-    - PACKAGE_VERSION_SUFFIX # orm.v1 is intentionally version-suffixed
+    - PACKAGE_VERSION_SUFFIX  # orm.v1 is intentionally version-suffixed
 
 breaking:
   use:
-    - FILE # enforce no breaking changes at the file level
+    - FILE  # enforce no breaking changes at the file level

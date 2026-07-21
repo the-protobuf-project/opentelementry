@@ -77,7 +77,7 @@ graph TB
         Profiles[Profiles]
     end
 
-    subgraph Collection["Collection and Storage"]
+    subgraph Live["Live Pipeline (OTLP)"]
         OTLP[OTLP Collector]
         Loki[Loki]
         Prometheus[Prometheus]
@@ -86,6 +86,11 @@ graph TB
     end
 
     Grafana[Grafana Dashboards]
+
+    subgraph Offline["Offline Analysis"]
+        MCAP[(MCAP File)]
+        Foxglove[Foxglove Studio]
+    end
 
     App --> SDK
     SDK --> Logs
@@ -106,6 +111,11 @@ graph TB
     Prometheus --> Grafana
     Tempo --> Grafana
     Pyroscope --> Grafana
+
+    Logs --> MCAP
+    Metrics --> MCAP
+    Traces --> MCAP
+    MCAP --> Foxglove
 ```
 
 ## Language support

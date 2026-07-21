@@ -25,7 +25,7 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          working-directory: ./pulse-go
+          working-directory: ./opentelementry-go
           args: --timeout=5m
 
   lint-markdown:
@@ -74,15 +74,15 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            pulse-rs/target/
+            opentelementry-rs/target/
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Check formatting
-        working-directory: ./pulse-rs
+        working-directory: ./opentelementry-rs
         run: cargo fmt --all -- --check
 
       - name: Run Clippy
-        working-directory: ./pulse-rs
+        working-directory: ./opentelementry-rs
         run: cargo clippy --all-targets --all-features -- -D warnings
 
   lint-python:
@@ -101,11 +101,11 @@ jobs:
         run: pip install ruff mypy
 
       - name: Run Ruff linter
-        working-directory: ./pulse-py
+        working-directory: ./opentelementry-py
         run: ruff check .
 
       - name: Run Ruff formatter check
-        working-directory: ./pulse-py
+        working-directory: ./opentelementry-py
         run: ruff format --check .
 
   check-links:

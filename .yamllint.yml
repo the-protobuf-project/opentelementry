@@ -2,7 +2,7 @@
 extends: default
 
 ignore:
-  - opentelemetry/deploy/production/envoy/
+  - opentelementry-core/deploy/production/envoy/
 
 rules:
   line-length:

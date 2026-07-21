@@ -8,11 +8,19 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-go:
     name: Test Go SDK
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
         go-version: ['1.25']
@@ -37,16 +45,105 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        working-directory: ./pulse-go
+        working-directory: ./opentelementry-go
         run: go mod download
 
-      - name: Run tests
-        working-directory: ./pulse-go
-        run: go test -v -race ./...
+      - name: Verify go.mod is tidy
+        working-directory: ./opentelementry-go
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
 
       - name: Build
-        working-directory: ./pulse-go
+        working-directory: ./opentelementry-go
         run: go build -v ./...
+
+      - name: Vet
+        working-directory: ./opentelementry-go
+        run: go vet ./...
+
+      - name: Run tests
+        working-directory: ./opentelementry-go
+        run: go test -v -race ./...
+
+  test-rust:
+    name: Test Rust SDK
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            opentelementry-rs/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Build
+        working-directory: ./opentelementry-rs
+        run: cargo build --all-targets --all-features --verbose
+
+      - name: Run tests
+        working-directory: ./opentelementry-rs
+        run: cargo test --all-features --verbose
+
+  build-python:
+    name: Build Python SDK
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.12', '3.13']
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package
+        working-directory: ./opentelementry-py
+        run: pip install .
+
+      - name: Import smoke test
+        run: python -c "import opentelementry; print('opentelementry', opentelementry.__all__)"
+
+  build-cpp:
+    name: Build C++ SDK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - name: Set up Bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Build library and examples
+        working-directory: ./opentelementry-cpp
+        run: bazel build //...
 
   docker-compose:
     name: Test Docker Compose Stack
@@ -57,22 +154,22 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Validate docker-compose.yaml
-        working-directory: ./opentelemetry
+        working-directory: ./opentelementry-core
         run: docker compose config
 
       - name: Start observability stack
-        working-directory: ./opentelemetry
+        working-directory: ./opentelementry-core
         run: |
           docker compose up -d
           sleep 30
 
       - name: Check service health
-        working-directory: ./opentelemetry
+        working-directory: ./opentelementry-core
         run: |
           docker compose ps
           docker compose logs
 
       - name: Stop services
-        working-directory: ./opentelemetry
+        working-directory: ./opentelementry-core
         if: always()
         run: docker compose down -v

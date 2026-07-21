@@ -1,6 +1,6 @@
-name: "pulse-env"
+name: "opentelementry-env"
 include:
-  - ../opentelemetry/compose.yaml
+  - ../opentelementry-core/compose.yaml
 
 services:
   devcontainer:
@@ -9,7 +9,7 @@ services:
       dockerfile: .devcontainer/Dockerfile
     volumes:
       - ..:/workspace:cached
-      - pulse-build-cache:/home/developer/.cache
+      - opentelementry-build-cache:/home/developer/.cache
       - ${HOME}/.ssh:/home/developer/.ssh
       - ${HOME}/.aws:/home/developer/.aws
     network_mode: host
@@ -21,4 +21,4 @@ services:
       - seccomp:unconfined
 
 volumes:
-  pulse-build-cache:
+  opentelementry-build-cache:

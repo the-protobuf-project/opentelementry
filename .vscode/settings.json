@@ -12,5 +12,6 @@
   "files.associations": {
     "*.bzlmod": "bazel"
   },
-  "files.insertFinalNewline": true
+  "files.insertFinalNewline": true,
+  "cmake.sourceDirectory": "/Users/srikanthkandarp/Projects/personal/the-protobuf-project/opentelementry/opentelementry-cpp"
 }

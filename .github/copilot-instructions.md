@@ -1,8 +1,8 @@
-# Pulse Observability Framework - AI Agent Guidelines
+# Opentelementry Observability Framework - AI Agent Guidelines
 
 ## Project Overview
 
-**Pulse** is a unified observability framework providing multi-language SDKs
+**Opentelementry** is a unified observability framework providing multi-language SDKs
 (Go, Rust, Python) for OpenTelemetry-based logging, metrics, tracing, and
 profiling. Built by Machani Robotics for production robotics systems with
 MCAP recording for offline analysis.
@@ -18,7 +18,7 @@ MCAP recording for offline analysis.
 ### 2. Core Components Architecture
 
 ```text
-pulse.New() → Pulse struct with:
+opentelementry.New() → Opentelementry struct with:
 ├── Logger (*logging.Logger)           # Structured logging with trace correlation
 ├── Metrics (*metrics.Metrics)         # OTel metrics
 ├── Tracing (*tracing.Tracing)         # Distributed tracing spans
@@ -30,7 +30,7 @@ pulse.New() → Pulse struct with:
 ### 3. Configuration System
 
 - **ServiceOptions**: Service identity (name, version, environment)
-- **PulseOptions**: Feature toggles and endpoint configuration
+- **OpentelementryOptions**: Feature toggles and endpoint configuration
 - **Environment constants**: `Development`, `Staging`, `Production`, `Jetson`
 
 ## Development Workflows
@@ -66,7 +66,7 @@ serviceOpts := options.ServiceOptions{
     Name: "service-name",
     Environment: options.Development,
 }
-p, err := pulse.New(ctx, serviceOpts, options.PulseOptions{
+p, err := opentelementry.New(ctx, serviceOpts, options.OpentelementryOptions{
     Telemetry: options.DefaultTelemetry(),
 })
 defer p.Close(ctx)
@@ -74,14 +74,14 @@ defer p.Close(ctx)
 
 ### 2. Structured Logging with Attributes
 
-Use struct tags `pulse:"attribute:key.name"` for automatic OpenTelemetry
+Use struct tags `opentelementry:"attribute:key.name"` for automatic OpenTelemetry
 attribute extraction:
 
 ```go
 type ChatMessage struct {
-    UserID   string `json:"user_id" pulse:"attribute:user.id"`
-    RoomID   string `json:"room_id" pulse:"attribute:room.id"`
-    Language string `json:"language" pulse:"attribute:message.language"`
+    UserID   string `json:"user_id" opentelementry:"attribute:user.id"`
+    RoomID   string `json:"room_id" opentelementry:"attribute:room.id"`
+    Language string `json:"language" opentelementry:"attribute:message.language"`
 }
 ```
 
@@ -116,7 +116,7 @@ Default endpoints:
 
 ### Go SDK Structure (`/go/`)
 
-- `pulse.go`: Main SDK interface
+- `opentelementry.go`: Main SDK interface
 - `options/`: Configuration structs and defaults
 - `internal/`: Implementation packages (logging, metrics, tracing, telemetry,
   profiling, foxglove)
@@ -125,7 +125,7 @@ Default endpoints:
 ### Internal Package Boundaries
 
 - Never import `internal/` packages directly in user code
-- Use public interfaces through main `Pulse` struct
+- Use public interfaces through main `Opentelementry` struct
 - Cross-cutting concerns handled in `internal/telemetry/`
 
 ## Environment-Specific Conventions
@@ -151,11 +151,11 @@ Default endpoints:
 
 ## Adding New Features
 
-When extending Pulse:
+When extending Opentelementry:
 
 1. Add options in `options/` package first
 2. Implement in appropriate `internal/` package
-3. Expose through main `Pulse` struct
+3. Expose through main `Opentelementry` struct
 4. Add example in `examples/`
 5. Update unified telemetry integration if needed
 

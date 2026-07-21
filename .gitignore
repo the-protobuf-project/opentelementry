@@ -11,4 +11,4 @@ target
 *.mcap
 build
 .terraform*
-pulse.toml
+opentelementry.toml

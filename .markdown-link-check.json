@@ -22,7 +22,7 @@
       "pattern": "^#"
     },
     {
-      "pattern": "github.com/machanirobotics/pulse/releases/tag"
+      "pattern": "github.com/the-protobuf-project/opentelementry/releases/tag"
     }
   ],
   "replacementPatterns": [],

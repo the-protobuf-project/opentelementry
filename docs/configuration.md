@@ -1,6 +1,6 @@
-# Pulse Configuration Guide
+# Opentelementry Configuration Guide
 
-Comprehensive documentation on `pulse.toml` configuration, lifecycle,
+Comprehensive documentation on `opentelementry.toml` configuration, lifecycle,
 supported formats, and all available options.
 
 ## Table of Contents
@@ -19,7 +19,7 @@ supported formats, and all available options.
 
 ## Overview
 
-Pulse uses a unified configuration system across all SDKs (Go, Python, Rust).
+Opentelementry uses a unified configuration system across all SDKs (Go, Python, Rust).
 The configuration defines:
 
 - **Service identity** - Name, version, environment, and custom attributes
@@ -33,7 +33,7 @@ The configuration defines:
 
 ## Supported Formats
 
-Pulse supports multiple configuration file formats, auto-detected by file extension:
+Opentelementry supports multiple configuration file formats, auto-detected by file extension:
 
 | Format | Extensions | Parser Library |
 |--------|------------|----------------|
@@ -104,10 +104,10 @@ stateDiagram-v2
     note right of Defaults: LOWEST PRIORITY
 
     ConfigFile: Config File
-    note right of ConfigFile: pulse.toml / yaml / json
+    note right of ConfigFile: opentelementry.toml / yaml / json
 
     EnvVars: Environment Variables
-    note right of EnvVars: PULSE_* prefixed
+    note right of EnvVars: OPENTELEMENTRY_* prefixed
 
     BuilderMethods: Code (Builder Methods)
     note right of BuilderMethods: HIGHEST PRIORITY
@@ -126,7 +126,7 @@ stateDiagram-v2
 
 ### 1. Initialization Phase
 
-When you call `Pulse.new()` (or equivalent), the SDK begins the
+When you call `Opentelementry.new()` (or equivalent), the SDK begins the
 configuration loading process:
 
 ```mermaid
@@ -159,44 +159,44 @@ stateDiagram-v2
 
 Once initialized, configuration is **immutable**. To change configuration:
 
-1. Close the existing Pulse instance
+1. Close the existing Opentelementry instance
 2. Create a new instance with updated configuration
 
 ---
 
 ## File Discovery
 
-Pulse auto-discovers configuration files in this order:
+Opentelementry auto-discovers configuration files in this order:
 
 ### Discovery Priority
 
-1. **`PULSE_CONFIG_PATH` environment variable** (if set)
+1. **`OPENTELEMENTRY_CONFIG_PATH` environment variable** (if set)
 2. **Current directory:**
-   - `pulse.toml`
-   - `pulse.yaml` / `pulse.yml`
-   - `pulse.json`
+   - `opentelementry.toml`
+   - `opentelementry.yaml` / `opentelementry.yml`
+   - `opentelementry.json`
 3. **`.config` subdirectory:**
-   - `.config/pulse.toml`
-   - `.config/pulse.yaml` / `.config/pulse.yml`
-   - `.config/pulse.json`
+   - `.config/opentelementry.toml`
+   - `.config/opentelementry.yaml` / `.config/opentelementry.yml`
+   - `.config/opentelementry.json`
 
 ### Discovery Algorithm
 
 ```text
 function discoverConfigPath():
     // 1. Check environment variable first
-    if PULSE_CONFIG_PATH is set and file exists:
-        return PULSE_CONFIG_PATH
+    if OPENTELEMENTRY_CONFIG_PATH is set and file exists:
+        return OPENTELEMENTRY_CONFIG_PATH
 
     // 2. Search in current directory
     for ext in [".toml", ".yaml", ".yml", ".json"]:
-        if "pulse{ext}" exists:
-            return "pulse{ext}"
+        if "opentelementry{ext}" exists:
+            return "opentelementry{ext}"
 
     // 3. Search in .config directory
     for ext in [".toml", ".yaml", ".yml", ".json"]:
-        if ".config/pulse{ext}" exists:
-            return ".config/pulse{ext}"
+        if ".config/opentelementry{ext}" exists:
+            return ".config/opentelementry{ext}"
 
     // 4. No config file found - use defaults only
     return null
@@ -215,14 +215,14 @@ opts, svc, _ := options.LoadConfigWithDefaults("/path/to/config.toml")
 **Python:**
 
 ```python
-from pulse.options import from_config
-service_opts, pulse_opts = from_config("/path/to/config.toml")
+from opentelementry.options import from_config
+service_opts, opentelementry_opts = from_config("/path/to/config.toml")
 ```
 
 **Rust:**
 
 ```rust
-let config = PulseConfig::load_from("/path/to/config.toml")?;
+let config = OpentelementryConfig::load_from("/path/to/config.toml")?;
 ```
 
 ---
@@ -235,40 +235,40 @@ Environment variables provide runtime configuration without modifying files.
 
 | SDK | Prefix | Separator | Example |
 |-----|--------|-----------|---------|
-| Go | `PULSE_` | `_` (single underscore) | `PULSE_TELEMETRY_OTLP_ENDPOINT` |
-| Python | `PULSE_` | `__` (double underscore) | `PULSE_TELEMETRY__OTLP__EP` |
-| Rust | `PULSE_` | `_` (single underscore) | `PULSE_TELEMETRY_OTLP_ENDPOINT` |
+| Go | `OPENTELEMENTRY_` | `_` (single underscore) | `OPENTELEMENTRY_TELEMETRY_OTLP_ENDPOINT` |
+| Python | `OPENTELEMENTRY_` | `__` (double underscore) | `OPENTELEMENTRY_TELEMETRY__OTLP__EP` |
+| Rust | `OPENTELEMENTRY_` | `_` (single underscore) | `OPENTELEMENTRY_TELEMETRY_OTLP_ENDPOINT` |
 
 ### Transformation Rules
 
 Environment variable names are transformed to config paths:
 
 ```text
-PULSE_SERVICE_NAME        → service.name
-PULSE_TELEMETRY_OTLP_HOST → telemetry.otlp.host
-PULSE_FOXGLOVE_ENABLED    → foxglove.enabled
+OPENTELEMENTRY_SERVICE_NAME        → service.name
+OPENTELEMENTRY_TELEMETRY_OTLP_HOST → telemetry.otlp.host
+OPENTELEMENTRY_FOXGLOVE_ENABLED    → foxglove.enabled
 ```
 
 ### Common Environment Variables
 
 ```bash
 # Service Configuration
-PULSE_SERVICE_NAME=my-service
-PULSE_SERVICE_VERSION=1.0.0
-PULSE_SERVICE_ENVIRONMENT=production
+OPENTELEMENTRY_SERVICE_NAME=my-service
+OPENTELEMENTRY_SERVICE_VERSION=1.0.0
+OPENTELEMENTRY_SERVICE_ENVIRONMENT=production
 
 # OTLP Configuration
-PULSE_TELEMETRY_OTLP_ENDPOINT=otel.example.com:4317
-PULSE_TELEMETRY_OTLP_AUTH_TOKEN=your-bearer-token
-PULSE_TELEMETRY_OTLP_SECURE=true
+OPENTELEMENTRY_TELEMETRY_OTLP_ENDPOINT=otel.example.com:4317
+OPENTELEMENTRY_TELEMETRY_OTLP_AUTH_TOKEN=your-bearer-token
+OPENTELEMENTRY_TELEMETRY_OTLP_SECURE=true
 
 # Feature Toggles
-PULSE_FOXGLOVE_ENABLED=true
-PULSE_PROFILING_ENABLED=true
-PULSE_TRACING_ENABLED=true
+OPENTELEMENTRY_FOXGLOVE_ENABLED=true
+OPENTELEMENTRY_PROFILING_ENABLED=true
+OPENTELEMENTRY_TRACING_ENABLED=true
 
 # Config File Override
-PULSE_CONFIG_PATH=/etc/pulse/config.toml
+OPENTELEMENTRY_CONFIG_PATH=/etc/opentelementry/config.toml
 ```
 
 ### Using `.env` Files
@@ -277,15 +277,15 @@ Python SDK supports `.env` files via `dynaconf`:
 
 ```bash
 # .env
-PULSE_SERVICE__NAME=my-service
-PULSE_TELEMETRY__OTLP__ENDPOINT=otel.example.com:4317
+OPENTELEMENTRY_SERVICE__NAME=my-service
+OPENTELEMENTRY_TELEMETRY__OTLP__ENDPOINT=otel.example.com:4317
 ```
 
 ---
 
 ## Per-Module Log Levels
 
-Pulse supports per-module log level control, allowing each service/module in a
+Opentelementry supports per-module log level control, allowing each service/module in a
 multi-module system to have its own verbosity. This is especially useful in
 robotics, where stable modules (e.g., NATS transport) should be quiet while
 modules under active development (e.g., vision) need full debug output.
@@ -305,7 +305,7 @@ The effective log level for a module is resolved using the following priority
 chain (highest to lowest):
 
 ```text
-1. Environment variable   PULSE_LOGGING_MODULES_<NAME>_LEVEL   (highest)
+1. Environment variable   OPENTELEMENTRY_LOGGING_MODULES_<NAME>_LEVEL   (highest)
 2. Config file            [logging.modules.<name>] level = N
 3. Code-level builder     WithLogLevel() / with_log_level()
 4. Global config level    [logging] level = N
@@ -314,7 +314,7 @@ chain (highest to lowest):
 
 ```mermaid
 flowchart TD
-    A[Env Var<br/>PULSE_LOGGING_MODULES_&lt;NAME&gt;_LEVEL] -->|not set| B[Config File<br/>logging.modules.&lt;name&gt;.level]
+    A[Env Var<br/>OPENTELEMENTRY_LOGGING_MODULES_&lt;NAME&gt;_LEVEL] -->|not set| B[Config File<br/>logging.modules.&lt;name&gt;.level]
     B -->|not set| C[Code Builder<br/>WithLogLevel / with_log_level]
     C -->|not set| D[Global Config<br/>logging.level]
     D -->|not set| E[Environment Default<br/>dev=Debug, prod=Info, staging=Warn]
@@ -325,7 +325,7 @@ flowchart TD
 Define per-module overrides under `[logging.modules.<service-name>]`:
 
 ```toml
-# pulse.toml
+# opentelementry.toml
 
 [logging]
 level = 2                          # Global default: Info
@@ -369,10 +369,10 @@ Override any module's level at runtime without changing config files or code:
 
 ```bash
 # Override nats-module to Debug (level 3)
-export PULSE_LOGGING_MODULES_NATS_MODULE_LEVEL=3
+export OPENTELEMENTRY_LOGGING_MODULES_NATS_MODULE_LEVEL=3
 
 # Override vision-module to Error only (level 1)
-export PULSE_LOGGING_MODULES_VISION_MODULE_LEVEL=1
+export OPENTELEMENTRY_LOGGING_MODULES_VISION_MODULE_LEVEL=1
 ```
 
 > **Note:** Hyphens in service names are replaced with underscores in
@@ -386,19 +386,19 @@ the code-level default and can be overridden by config file or env vars.
 **Go:**
 
 ```go
-p, err := pulse.New().
+p, err := opentelementry.New().
     WithService("vision", "1.0.0").
-    WithLogLevel(pulse.ModuleLevel_3).  // Level 3 = Debug
+    WithLogLevel(opentelementry.ModuleLevel_3).  // Level 3 = Debug
     Build()
 ```
 
 **Python:**
 
 ```python
-from pulse import Pulse
-from pulse.options import LogLevel
+from opentelementry import Opentelementry
+from opentelementry.options import LogLevel
 
-pulse = Pulse.new() \
+opentelementry = Opentelementry.new() \
     .with_service("vision", "1.0.0") \
     .with_log_level(LogLevel.MODULE_LEVEL_3) \
     .build()
@@ -407,9 +407,9 @@ pulse = Pulse.new() \
 **Rust:**
 
 ```rust
-use pulse::{Pulse, LogLevel};
+use opentelementry::{Opentelementry, LogLevel};
 
-let pulse = Pulse::new()
+let opentelementry = Opentelementry::new()
     .with_service("vision", "1.0.0")
     .with_log_level(LogLevel::ModuleLevel_3)
     .build()?;
@@ -420,7 +420,7 @@ let pulse = Pulse::new()
 A typical robotics system with multiple modules, each at a different log level:
 
 ```toml
-# pulse.toml — shared config for all modules on this robot
+# opentelementry.toml — shared config for all modules on this robot
 
 [service]
 name = "robot-core"
@@ -459,16 +459,16 @@ With this config:
 
 | Level | Go | Python | Rust |
 |-------|-----|--------|------|
-| Unset (0) | `pulse.ModuleLevel_Unset` | `LogLevel.UNSET` | `LogLevel::Unset` |
-| Error (1) | `pulse.ModuleLevel_1` | `LogLevel.MODULE_LEVEL_1` | `LogLevel::ModuleLevel_1` |
-| Info (2) | `pulse.ModuleLevel_2` | `LogLevel.MODULE_LEVEL_2` | `LogLevel::ModuleLevel_2` |
-| Debug (3) | `pulse.ModuleLevel_3` | `LogLevel.MODULE_LEVEL_3` | `LogLevel::ModuleLevel_3` |
+| Unset (0) | `opentelementry.ModuleLevel_Unset` | `LogLevel.UNSET` | `LogLevel::Unset` |
+| Error (1) | `opentelementry.ModuleLevel_1` | `LogLevel.MODULE_LEVEL_1` | `LogLevel::ModuleLevel_1` |
+| Info (2) | `opentelementry.ModuleLevel_2` | `LogLevel.MODULE_LEVEL_2` | `LogLevel::ModuleLevel_2` |
+| Debug (3) | `opentelementry.ModuleLevel_3` | `LogLevel.MODULE_LEVEL_3` | `LogLevel::ModuleLevel_3` |
 
 ---
 
 ## Complete Configuration Reference
 
-### Full `pulse.toml` Example
+### Full `opentelementry.toml` Example
 
 ```toml
 # =============================================================================
@@ -657,35 +657,35 @@ Key-value pairs added to all telemetry signals. Useful for:
 package main
 
 import (
-    "github.com/machanirobotics/pulse/pulse-go"
-    "github.com/machanirobotics/pulse/pulse-go/options"
+    "github.com/the-protobuf-project/opentelementry/opentelementry-go"
+    "github.com/the-protobuf-project/opentelementry/opentelementry-go/options"
 )
 
 func main() {
     // Auto-discover config
-    p, _ := pulse.New().Build()
+    p, _ := opentelementry.New().Build()
     defer p.Close()
 
     // With per-module log level
-    vision, _ := pulse.New().
+    vision, _ := opentelementry.New().
         WithService("vision", "1.0.0").
-        WithLogLevel(pulse.ModuleLevel_3).  // Debug
+        WithLogLevel(opentelementry.ModuleLevel_3).  // Debug
         Build()
     defer vision.Close()
 
     // Or load config explicitly
-    pulseOpts, serviceOpts, _ := options.LoadConfigWithDefaults("")
+    opentelementryOpts, serviceOpts, _ := options.LoadConfigWithDefaults("")
 
     // Or specify path
-    pulseOpts, serviceOpts, _ := options.LoadConfigWithDefaults("/path/to/config.toml")
+    opentelementryOpts, serviceOpts, _ := options.LoadConfigWithDefaults("/path/to/config.toml")
 }
 ```
 
 **Environment Variable Format:** Single underscore separator
 
 ```bash
-PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
-PULSE_LOGGING_MODULES_VISION_LEVEL=3
+OPENTELEMENTRY_TELEMETRY_OTLP_ENDPOINT=localhost:4317
+OPENTELEMENTRY_LOGGING_MODULES_VISION_LEVEL=3
 ```
 
 ### Python SDK
@@ -693,31 +693,31 @@ PULSE_LOGGING_MODULES_VISION_LEVEL=3
 **Config Library:** [dynaconf](https://www.dynaconf.com/)
 
 ```python
-from pulse import Pulse
-from pulse.options import from_config, LogLevel
+from opentelementry import Opentelementry
+from opentelementry.options import from_config, LogLevel
 
 # Auto-discover config
-with Pulse.new().build() as pulse:
-    pulse.logger.info("Hello")
+with Opentelementry.new().build() as opentelementry:
+    opentelementry.logger.info("Hello")
 
 # With per-module log level
-vision = Pulse.new() \
+vision = Opentelementry.new() \
     .with_service("vision", "1.0.0") \
     .with_log_level(LogLevel.MODULE_LEVEL_3) \
     .build()
 
 # Or load config explicitly
-service_opts, pulse_opts = from_config()
+service_opts, opentelementry_opts = from_config()
 
 # Or specify path
-service_opts, pulse_opts = from_config("/path/to/config.toml")
+service_opts, opentelementry_opts = from_config("/path/to/config.toml")
 ```
 
 **Environment Variable Format:** Double underscore separator
 
 ```bash
-PULSE_TELEMETRY__OTLP__ENDPOINT=localhost:4317
-PULSE_LOGGING__MODULES__VISION__LEVEL=3
+OPENTELEMENTRY_TELEMETRY__OTLP__ENDPOINT=localhost:4317
+OPENTELEMENTRY_LOGGING__MODULES__VISION__LEVEL=3
 ```
 
 **`.env` File Support:** Yes (auto-loaded)
@@ -727,24 +727,24 @@ PULSE_LOGGING__MODULES__VISION__LEVEL=3
 **Config Library:** [figment](https://docs.rs/figment)
 
 ```rust
-use pulse::{Pulse, PulseConfig, LogLevel};
+use opentelementry::{Opentelementry, OpentelementryConfig, LogLevel};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // Auto-discover config
-    let _pulse = Pulse::new().build()?;
+    let _opentelementry = Opentelementry::new().build()?;
 
     // With per-module log level
-    let _vision = Pulse::new()
+    let _vision = Opentelementry::new()
         .with_service("vision", "1.0.0")
         .with_log_level(LogLevel::ModuleLevel_3)  // Debug
         .build()?;
 
     // Or load config explicitly
-    let config = PulseConfig::load()?;
+    let config = OpentelementryConfig::load()?;
 
     // Or specify path
-    let config = PulseConfig::load_from("/path/to/config.toml")?;
+    let config = OpentelementryConfig::load_from("/path/to/config.toml")?;
 
     Ok(())
 }
@@ -753,8 +753,8 @@ async fn main() -> anyhow::Result<()> {
 **Environment Variable Format:** Single underscore separator
 
 ```bash
-PULSE_TELEMETRY_OTLP_ENDPOINT=localhost:4317
-PULSE_LOGGING_MODULES_VISION_LEVEL=3
+OPENTELEMENTRY_TELEMETRY_OTLP_ENDPOINT=localhost:4317
+OPENTELEMENTRY_LOGGING_MODULES_VISION_LEVEL=3
 ```
 
 ---
@@ -766,7 +766,7 @@ PULSE_LOGGING_MODULES_VISION_LEVEL=3
 Never commit secrets to config files:
 
 ```toml
-# pulse.toml - NO SECRETS HERE
+# opentelementry.toml - NO SECRETS HERE
 [telemetry.otlp]
 endpoint = "otel.example.com:4317"
 # auth_token loaded from environment
@@ -774,7 +774,7 @@ endpoint = "otel.example.com:4317"
 
 ```bash
 # Set via environment
-export PULSE_TELEMETRY_OTLP_AUTH_TOKEN="your-secret-token"
+export OPENTELEMENTRY_TELEMETRY_OTLP_AUTH_TOKEN="your-secret-token"
 ```
 
 ### 2. Environment-Specific Configs
@@ -783,13 +783,13 @@ Use different config files per environment:
 
 ```text
 config/
-├── pulse.development.toml
-├── pulse.staging.toml
-└── pulse.production.toml
+├── opentelementry.development.toml
+├── opentelementry.staging.toml
+└── opentelementry.production.toml
 ```
 
 ```bash
-export PULSE_CONFIG_PATH=config/pulse.production.toml
+export OPENTELEMENTRY_CONFIG_PATH=config/opentelementry.production.toml
 ```
 
 ### 3. Use Service Attributes for Context
@@ -805,7 +805,7 @@ deployment_id = "deploy-abc123"
 
 ### 4. Start with Defaults
 
-Pulse works out of the box. Only configure what you need:
+Opentelementry works out of the box. Only configure what you need:
 
 ```toml
 # Minimal production config
@@ -823,14 +823,14 @@ auth_token = "token"
 
 ### Config Not Loading
 
-1. **Check file exists:** Ensure `pulse.toml` is in the current working directory
+1. **Check file exists:** Ensure `opentelementry.toml` is in the current working directory
 2. **Check permissions:** File must be readable
 3. **Validate syntax:** Use a TOML validator
-4. **Check discovery:** Set `PULSE_CONFIG_PATH` explicitly
+4. **Check discovery:** Set `OPENTELEMENTRY_CONFIG_PATH` explicitly
 
 ### Environment Variables Not Working
 
-1. **Check prefix:** Must start with `PULSE_`
+1. **Check prefix:** Must start with `OPENTELEMENTRY_`
 2. **Check separator:** Go/Rust use `_`, Python uses `__`
 3. **Check case:** Variable names are case-insensitive for keys
 
@@ -840,8 +840,8 @@ Enable debug logging to see configuration sources:
 
 ```bash
 # See which config file is loaded
-RUST_LOG=pulse=debug cargo run
+RUST_LOG=opentelementry=debug cargo run
 
 # Python
-PULSE_DEBUG=true python app.py
+OPENTELEMENTRY_DEBUG=true python app.py
 ```

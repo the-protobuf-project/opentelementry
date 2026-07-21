@@ -1,5 +1,5 @@
 {
-    "name": "pulse",
+    "name": "opentelementry",
     "dockerComposeFile": [
         "docker-compose.yaml"
     ],

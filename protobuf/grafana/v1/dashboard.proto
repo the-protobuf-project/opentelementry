@@ -1,0 +1,183 @@
+syntax = "proto3";
+
+// Telemetry API messages for listing, reading, and loading Grafana-backed service dashboards.
+//
+// ServiceDashboard is the primary resource. GetServiceDashboard and LoadServiceDashboard
+// return the full grafana_dashboard_document which maps 1:1 with dashboard.json.
+package granfana.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "grafana/v1/metadata.proto";
+
+option go_package = "github.com/the-protobuf-project/opentelementry-go/protobuf/grafana/v1/grafanapbv1;grafanapbv1";
+option java_multiple_files = true;
+option java_outer_classname = "DashboardProto";
+option java_package = "com.grafana.v1";
+
+// Read-only Grafana-backed dashboard resource under a telemetry workspace.
+//
+// GetServiceDashboard returns grafana_dashboard_document populated with the full
+// GrafanaDashboardAccessMeta tree (same shape as dashboard.json).
+// ListServiceDashboards returns stubs without grafana_dashboard_document.
+message ServiceDashboard {
+  option (google.api.resource) = {
+    type: "telemetry.the-protobuf-project.app/ServiceDashboard"
+    pattern: "telemetryWorkspaces/{telemetry_workspace}/serviceDashboards/{service_dashboard}"
+    singular: "serviceDashboard"
+    plural: "serviceDashboards"
+  };
+
+  // Resource name. Format: `telemetryWorkspaces/{workspace}/serviceDashboards/{id}`.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+
+  // Denormalized title from grafana_dashboard_document.spec.title; available in list results.
+  string title = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Full Grafana DashboardWithAccessInfo document. Populated on Get and Load; omitted on List.
+  // Protojson of this message mirrors dashboard.json when marshalled with EmitUnpopulated=true.
+  GrafanaDashboardAccessMeta grafana_dashboard_document = 3 [
+    json_name = "grafanaDashboardDocument",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+}
+
+// Request for ListServiceDashboards (AIP-132).
+message ListServiceDashboardsRequest {
+  // Parent workspace. Format: `telemetryWorkspaces/{workspace}`.
+  string parent = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {child_type: "telemetry.the-protobuf-project.app/ServiceDashboard"}
+  ];
+
+  // Maximum page size; server may cap.
+  int32 page_size = 2 [
+    json_name = "pageSize",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Opaque page token from a prior response.
+  string page_token = 3 [
+    json_name = "pageToken",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // AIP-160 filter expression (title or tag predicates).
+  string filter = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Response for ListServiceDashboards.
+message ListServiceDashboardsResponse {
+  // Page of ServiceDashboard stubs (grafana_dashboard_document is always empty here).
+  repeated ServiceDashboard service_dashboards = 1 [json_name = "serviceDashboards"];
+
+  // Token for the next page; unset when there is no further page.
+  string next_page_token = 2 [json_name = "nextPageToken"];
+}
+
+// Request for GetServiceDashboard (AIP-131).
+message GetServiceDashboardRequest {
+  // Full resource name of the dashboard to return.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telemetry.the-protobuf-project.app/ServiceDashboard"}
+  ];
+}
+
+// Request for LoadServiceDashboard: optional time range, timezone, variable overrides.
+message LoadServiceDashboardRequest {
+  // One variable substitution for this load.
+  message VariableOverride {
+    // Template variable name without $ (e.g. "Robot", "Region"). JSON: "name".
+    string template_key = 1 [
+      json_name = "name",
+      (google.api.field_behavior) = REQUIRED
+    ];
+
+    // Substitution value. JSON: "value".
+    string substitution = 2 [
+      json_name = "value",
+      (google.api.field_behavior) = REQUIRED
+    ];
+  }
+
+  // Full resource name of the dashboard to load.
+  string name = 1 [
+    (google.api.field_behavior) = REQUIRED,
+    (google.api.resource_reference) = {type: "telemetry.the-protobuf-project.app/ServiceDashboard"}
+  ];
+
+  // Override range start (Grafana relative or RFC 3339). HTTP JSON key: "from".
+  string time_range_start = 2 [
+    json_name = "from",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Override range end. HTTP JSON key: "to".
+  string time_range_end = 3 [
+    json_name = "to",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Override timezone (IANA id or "browser"). HTTP JSON key: "timezone".
+  string time_zone = 4 [
+    json_name = "timezone",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Per-load variable substitutions.
+  repeated VariableOverride variable_overrides = 5 [
+    json_name = "variableOverrides",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // When true, the server may evaluate panel queries and fill panel_data_json.
+  bool include_panel_data = 6 [
+    json_name = "includePanelData",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Optional: Grafana instance base URL to fetch the dashboard live from Grafana's v2 API.
+  // e.g. "http://localhost:3000"
+  // When set, the server fetches the dashboard directly from Grafana using the dashboard
+  // uid found in the stored grafana_dashboard_document.metadata.uid and returns the live
+  // response instead of the cached version. The result is also updated in the store.
+  // JSON key: "grafanaUrl"
+  string grafana_url = 7 [
+    json_name = "grafanaUrl",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Optional: Bearer token or Basic auth credentials for the Grafana API.
+  // Format: "Bearer <token>" or "Basic <(user:pass)>"
+  // If omitted, the request is made without Authorization header (works for Grafana with no auth).
+  // JSON key: "grafanaToken"
+  string grafana_token = 8 [
+    json_name = "grafanaToken",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// Response for LoadServiceDashboard.
+message LoadServiceDashboardResponse {
+  // Full ServiceDashboard including grafana_dashboard_document.
+  ServiceDashboard service_dashboard = 1 [json_name = "serviceDashboard"];
+
+  // Resolved range start after applying request overrides (RFC 3339).
+  string effective_time_range_start = 2 [
+    json_name = "effectiveTimeRangeStart",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // Resolved range end (RFC 3339).
+  string effective_time_range_end = 3 [
+    json_name = "effectiveTimeRangeEnd",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // Panel ref id → JSON-encoded data frames; populated only when include_panel_data was true.
+  map<string, string> panel_data_json = 4 [
+    json_name = "panelDataJson",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+}

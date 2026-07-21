@@ -1,0 +1,438 @@
+syntax = "proto3";
+
+// Grafana DashboardWithAccessInfo schema modelled for protobuf JSON round-trip.
+//
+// Design goals:
+//   1. Every json_name matches the exact Grafana JSON key so protojson can
+//      unmarshal dashboard.json with no normalisation step.
+//   2. Fields that are deeply plugin-specific or opaque (vizConfig.spec,
+//      queryOptions, transformations, variable spec) are google.protobuf.Struct
+//      so nothing is lost.
+//   3. All scalar booleans and integer defaults that Grafana always emits (e.g.
+//      collapse:false, liveNow:false) are regular proto3 fields; callers must
+//      marshal with EmitUnpopulated=true to reproduce those zero-value keys.
+//
+// go_package intentionally mirrors protoverse-go so this file can replace the
+// existing stubs once regenerated and published.
+package granfana.v1;
+
+import "google/api/field_behavior.proto";
+import "google/protobuf/struct.proto";
+
+option go_package = "github.com/the-protobuf-project/opentelementry-go/protobuf/grafana/v1/grafanapbv1;grafanapbv1";
+option java_multiple_files = true;
+option java_outer_classname = "DashboardMetaProto";
+option java_package = "com.grafana.v1";
+
+// Top-level Grafana DashboardWithAccessInfo object.
+// JSON keys: apiVersion, kind, metadata, spec, status.
+message GrafanaDashboardAccessMeta {
+  // e.g. "dashboard.grafana.app/v2beta1"
+  string api_version = 1 [
+    json_name = "apiVersion",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // e.g. "DashboardWithAccessInfo"
+  string kind = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Kubernetes-style object metadata.
+  GrafanaObjectMeta metadata = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Dashboard body: panels, layout, variables, time settings, etc.
+  GrafanaDashboardSpec spec = 4 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Publication / access status from Grafana; often an empty object.
+  google.protobuf.Struct status = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Kubernetes-style metadata block (metadata.* in Grafana JSON).
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: Mirrors Grafana object metadata; not a standalone API resource. --)
+message GrafanaObjectMeta {
+  // Grafana resource name within its namespace.
+  string name = 1 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Kubernetes namespace (typically "default").
+  string namespace = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // ULID stable object identifier.
+  string id = 3 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Opaque optimistic-concurrency version string (JSON: "resourceVersion").
+  string resource_version = 4 [
+    json_name = "resourceVersion",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // Monotonic generation counter. Grafana JSON emits this as a number.
+  int64 generation = 5 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // RFC 3339 creation time string (JSON: "creationTimestamp").
+  // Stored as string to match Grafana's plain RFC 3339 text (not protobuf Timestamp JSON).
+  // (-- api-linter: core::0142::time-field-type=disabled
+  //     aip.dev/not-precedent: Grafana emits a plain RFC 3339 string, not Timestamp JSON. --)
+  string creation_timestamp = 6 [
+    json_name = "creationTimestamp",
+    (google.api.field_behavior) = OUTPUT_ONLY
+  ];
+
+  // Internal Grafana labels (e.g. deprecatedInternalID).
+  map<string, string> labels = 7 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Internal Grafana annotations (e.g. createdBy, folder, saved-from-ui).
+  map<string, string> annotations = 8 [(google.api.field_behavior) = OUTPUT_ONLY];
+}
+
+// Everything under dashboard.json "spec".
+message GrafanaDashboardSpec {
+  // Annotation query layers shown in the dashboard header.
+  repeated GrafanaAnnotationItem annotations = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Cross-panel cursor sync mode (JSON: "cursorSync"). e.g. "Off", "Crosshair", "Tooltip".
+  string cursor_sync = 2 [
+    json_name = "cursorSync",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Whether the dashboard is editable in the Grafana UI.
+  bool editable = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Panels keyed by element id (e.g. "panel-12"). JSON: "elements".
+  map<string, GrafanaPanelElement> elements = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Root layout tree (RowsLayout, GridLayout, …).
+  GrafanaLayout layout = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Dashboard header links.
+  repeated google.protobuf.Struct links = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // When true, enables live "now" scrolling (JSON: "liveNow").
+  bool live_now = 7 [
+    json_name = "liveNow",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // When true, preloads all panels eagerly.
+  bool preload = 8 [(google.api.field_behavior) = OPTIONAL];
+
+  // Searchable dashboard tags.
+  repeated string tags = 9 [(google.api.field_behavior) = OPTIONAL];
+
+  // Default time range and refresh settings (JSON: "timeSettings").
+  GrafanaTimeSettings time_settings = 10 [
+    json_name = "timeSettings",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Dashboard display title.
+  string title = 11 [(google.api.field_behavior) = OPTIONAL];
+
+  // Template variables (QueryVariable, ConstantVariable, …).
+  repeated GrafanaVariableItem variables = 12 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One entry in spec.annotations[].
+message GrafanaAnnotationItem {
+  // e.g. "AnnotationQuery"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Annotation row body.
+  GrafanaAnnotationSpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Body of an AnnotationQuery annotation (spec.annotations[].spec).
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: Nested Grafana spec; `name` is a display label, not a resource name. --)
+message GrafanaAnnotationSpec {
+  // True when this is a built-in Grafana annotation layer (JSON: "builtIn").
+  // (-- api-linter: core::0140::prepositions=disabled
+  //     aip.dev/not-precedent: Field name matches Grafana `builtIn` via json_name. --)
+  bool built_in = 1 [
+    json_name = "builtIn",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Whether the annotation layer is enabled.
+  bool enable = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Whether the layer is hidden from the UI toggles.
+  bool hide = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Marker colour string (JSON: "iconColor").
+  string icon_color = 4 [
+    json_name = "iconColor",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Human-readable annotation layer name.
+  string name = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Full Grafana DataQuery envelope; opaque Struct for plugin compatibility.
+  google.protobuf.Struct query = 6 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One value in spec.elements: {kind, spec}.
+message GrafanaPanelElement {
+  // "Panel" or "LibraryPanel"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Full panel body (data, description, id, links, title, vizConfig).
+  GrafanaPanelSpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Body under elements.*.spec for a Panel element.
+message GrafanaPanelSpec {
+  // Query group (queries, transformations, queryOptions).
+  GrafanaQueryGroup data = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Subtitle / description text.
+  string description = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Numeric Grafana panel id.
+  int32 id = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Panel-level drilldown links (opaque Struct array).
+  repeated google.protobuf.Struct links = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Panel title.
+  string title = 5 [(google.api.field_behavior) = OPTIONAL];
+
+  // Visualisation config wrapper (JSON: "vizConfig").
+  GrafanaVizConfig viz_config = 6 [
+    json_name = "vizConfig",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// Wrapper for a Grafana QueryGroup (data.kind + data.spec).
+message GrafanaQueryGroup {
+  // e.g. "QueryGroup"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Query group body.
+  GrafanaQueryGroupSpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Inner body of a QueryGroup (spec.queries, spec.queryOptions, spec.transformations).
+message GrafanaQueryGroupSpec {
+  // Panel query rows.
+  repeated GrafanaPanelQueryItem queries = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Shared query options (maxDataPoints, interval, …); opaque Struct.
+  google.protobuf.Struct query_options = 2 [
+    json_name = "queryOptions",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Transformation pipeline steps; each step is opaque Struct.
+  repeated google.protobuf.Struct transformations = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One slot in queries[]: {kind:"PanelQuery", spec:{…}}.
+message GrafanaPanelQueryItem {
+  // e.g. "PanelQuery"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Query row body.
+  GrafanaPanelQuerySpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Inner spec for a PanelQuery row.
+message GrafanaPanelQuerySpec {
+  // When true, the query is hidden in the editor.
+  bool hidden = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Grafana DataQuery envelope.
+  GrafanaDataQuery query = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Query reference id (e.g. "A", "B").
+  string ref_id = 3 [
+    json_name = "refId",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// Grafana DataQuery envelope: datasource selector, group, plugin spec, version.
+message GrafanaDataQuery {
+  // Datasource reference.
+  GrafanaDatasourceRef datasource = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Plugin group (e.g. "prometheus", "loki", "tempo", "grafana").
+  string group = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // e.g. "DataQuery"
+  string kind = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Plugin-specific query body; opaque Struct (editorMode, expr, filters, …).
+  google.protobuf.Struct spec = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Schema version string (e.g. "v0").
+  string version = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Datasource selector embedded in DataQuery.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: Grafana datasource pointer; `name` is not a google.api.resource name. --)
+message GrafanaDatasourceRef {
+  // Named datasource (e.g. "prometheus", "loki", "tempo", "-- Grafana --").
+  string name = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Datasource plugin type (e.g. "prometheus"). Present on some exports.
+  string type = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Instance UID or sentinel "$__default". JSON key "uid".
+  // (-- api-linter: core::0148::uid-format=disabled
+  //     aip.dev/not-precedent: Value may be $__default, not a ULID. --)
+  string uid = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Visualisation config wrapper (vizConfig.group, kind, spec, version).
+message GrafanaVizConfig {
+  // Plugin group (e.g. "timeseries", "stat", "piechart", "table", "logs").
+  string group = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // e.g. "VizConfig"
+  string kind = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Plugin-specific fieldConfig + options; opaque Struct.
+  google.protobuf.Struct spec = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Grafana version that saved this config (e.g. "12.4.1").
+  string version = 4 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Root layout node: {kind, spec}.
+message GrafanaLayout {
+  // e.g. "RowsLayout", "GridLayout", "AutoGridLayout"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Layout body.
+  GrafanaLayoutSpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Body of a layout spec. Only one branch is populated depending on kind.
+message GrafanaLayoutSpec {
+  // RowsLayout rows.
+  repeated GrafanaRowsLayoutRow rows = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // GridLayout items.
+  repeated GrafanaGridLayoutItem items = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One row in a RowsLayout.
+message GrafanaRowsLayoutRow {
+  // e.g. "RowsLayoutRow"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Row body.
+  GrafanaRowsLayoutRowSpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Inner spec for a RowsLayoutRow.
+message GrafanaRowsLayoutRowSpec {
+  // Whether the row starts collapsed.
+  bool collapse = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Nested layout (typically a GridLayout).
+  GrafanaLayout layout = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Row section title displayed in the dashboard.
+  string title = 3 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// One item in a GridLayout.
+message GrafanaGridLayoutItem {
+  // e.g. "GridLayoutItem"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Grid item body.
+  GrafanaGridLayoutItemSpec spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Position and element reference for a grid layout item.
+message GrafanaGridLayoutItemSpec {
+  // Reference to a panel in spec.elements.
+  GrafanaElementReference element = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Height in grid units.
+  int32 height = 2 [(google.api.field_behavior) = OPTIONAL];
+
+  // Width in grid units.
+  int32 width = 3 [(google.api.field_behavior) = OPTIONAL];
+
+  // Column origin (0-based).
+  int32 x = 4 [(google.api.field_behavior) = OPTIONAL];
+
+  // Row origin (0-based).
+  int32 y = 5 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// Pointer to an entry in spec.elements.
+// (-- api-linter: core::0123::resource-annotation=disabled
+//     aip.dev/not-precedent: Element key reference; not a top-level API resource. --)
+message GrafanaElementReference {
+  // e.g. "ElementReference"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Key into the elements map (e.g. "panel-12").
+  string name = 2 [(google.api.field_behavior) = OPTIONAL];
+}
+
+// spec.timeSettings block.
+// (-- api-linter: core::0140::prepositions=disabled
+//     aip.dev/not-precedent: `from`/`to` mirror Grafana timeSettings JSON keys. --)
+// (-- api-linter: core::0140::reserved-words=disabled
+//     aip.dev/not-precedent: Grafana JSON key `from` mapped via json_name. --)
+// (-- api-linter: core::0143::standardized-codes=disabled
+//     aip.dev/not-precedent: Grafana uses `timezone`; proto field matches that key. --)
+message GrafanaTimeSettings {
+  // Auto-refresh interval string; empty disables refresh (JSON: "autoRefresh").
+  string auto_refresh = 1 [
+    json_name = "autoRefresh",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Preset intervals shown in the UI refresh picker (JSON: "autoRefreshIntervals").
+  repeated string auto_refresh_intervals = 2 [
+    json_name = "autoRefreshIntervals",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Fiscal year start month 0–11; 0 = calendar year (JSON: "fiscalYearStartMonth").
+  int32 fiscal_year_start_month = 3 [
+    json_name = "fiscalYearStartMonth",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // Default range start; Grafana relative or RFC 3339 (JSON: "from").
+  string from = 4 [
+    json_name = "from",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // When true, the time picker toolbar is hidden (JSON: "hideTimepicker").
+  bool hide_timepicker = 5 [
+    json_name = "hideTimepicker",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+
+  // IANA timezone id or "browser" (JSON: "timezone").
+  string timezone = 6 [(google.api.field_behavior) = OPTIONAL];
+
+  // Default range end (JSON: "to").
+  string to = 7 [
+    json_name = "to",
+    (google.api.field_behavior) = OPTIONAL
+  ];
+}
+
+// One template variable entry (QueryVariable, ConstantVariable, …).
+// The spec is opaque Struct because variable bodies differ significantly by kind.
+message GrafanaVariableItem {
+  // e.g. "QueryVariable", "ConstantVariable", "TextboxVariable"
+  string kind = 1 [(google.api.field_behavior) = OPTIONAL];
+
+  // Full variable body (allowCustomValue, current, definition, hide, …).
+  google.protobuf.Struct spec = 2 [(google.api.field_behavior) = OPTIONAL];
+}

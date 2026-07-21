@@ -1,0 +1,19 @@
+version: v2
+
+# Regenerates the pre-compiled Go stubs for the grafana.v1 protos under protobuf/.
+#
+# Run:  buf generate --template buf.gen.yaml
+# Out:  opentelementry-go/protobuf/grafana/v1/grafanapbv1/*.pb.go
+#
+# The module= opt strips the opentelementry-go/protobuf module prefix from each go_package,
+# and out points at that same directory, so a go_package of
+#   .../opentelementry-go/protobuf/grafana/v1/grafanapbv1
+# is written to opentelementry-go/protobuf/grafana/v1/grafanapbv1.
+inputs:
+  - directory: protobuf
+
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.11
+    out: opentelementry-go/protobuf
+    opt:
+      - module=github.com/the-protobuf-project/opentelementry-go/protobuf

@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// gRPC service for read-only access to Grafana-backed telemetry dashboards.
+package granfana.v1;
+
+import "google/api/annotations.proto";
+import "google/api/client.proto";
+import "grafana/v1/dashboard.proto";
+
+option go_package = "github.com/the-protobuf-project/opentelementry-go/protobuf/grafana/v1/grafanapbv1;grafanapbv1";
+option java_multiple_files = true;
+option java_outer_classname = "DashboardServiceProto";
+option java_package = "com.grafana.v1";
+
+// DashboardService exposes Grafana dashboards over gRPC and REST.
+//
+// List returns stubs (no grafana_dashboard_document).
+// Get and Load return the full GrafanaDashboardAccessMeta document whose
+// protojson matches dashboard.json when marshalled with EmitUnpopulated=true.
+service DashboardService {
+  option (google.api.default_host) = "telemetry.the-protobuf-project.app";
+
+  // List dashboard stubs under a parent workspace. grafana_dashboard_document is omitted.
+  // HTTP: GET /v1/{parent=telemetryWorkspaces/*}/serviceDashboards
+  rpc ListServiceDashboards(ListServiceDashboardsRequest) returns (ListServiceDashboardsResponse) {
+    option (google.api.http) = {get: "/v1/{parent=telemetryWorkspaces/*}/serviceDashboards"};
+    option (google.api.method_signature) = "parent";
+  }
+
+  // Fetch one ServiceDashboard by name, including grafana_dashboard_document.
+  // HTTP: GET /v1/{name=telemetryWorkspaces/*/serviceDashboards/*}
+  rpc GetServiceDashboard(GetServiceDashboardRequest) returns (ServiceDashboard) {
+    option (google.api.http) = {get: "/v1/{name=telemetryWorkspaces/*/serviceDashboards/*}"};
+    option (google.api.method_signature) = "name";
+  }
+
+  // Load a dashboard with optional time range, timezone, and variable overrides.
+  // Returns the full ServiceDashboard plus resolved effective time range.
+  // HTTP: POST /v1/{name=telemetryWorkspaces/*/serviceDashboards/*}:load
+  rpc LoadServiceDashboard(LoadServiceDashboardRequest) returns (LoadServiceDashboardResponse) {
+    option (google.api.http) = {
+      post: "/v1/{name=telemetryWorkspaces/*/serviceDashboards/*}:load"
+      body: "*"
+    };
+    option (google.api.method_signature) = "name,time_range_start,time_range_end,time_zone,variable_overrides,include_panel_data";
+  }
+}

@@ -1,4 +1,4 @@
-//! MCAP + optional OTLP (`localhost:12005`).
+//! MCAP + optional OTLP (`localhost:6009`).
 use opentelementry::{Environment, logger};
 use serde::Serialize;
 use std::path::PathBuf;

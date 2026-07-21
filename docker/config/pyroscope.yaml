@@ -1,0 +1,17 @@
+# Pyroscope configuration for local development
+target: all
+
+# Server configuration
+server:
+  http_listen_port: 4040
+  grpc_listen_port: 9095
+
+# Use local filesystem for blocks storage
+storage:
+  path: /var/lib/pyroscope
+
+# Ingester configuration
+ingester:
+  lifecycler:
+    ring:
+      replication_factor: 1

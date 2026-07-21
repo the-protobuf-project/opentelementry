@@ -61,7 +61,7 @@ async fn main() -> anyhow::Result<()> {
     let mut opentelementry = Opentelementry::new()
         .with_service("simple-trace-test", "1.0.0")
         .environment(Environment::Development)
-        .with_otlp("localhost", 12005)
+        .with_otlp("localhost", 6009)
         .with_tracing()
         .build()?;
 

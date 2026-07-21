@@ -27,28 +27,29 @@ var File_grafana_v1_dashboard_service_proto protoreflect.FileDescriptor
 
 const file_grafana_v1_dashboard_service_proto_rawDesc = "" +
 	"\n" +
-	"\"grafana/v1/dashboard_service.proto\x12\vgranfana.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1agrafana/v1/dashboard.proto2\xa2\x05\n" +
-	"\x10DashboardService\x12\xb5\x01\n" +
-	"\x15ListServiceDashboards\x12).granfana.v1.ListServiceDashboardsRequest\x1a*.granfana.v1.ListServiceDashboardsResponse\"E\xdaA\x06parent\x82\xd3\xe4\x93\x026\x124/v1/{parent=telemetryWorkspaces/*}/serviceDashboards\x12\xa2\x01\n" +
-	"\x13GetServiceDashboard\x12'.granfana.v1.GetServiceDashboardRequest\x1a\x1d.granfana.v1.ServiceDashboard\"C\xdaA\x04name\x82\xd3\xe4\x93\x026\x124/v1/{name=telemetryWorkspaces/*/serviceDashboards/*}\x12\x89\x02\n" +
-	"\x14LoadServiceDashboard\x12(.granfana.v1.LoadServiceDashboardRequest\x1a).granfana.v1.LoadServiceDashboardResponse\"\x9b\x01\xdaATname,time_range_start,time_range_end,time_zone,variable_overrides,include_panel_data\x82\xd3\xe4\x93\x02>:\x01*\"9/v1/{name=telemetryWorkspaces/*/serviceDashboards/*}:load\x1a%\xcaA\"telemetry.the-protobuf-project.appB\x88\x01\n" +
+	"\"grafana/v1/dashboard_service.proto\x12\n" +
+	"grafana.v1\x1a\x1cgoogle/api/annotations.proto\x1a\x17google/api/client.proto\x1a\x1agrafana/v1/dashboard.proto2\x9c\x05\n" +
+	"\x10DashboardService\x12\xb3\x01\n" +
+	"\x15ListServiceDashboards\x12(.grafana.v1.ListServiceDashboardsRequest\x1a).grafana.v1.ListServiceDashboardsResponse\"E\xdaA\x06parent\x82\xd3\xe4\x93\x026\x124/v1/{parent=telemetryWorkspaces/*}/serviceDashboards\x12\xa0\x01\n" +
+	"\x13GetServiceDashboard\x12&.grafana.v1.GetServiceDashboardRequest\x1a\x1c.grafana.v1.ServiceDashboard\"C\xdaA\x04name\x82\xd3\xe4\x93\x026\x124/v1/{name=telemetryWorkspaces/*/serviceDashboards/*}\x12\x87\x02\n" +
+	"\x14LoadServiceDashboard\x12'.grafana.v1.LoadServiceDashboardRequest\x1a(.grafana.v1.LoadServiceDashboardResponse\"\x9b\x01\xdaATname,time_range_start,time_range_end,time_zone,variable_overrides,include_panel_data\x82\xd3\xe4\x93\x02>:\x01*\"9/v1/{name=telemetryWorkspaces/*/serviceDashboards/*}:load\x1a%\xcaA\"telemetry.the-protobuf-project.appB\x88\x01\n" +
 	"\x0ecom.grafana.v1B\x15DashboardServiceProtoP\x01Z]github.com/the-protobuf-project/opentelementry-go/protobuf/grafana/v1/grafanapbv1;grafanapbv1b\x06proto3"
 
 var file_grafana_v1_dashboard_service_proto_goTypes = []any{
-	(*ListServiceDashboardsRequest)(nil),  // 0: granfana.v1.ListServiceDashboardsRequest
-	(*GetServiceDashboardRequest)(nil),    // 1: granfana.v1.GetServiceDashboardRequest
-	(*LoadServiceDashboardRequest)(nil),   // 2: granfana.v1.LoadServiceDashboardRequest
-	(*ListServiceDashboardsResponse)(nil), // 3: granfana.v1.ListServiceDashboardsResponse
-	(*ServiceDashboard)(nil),              // 4: granfana.v1.ServiceDashboard
-	(*LoadServiceDashboardResponse)(nil),  // 5: granfana.v1.LoadServiceDashboardResponse
+	(*ListServiceDashboardsRequest)(nil),  // 0: grafana.v1.ListServiceDashboardsRequest
+	(*GetServiceDashboardRequest)(nil),    // 1: grafana.v1.GetServiceDashboardRequest
+	(*LoadServiceDashboardRequest)(nil),   // 2: grafana.v1.LoadServiceDashboardRequest
+	(*ListServiceDashboardsResponse)(nil), // 3: grafana.v1.ListServiceDashboardsResponse
+	(*ServiceDashboard)(nil),              // 4: grafana.v1.ServiceDashboard
+	(*LoadServiceDashboardResponse)(nil),  // 5: grafana.v1.LoadServiceDashboardResponse
 }
 var file_grafana_v1_dashboard_service_proto_depIdxs = []int32{
-	0, // 0: granfana.v1.DashboardService.ListServiceDashboards:input_type -> granfana.v1.ListServiceDashboardsRequest
-	1, // 1: granfana.v1.DashboardService.GetServiceDashboard:input_type -> granfana.v1.GetServiceDashboardRequest
-	2, // 2: granfana.v1.DashboardService.LoadServiceDashboard:input_type -> granfana.v1.LoadServiceDashboardRequest
-	3, // 3: granfana.v1.DashboardService.ListServiceDashboards:output_type -> granfana.v1.ListServiceDashboardsResponse
-	4, // 4: granfana.v1.DashboardService.GetServiceDashboard:output_type -> granfana.v1.ServiceDashboard
-	5, // 5: granfana.v1.DashboardService.LoadServiceDashboard:output_type -> granfana.v1.LoadServiceDashboardResponse
+	0, // 0: grafana.v1.DashboardService.ListServiceDashboards:input_type -> grafana.v1.ListServiceDashboardsRequest
+	1, // 1: grafana.v1.DashboardService.GetServiceDashboard:input_type -> grafana.v1.GetServiceDashboardRequest
+	2, // 2: grafana.v1.DashboardService.LoadServiceDashboard:input_type -> grafana.v1.LoadServiceDashboardRequest
+	3, // 3: grafana.v1.DashboardService.ListServiceDashboards:output_type -> grafana.v1.ListServiceDashboardsResponse
+	4, // 4: grafana.v1.DashboardService.GetServiceDashboard:output_type -> grafana.v1.ServiceDashboard
+	5, // 5: grafana.v1.DashboardService.LoadServiceDashboard:output_type -> grafana.v1.LoadServiceDashboardResponse
 	3, // [3:6] is the sub-list for method output_type
 	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

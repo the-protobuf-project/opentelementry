@@ -519,43 +519,44 @@ var File_grafana_v1_dashboard_proto protoreflect.FileDescriptor
 
 const file_grafana_v1_dashboard_proto_rawDesc = "" +
 	"\n" +
-	"\x1agrafana/v1/dashboard.proto\x12\vgranfana.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x19grafana/v1/metadata.proto\"\xe4\x02\n" +
+	"\x1agrafana/v1/dashboard.proto\x12\n" +
+	"grafana.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x19google/api/resource.proto\x1a\x19grafana/v1/metadata.proto\"\xe3\x02\n" +
 	"\x10ServiceDashboard\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\bR\x04name\x12\x19\n" +
-	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x12j\n" +
-	"\x1agrafana_dashboard_document\x18\x03 \x01(\v2'.granfana.v1.GrafanaDashboardAccessMetaB\x03\xe0A\x03R\x18grafanaDashboardDocument:\xaf\x01\xeaA\xab\x01\n" +
+	"\x05title\x18\x02 \x01(\tB\x03\xe0A\x03R\x05title\x12i\n" +
+	"\x1agrafana_dashboard_document\x18\x03 \x01(\v2&.grafana.v1.GrafanaDashboardAccessMetaB\x03\xe0A\x03R\x18grafanaDashboardDocument:\xaf\x01\xeaA\xab\x01\n" +
 	"3telemetry.the-protobuf-project.app/ServiceDashboard\x12OtelemetryWorkspaces/{telemetry_workspace}/serviceDashboards/{service_dashboard}*\x11serviceDashboards2\x10serviceDashboard\"\xd6\x01\n" +
 	"\x1cListServiceDashboardsRequest\x12S\n" +
 	"\x06parent\x18\x01 \x01(\tB;\xe0A\x02\xfaA5\x123telemetry.the-protobuf-project.app/ServiceDashboardR\x06parent\x12 \n" +
 	"\tpage_size\x18\x02 \x01(\x05B\x03\xe0A\x01R\bpageSize\x12\"\n" +
 	"\n" +
 	"page_token\x18\x03 \x01(\tB\x03\xe0A\x01R\tpageToken\x12\x1b\n" +
-	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\"\x95\x01\n" +
-	"\x1dListServiceDashboardsResponse\x12L\n" +
-	"\x12service_dashboards\x18\x01 \x03(\v2\x1d.granfana.v1.ServiceDashboardR\x11serviceDashboards\x12&\n" +
+	"\x06filter\x18\x04 \x01(\tB\x03\xe0A\x01R\x06filter\"\x94\x01\n" +
+	"\x1dListServiceDashboardsResponse\x12K\n" +
+	"\x12service_dashboards\x18\x01 \x03(\v2\x1c.grafana.v1.ServiceDashboardR\x11serviceDashboards\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"m\n" +
 	"\x1aGetServiceDashboardRequest\x12O\n" +
 	"\x04name\x18\x01 \x01(\tB;\xe0A\x02\xfaA5\n" +
-	"3telemetry.the-protobuf-project.app/ServiceDashboardR\x04name\"\x9f\x04\n" +
+	"3telemetry.the-protobuf-project.app/ServiceDashboardR\x04name\"\x9e\x04\n" +
 	"\x1bLoadServiceDashboardRequest\x12O\n" +
 	"\x04name\x18\x01 \x01(\tB;\xe0A\x02\xfaA5\n" +
 	"3telemetry.the-protobuf-project.app/ServiceDashboardR\x04name\x12#\n" +
 	"\x10time_range_start\x18\x02 \x01(\tB\x03\xe0A\x01R\x04from\x12\x1f\n" +
 	"\x0etime_range_end\x18\x03 \x01(\tB\x03\xe0A\x01R\x02to\x12 \n" +
-	"\ttime_zone\x18\x04 \x01(\tB\x03\xe0A\x01R\btimezone\x12m\n" +
-	"\x12variable_overrides\x18\x05 \x03(\v29.granfana.v1.LoadServiceDashboardRequest.VariableOverrideB\x03\xe0A\x01R\x11variableOverrides\x121\n" +
+	"\ttime_zone\x18\x04 \x01(\tB\x03\xe0A\x01R\btimezone\x12l\n" +
+	"\x12variable_overrides\x18\x05 \x03(\v28.grafana.v1.LoadServiceDashboardRequest.VariableOverrideB\x03\xe0A\x01R\x11variableOverrides\x121\n" +
 	"\x12include_panel_data\x18\x06 \x01(\bB\x03\xe0A\x01R\x10includePanelData\x12$\n" +
 	"\vgrafana_url\x18\a \x01(\tB\x03\xe0A\x01R\n" +
 	"grafanaUrl\x12(\n" +
 	"\rgrafana_token\x18\b \x01(\tB\x03\xe0A\x01R\fgrafanaToken\x1aU\n" +
 	"\x10VariableOverride\x12\x1f\n" +
 	"\ftemplate_key\x18\x01 \x01(\tB\x03\xe0A\x02R\x04name\x12 \n" +
-	"\fsubstitution\x18\x02 \x01(\tB\x03\xe0A\x02R\x05value\"\x97\x03\n" +
-	"\x1cLoadServiceDashboardResponse\x12J\n" +
-	"\x11service_dashboard\x18\x01 \x01(\v2\x1d.granfana.v1.ServiceDashboardR\x10serviceDashboard\x12@\n" +
+	"\fsubstitution\x18\x02 \x01(\tB\x03\xe0A\x02R\x05value\"\x95\x03\n" +
+	"\x1cLoadServiceDashboardResponse\x12I\n" +
+	"\x11service_dashboard\x18\x01 \x01(\v2\x1c.grafana.v1.ServiceDashboardR\x10serviceDashboard\x12@\n" +
 	"\x1aeffective_time_range_start\x18\x02 \x01(\tB\x03\xe0A\x03R\x17effectiveTimeRangeStart\x12<\n" +
-	"\x18effective_time_range_end\x18\x03 \x01(\tB\x03\xe0A\x03R\x15effectiveTimeRangeEnd\x12i\n" +
-	"\x0fpanel_data_json\x18\x04 \x03(\v2<.granfana.v1.LoadServiceDashboardResponse.PanelDataJsonEntryB\x03\xe0A\x03R\rpanelDataJson\x1a@\n" +
+	"\x18effective_time_range_end\x18\x03 \x01(\tB\x03\xe0A\x03R\x15effectiveTimeRangeEnd\x12h\n" +
+	"\x0fpanel_data_json\x18\x04 \x03(\v2;.grafana.v1.LoadServiceDashboardResponse.PanelDataJsonEntryB\x03\xe0A\x03R\rpanelDataJson\x1a@\n" +
 	"\x12PanelDataJsonEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x81\x01\n" +
@@ -575,22 +576,22 @@ func file_grafana_v1_dashboard_proto_rawDescGZIP() []byte {
 
 var file_grafana_v1_dashboard_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_grafana_v1_dashboard_proto_goTypes = []any{
-	(*ServiceDashboard)(nil),                             // 0: granfana.v1.ServiceDashboard
-	(*ListServiceDashboardsRequest)(nil),                 // 1: granfana.v1.ListServiceDashboardsRequest
-	(*ListServiceDashboardsResponse)(nil),                // 2: granfana.v1.ListServiceDashboardsResponse
-	(*GetServiceDashboardRequest)(nil),                   // 3: granfana.v1.GetServiceDashboardRequest
-	(*LoadServiceDashboardRequest)(nil),                  // 4: granfana.v1.LoadServiceDashboardRequest
-	(*LoadServiceDashboardResponse)(nil),                 // 5: granfana.v1.LoadServiceDashboardResponse
-	(*LoadServiceDashboardRequest_VariableOverride)(nil), // 6: granfana.v1.LoadServiceDashboardRequest.VariableOverride
-	nil,                                // 7: granfana.v1.LoadServiceDashboardResponse.PanelDataJsonEntry
-	(*GrafanaDashboardAccessMeta)(nil), // 8: granfana.v1.GrafanaDashboardAccessMeta
+	(*ServiceDashboard)(nil),                             // 0: grafana.v1.ServiceDashboard
+	(*ListServiceDashboardsRequest)(nil),                 // 1: grafana.v1.ListServiceDashboardsRequest
+	(*ListServiceDashboardsResponse)(nil),                // 2: grafana.v1.ListServiceDashboardsResponse
+	(*GetServiceDashboardRequest)(nil),                   // 3: grafana.v1.GetServiceDashboardRequest
+	(*LoadServiceDashboardRequest)(nil),                  // 4: grafana.v1.LoadServiceDashboardRequest
+	(*LoadServiceDashboardResponse)(nil),                 // 5: grafana.v1.LoadServiceDashboardResponse
+	(*LoadServiceDashboardRequest_VariableOverride)(nil), // 6: grafana.v1.LoadServiceDashboardRequest.VariableOverride
+	nil,                                // 7: grafana.v1.LoadServiceDashboardResponse.PanelDataJsonEntry
+	(*GrafanaDashboardAccessMeta)(nil), // 8: grafana.v1.GrafanaDashboardAccessMeta
 }
 var file_grafana_v1_dashboard_proto_depIdxs = []int32{
-	8, // 0: granfana.v1.ServiceDashboard.grafana_dashboard_document:type_name -> granfana.v1.GrafanaDashboardAccessMeta
-	0, // 1: granfana.v1.ListServiceDashboardsResponse.service_dashboards:type_name -> granfana.v1.ServiceDashboard
-	6, // 2: granfana.v1.LoadServiceDashboardRequest.variable_overrides:type_name -> granfana.v1.LoadServiceDashboardRequest.VariableOverride
-	0, // 3: granfana.v1.LoadServiceDashboardResponse.service_dashboard:type_name -> granfana.v1.ServiceDashboard
-	7, // 4: granfana.v1.LoadServiceDashboardResponse.panel_data_json:type_name -> granfana.v1.LoadServiceDashboardResponse.PanelDataJsonEntry
+	8, // 0: grafana.v1.ServiceDashboard.grafana_dashboard_document:type_name -> grafana.v1.GrafanaDashboardAccessMeta
+	0, // 1: grafana.v1.ListServiceDashboardsResponse.service_dashboards:type_name -> grafana.v1.ServiceDashboard
+	6, // 2: grafana.v1.LoadServiceDashboardRequest.variable_overrides:type_name -> grafana.v1.LoadServiceDashboardRequest.VariableOverride
+	0, // 3: grafana.v1.LoadServiceDashboardResponse.service_dashboard:type_name -> grafana.v1.ServiceDashboard
+	7, // 4: grafana.v1.LoadServiceDashboardResponse.panel_data_json:type_name -> grafana.v1.LoadServiceDashboardResponse.PanelDataJsonEntry
 	5, // [5:5] is the sub-list for method output_type
 	5, // [5:5] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name

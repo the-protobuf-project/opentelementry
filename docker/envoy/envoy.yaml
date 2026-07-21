@@ -1,0 +1,288 @@
+admin:
+  address:
+    socket_address:
+      address: 0.0.0.0
+      port_value: 9901
+
+static_resources:
+  listeners:
+    # Single ingress port for OTLP HTTP + OTLP gRPC + all UIs/APIs
+    - name: otel_ingress
+      address:
+        socket_address:
+          address: 0.0.0.0
+          port_value: 6009
+      filter_chains:
+        - filters:
+            - name: envoy.filters.network.http_connection_manager
+              typed_config:
+                "@type": type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
+                stat_prefix: otel_ingress
+                codec_type: AUTO
+                http2_protocol_options: {}
+                route_config:
+                  name: otel_ingress_route
+                  virtual_hosts:
+                    - name: otel_collector
+                      domains: ["*"]
+                      routes:
+                        # OTLP gRPC requests
+                        - match:
+                            prefix: "/"
+                            headers:
+                              - name: content-type
+                                string_match:
+                                  prefix: "application/grpc"
+                          route:
+                            cluster: otelcol_grpc
+                            timeout: 60s
+                        # OTLP HTTP requests
+                        - match:
+                            prefix: "/v1/"
+                          route:
+                            cluster: otelcol_http
+                            timeout: 60s
+                        # Alertmanager UI/API mounted at /alertmanager/*
+                        - match:
+                            path: "/alertmanager"
+                          redirect:
+                            path_redirect: "/alertmanager/"
+                        - match:
+                            prefix: "/alertmanager/"
+                          route:
+                            cluster: alertmanager
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # Grafana UI/API mounted at /grafana/*
+                        - match:
+                            path: "/grafana"
+                          redirect:
+                            path_redirect: "/grafana/"
+                        - match:
+                            prefix: "/grafana/"
+                          route:
+                            cluster: grafana
+                            timeout: 60s
+                        # Loki API mounted at /logs/*
+                        - match:
+                            path: "/logs"
+                          redirect:
+                            path_redirect: "/logs/"
+                        - match:
+                            prefix: "/logs/"
+                          route:
+                            cluster: loki
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # Prometheus UI/API mounted at /metrics/*
+                        - match:
+                            path: "/metrics"
+                          redirect:
+                            path_redirect: "/metrics/"
+                        - match:
+                            prefix: "/metrics/"
+                          route:
+                            cluster: prometheus
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # Tempo HTTP API mounted at /traces/*
+                        - match:
+                            path: "/traces"
+                          redirect:
+                            path_redirect: "/traces/"
+                        - match:
+                            prefix: "/traces/"
+                          route:
+                            cluster: tempo
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # Pushgateway API/UI mounted at /pushgateway/*
+                        - match:
+                            path: "/pushgateway"
+                          redirect:
+                            path_redirect: "/pushgateway/"
+                        - match:
+                            prefix: "/pushgateway/"
+                          route:
+                            cluster: pushgateway
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # OTel Collector health/status mounted at /otelcol/*
+                        - match:
+                            path: "/otelcol"
+                          redirect:
+                            path_redirect: "/otelcol/"
+                        - match:
+                            prefix: "/otelcol/"
+                          route:
+                            cluster: otelcol_health
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # Envoy admin interface mounted at /envoy/*
+                        # NOTE: the admin API is powerful (config dump, /quitquitquit).
+                        # Only expose it on trusted networks.
+                        - match:
+                            path: "/envoy"
+                          redirect:
+                            path_redirect: "/envoy/"
+                        - match:
+                            prefix: "/envoy/"
+                          route:
+                            cluster: envoy_admin
+                            prefix_rewrite: "/"
+                            timeout: 60s
+                        # Redirect root to Grafana subpath
+                        - match:
+                            path: "/"
+                          redirect:
+                            path_redirect: "/grafana/"
+                http_filters:
+                  - name: envoy.filters.http.router
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
+
+  clusters:
+    - name: loki
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: loki
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 3101
+
+    - name: prometheus
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: prometheus
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 9090
+
+    - name: tempo
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: tempo
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 3201
+
+    - name: grafana
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: grafana
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 3000
+
+    - name: alertmanager
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: alertmanager
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 9093
+
+    - name: pushgateway
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: pushgateway
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 9091
+
+    - name: otelcol_grpc
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      typed_extension_protocol_options:
+        envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
+          "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
+          explicit_http_config:
+            http2_protocol_options: {}
+      load_assignment:
+        cluster_name: otelcol_grpc
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 4317
+
+    - name: otelcol_http
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: otelcol_http
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 4318
+
+    - name: otelcol_health
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: otelcol_health
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 13133
+
+    - name: envoy_admin
+      connect_timeout: 5s
+      type: STRICT_DNS
+      lb_policy: ROUND_ROBIN
+      load_assignment:
+        cluster_name: envoy_admin
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: 127.0.0.1
+                      port_value: 9901

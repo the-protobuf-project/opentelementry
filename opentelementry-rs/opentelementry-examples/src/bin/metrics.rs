@@ -1,4 +1,4 @@
-//! OTLP metrics to `localhost:12005`.
+//! OTLP metrics to `localhost:6009`.
 use opentelementry::derive::Metrics;
 use opentelementry::{Environment, logger};
 use std::path::PathBuf;
@@ -36,7 +36,7 @@ async fn main() -> anyhow::Result<()> {
         .with_mcap(mcap_path.to_string_lossy())
         .build()?;
 
-    logger::info!("Metrics → OTLP gRPC localhost:12005 (+ MCAP)");
+    logger::info!("Metrics → OTLP gRPC localhost:6009 (+ MCAP)");
 
     let llm_metrics = LlmMetrics {
         request_count: 42,

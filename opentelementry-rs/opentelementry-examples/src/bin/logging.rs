@@ -1,4 +1,4 @@
-//! Logs to console + OTLP logs to local collector (`localhost:12005`).
+//! Logs to console + OTLP logs to local collector (`localhost:6009`).
 use opentelementry::{Environment, logger};
 use serde::Serialize;
 
@@ -16,11 +16,11 @@ struct ChatMessage {
 async fn main() -> anyhow::Result<()> {
     let _opentelementry = opentelementry::opentelementry_local_otel!()
         .with_service("chat-service", "1.0.0")
-        .description("OTLP logs → localhost:12005")
+        .description("OTLP logs → localhost:6009")
         .environment(Environment::Development)
         .build()?;
 
-    logger::info!("Chat service started (OTLP logs to localhost:12005)");
+    logger::info!("Chat service started (OTLP logs to localhost:6009)");
 
     let msg1 = ChatMessage {
         message_id: "msg-001".to_string(),

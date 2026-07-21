@@ -14,7 +14,7 @@ syntax = "proto3";
 //
 // go_package intentionally mirrors protoverse-go so this file can replace the
 // existing stubs once regenerated and published.
-package granfana.v1;
+package grafana.v1;
 
 import "google/api/field_behavior.proto";
 import "google/protobuf/struct.proto";

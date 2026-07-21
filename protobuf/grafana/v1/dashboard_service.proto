@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 // gRPC service for read-only access to Grafana-backed telemetry dashboards.
-package granfana.v1;
+package grafana.v1;
 
 import "google/api/annotations.proto";
 import "google/api/client.proto";

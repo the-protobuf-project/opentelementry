@@ -1,11 +1,11 @@
 //! Declarative macros for quick OTLP setup (aligned with `opentelementry-go` builder ergonomics).
 //!
-//! Default collector address for the `opentelementry-examples` workspace crate is **gRPC OTLP on port 12005**.
+//! Default collector address for the `opentelementry-examples` workspace crate is **gRPC OTLP on port 6009**.
 //! Configure your OpenTelemetry Collector to receive OTLP gRPC on that port.
 
 /// Default OTLP **gRPC** port for a local collector used by `opentelementry-examples`.
 ///
-/// Standard ports are 4317 (gRPC) and 4318 (HTTP). This project uses **12005** so examples
+/// Standard ports are 4317 (gRPC) and 4318 (HTTP). This project uses **6009** so examples
 /// can run alongside a default collector without port clashes.
 pub const DEFAULT_OTEL_COLLECTOR_OTLP_PORT: u16 = 12_005;
 

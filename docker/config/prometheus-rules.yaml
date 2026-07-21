@@ -1,0 +1,56 @@
+groups:
+  - name: thirdparty-readiness-freshness
+    interval: 1s
+    rules:
+      - record: thirdparty_service_ready_live
+        expr: |
+          (
+            thirdparty_service_ready
+            * on(exported_job, exported_instance) group_left()
+              ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+          )
+          or on(service, robot_id, fleet_id, region)
+            label_replace(
+              thirdparty_opentelemetry_stack_ready * 0,
+              "service", "whisper-cpp", "__name__", ".*"
+            )
+
+      - record: thirdparty_redis_ready_live
+        expr: |
+          thirdparty_redis_ready
+          * on(exported_job, exported_instance) group_left()
+            ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+
+      - record: thirdparty_nats_ready_live
+        expr: |
+          thirdparty_nats_ready
+          * on(exported_job, exported_instance) group_left()
+            ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+
+      - record: thirdparty_ollama_ready_live
+        expr: |
+          thirdparty_ollama_ready
+          * on(exported_job, exported_instance) group_left()
+            ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+
+      - record: thirdparty_milvusdb_ready_live
+        expr: |
+          thirdparty_milvusdb_ready
+          * on(exported_job, exported_instance) group_left()
+            ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+
+      - record: thirdparty_opentelemetry_stack_ready_live
+        expr: |
+          thirdparty_opentelemetry_stack_ready
+          * on(exported_job, exported_instance) group_left()
+            ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+
+      - record: thirdparty_whisper_ready_live
+        expr: |
+          (
+            thirdparty_whisper_ready
+            * on(exported_job, exported_instance) group_left()
+              ((time() - push_time_seconds{job="pushgateway"}) < bool 5)
+          )
+          or on()
+            vector(0)

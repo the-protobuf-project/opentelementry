@@ -1,4 +1,4 @@
-//! OTLP traces to `localhost:12005` via `#[instrument]` + batch export.
+//! OTLP traces to `localhost:6009` via `#[instrument]` + batch export.
 use opentelementry::tracing::instrument;
 use opentelementry::{Environment, logger};
 
@@ -16,7 +16,7 @@ async fn main() -> anyhow::Result<()> {
         .with_tracing()
         .build()?;
 
-    logger::info!("Tracing → OTLP localhost:12005");
+    logger::info!("Tracing → OTLP localhost:6009");
 
     simple_operation();
 

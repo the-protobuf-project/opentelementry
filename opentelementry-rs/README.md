@@ -47,9 +47,9 @@ async fn main() -> anyhow::Result<()> {
 }
 ```
 
-### OTLP to a local collector (port **12005**)
+### OTLP to a local collector (port **6009**)
 
-Same defaults as the **`opentelementry-examples`** crate (gRPC OTLP on `localhost:12005`):
+Same defaults as the **`opentelementry-examples`** crate (gRPC OTLP on `localhost:6009`):
 
 ```rust
 use opentelementry::{Environment, logger};
@@ -74,12 +74,12 @@ Or: `.with_local_otel_collector()` on any builder. **`Opentelementry`’s `Drop`
 Standalone workspace package (mirrors `opentelementry-go/examples/`):
 
 ```bash
-cargo run -p opentelementry-examples --bin tracing    # OTLP traces → localhost:12005
+cargo run -p opentelementry-examples --bin tracing    # OTLP traces → localhost:6009
 cargo run -p opentelementry-examples --bin metrics
 cargo run -p opentelementry-examples --bin logging
 ```
 
-See **`opentelementry-examples/README.md`** for collector config on port **12005**.
+See **`opentelementry-examples/README.md`** for collector config on port **6009**.
 
 ## Configuration
 

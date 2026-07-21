@@ -4,7 +4,7 @@ syntax = "proto3";
 //
 // ServiceDashboard is the primary resource. GetServiceDashboard and LoadServiceDashboard
 // return the full grafana_dashboard_document which maps 1:1 with dashboard.json.
-package granfana.v1;
+package grafana.v1;
 
 import "google/api/field_behavior.proto";
 import "google/api/resource.proto";

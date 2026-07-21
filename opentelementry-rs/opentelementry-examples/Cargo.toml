@@ -3,7 +3,7 @@ name = "opentelementry-examples"
 version.workspace = true
 edition.workspace = true
 publish = false
-description = "Runnable demos for Opentelementry — OTLP to localhost:12005 (gRPC)"
+description = "Runnable demos for Opentelementry — OTLP to localhost:6009 (gRPC)"
 
 [dependencies]
 opentelementry = { path = "../opentelementry" }

@@ -1738,14 +1738,15 @@ var File_grafana_v1_metadata_proto protoreflect.FileDescriptor
 
 const file_grafana_v1_metadata_proto_rawDesc = "" +
 	"\n" +
-	"\x19grafana/v1/metadata.proto\x12\vgranfana.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x8e\x02\n" +
+	"\x19grafana/v1/metadata.proto\x12\n" +
+	"grafana.v1\x1a\x1fgoogle/api/field_behavior.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x8c\x02\n" +
 	"\x1aGrafanaDashboardAccessMeta\x12$\n" +
 	"\vapi_version\x18\x01 \x01(\tB\x03\xe0A\x03R\n" +
 	"apiVersion\x12\x17\n" +
-	"\x04kind\x18\x02 \x01(\tB\x03\xe0A\x03R\x04kind\x12?\n" +
-	"\bmetadata\x18\x03 \x01(\v2\x1e.granfana.v1.GrafanaObjectMetaB\x03\xe0A\x03R\bmetadata\x12:\n" +
-	"\x04spec\x18\x04 \x01(\v2!.granfana.v1.GrafanaDashboardSpecB\x03\xe0A\x03R\x04spec\x124\n" +
-	"\x06status\x18\x05 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x03R\x06status\"\x89\x04\n" +
+	"\x04kind\x18\x02 \x01(\tB\x03\xe0A\x03R\x04kind\x12>\n" +
+	"\bmetadata\x18\x03 \x01(\v2\x1d.grafana.v1.GrafanaObjectMetaB\x03\xe0A\x03R\bmetadata\x129\n" +
+	"\x04spec\x18\x04 \x01(\v2 .grafana.v1.GrafanaDashboardSpecB\x03\xe0A\x03R\x04spec\x124\n" +
+	"\x06status\x18\x05 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x03R\x06status\"\x87\x04\n" +
 	"\x11GrafanaObjectMeta\x12\x17\n" +
 	"\x04name\x18\x01 \x01(\tB\x03\xe0A\x03R\x04name\x12!\n" +
 	"\tnamespace\x18\x02 \x01(\tB\x03\xe0A\x03R\tnamespace\x12\x13\n" +
@@ -1754,36 +1755,36 @@ const file_grafana_v1_metadata_proto_rawDesc = "" +
 	"\n" +
 	"generation\x18\x05 \x01(\x03B\x03\xe0A\x03R\n" +
 	"generation\x122\n" +
-	"\x12creation_timestamp\x18\x06 \x01(\tB\x03\xe0A\x03R\x11creationTimestamp\x12G\n" +
-	"\x06labels\x18\a \x03(\v2*.granfana.v1.GrafanaObjectMeta.LabelsEntryB\x03\xe0A\x03R\x06labels\x12V\n" +
-	"\vannotations\x18\b \x03(\v2/.granfana.v1.GrafanaObjectMeta.AnnotationsEntryB\x03\xe0A\x03R\vannotations\x1a9\n" +
+	"\x12creation_timestamp\x18\x06 \x01(\tB\x03\xe0A\x03R\x11creationTimestamp\x12F\n" +
+	"\x06labels\x18\a \x03(\v2).grafana.v1.GrafanaObjectMeta.LabelsEntryB\x03\xe0A\x03R\x06labels\x12U\n" +
+	"\vannotations\x18\b \x03(\v2..grafana.v1.GrafanaObjectMeta.AnnotationsEntryB\x03\xe0A\x03R\vannotations\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
 	"\x10AnnotationsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xca\x05\n" +
-	"\x14GrafanaDashboardSpec\x12I\n" +
-	"\vannotations\x18\x01 \x03(\v2\".granfana.v1.GrafanaAnnotationItemB\x03\xe0A\x01R\vannotations\x12$\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xc4\x05\n" +
+	"\x14GrafanaDashboardSpec\x12H\n" +
+	"\vannotations\x18\x01 \x03(\v2!.grafana.v1.GrafanaAnnotationItemB\x03\xe0A\x01R\vannotations\x12$\n" +
 	"\vcursor_sync\x18\x02 \x01(\tB\x03\xe0A\x01R\n" +
 	"cursorSync\x12\x1f\n" +
-	"\beditable\x18\x03 \x01(\bB\x03\xe0A\x01R\beditable\x12P\n" +
-	"\belements\x18\x04 \x03(\v2/.granfana.v1.GrafanaDashboardSpec.ElementsEntryB\x03\xe0A\x01R\belements\x127\n" +
-	"\x06layout\x18\x05 \x01(\v2\x1a.granfana.v1.GrafanaLayoutB\x03\xe0A\x01R\x06layout\x122\n" +
+	"\beditable\x18\x03 \x01(\bB\x03\xe0A\x01R\beditable\x12O\n" +
+	"\belements\x18\x04 \x03(\v2..grafana.v1.GrafanaDashboardSpec.ElementsEntryB\x03\xe0A\x01R\belements\x126\n" +
+	"\x06layout\x18\x05 \x01(\v2\x19.grafana.v1.GrafanaLayoutB\x03\xe0A\x01R\x06layout\x122\n" +
 	"\x05links\x18\x06 \x03(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x05links\x12\x1e\n" +
 	"\blive_now\x18\a \x01(\bB\x03\xe0A\x01R\aliveNow\x12\x1d\n" +
 	"\apreload\x18\b \x01(\bB\x03\xe0A\x01R\apreload\x12\x17\n" +
-	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags\x12J\n" +
+	"\x04tags\x18\t \x03(\tB\x03\xe0A\x01R\x04tags\x12I\n" +
 	"\rtime_settings\x18\n" +
-	" \x01(\v2 .granfana.v1.GrafanaTimeSettingsB\x03\xe0A\x01R\ftimeSettings\x12\x19\n" +
-	"\x05title\x18\v \x01(\tB\x03\xe0A\x01R\x05title\x12C\n" +
-	"\tvariables\x18\f \x03(\v2 .granfana.v1.GrafanaVariableItemB\x03\xe0A\x01R\tvariables\x1a]\n" +
+	" \x01(\v2\x1f.grafana.v1.GrafanaTimeSettingsB\x03\xe0A\x01R\ftimeSettings\x12\x19\n" +
+	"\x05title\x18\v \x01(\tB\x03\xe0A\x01R\x05title\x12B\n" +
+	"\tvariables\x18\f \x03(\v2\x1f.grafana.v1.GrafanaVariableItemB\x03\xe0A\x01R\tvariables\x1a\\\n" +
 	"\rElementsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x126\n" +
-	"\x05value\x18\x02 \x01(\v2 .granfana.v1.GrafanaPanelElementR\x05value:\x028\x01\"m\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x125\n" +
+	"\x05value\x18\x02 \x01(\v2\x1f.grafana.v1.GrafanaPanelElementR\x05value:\x028\x01\"l\n" +
 	"\x15GrafanaAnnotationItem\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12;\n" +
-	"\x04spec\x18\x02 \x01(\v2\".granfana.v1.GrafanaAnnotationSpecB\x03\xe0A\x01R\x04spec\"\xde\x01\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12:\n" +
+	"\x04spec\x18\x02 \x01(\v2!.grafana.v1.GrafanaAnnotationSpecB\x03\xe0A\x01R\x04spec\"\xde\x01\n" +
 	"\x15GrafanaAnnotationSpec\x12\x1e\n" +
 	"\bbuilt_in\x18\x01 \x01(\bB\x03\xe0A\x01R\abuiltIn\x12\x1b\n" +
 	"\x06enable\x18\x02 \x01(\bB\x03\xe0A\x01R\x06enable\x12\x17\n" +
@@ -1791,35 +1792,35 @@ const file_grafana_v1_metadata_proto_rawDesc = "" +
 	"\n" +
 	"icon_color\x18\x04 \x01(\tB\x03\xe0A\x01R\ticonColor\x12\x17\n" +
 	"\x04name\x18\x05 \x01(\tB\x03\xe0A\x01R\x04name\x122\n" +
-	"\x05query\x18\x06 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x05query\"f\n" +
+	"\x05query\x18\x06 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x05query\"e\n" +
 	"\x13GrafanaPanelElement\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x126\n" +
-	"\x04spec\x18\x02 \x01(\v2\x1d.granfana.v1.GrafanaPanelSpecB\x03\xe0A\x01R\x04spec\"\x99\x02\n" +
-	"\x10GrafanaPanelSpec\x127\n" +
-	"\x04data\x18\x01 \x01(\v2\x1e.granfana.v1.GrafanaQueryGroupB\x03\xe0A\x01R\x04data\x12%\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x125\n" +
+	"\x04spec\x18\x02 \x01(\v2\x1c.grafana.v1.GrafanaPanelSpecB\x03\xe0A\x01R\x04spec\"\x97\x02\n" +
+	"\x10GrafanaPanelSpec\x126\n" +
+	"\x04data\x18\x01 \x01(\v2\x1d.grafana.v1.GrafanaQueryGroupB\x03\xe0A\x01R\x04data\x12%\n" +
 	"\vdescription\x18\x02 \x01(\tB\x03\xe0A\x01R\vdescription\x12\x13\n" +
 	"\x02id\x18\x03 \x01(\x05B\x03\xe0A\x01R\x02id\x122\n" +
 	"\x05links\x18\x04 \x03(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x05links\x12\x19\n" +
-	"\x05title\x18\x05 \x01(\tB\x03\xe0A\x01R\x05title\x12A\n" +
+	"\x05title\x18\x05 \x01(\tB\x03\xe0A\x01R\x05title\x12@\n" +
 	"\n" +
-	"viz_config\x18\x06 \x01(\v2\x1d.granfana.v1.GrafanaVizConfigB\x03\xe0A\x01R\tvizConfig\"i\n" +
+	"viz_config\x18\x06 \x01(\v2\x1c.grafana.v1.GrafanaVizConfigB\x03\xe0A\x01R\tvizConfig\"h\n" +
 	"\x11GrafanaQueryGroup\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12;\n" +
-	"\x04spec\x18\x02 \x01(\v2\".granfana.v1.GrafanaQueryGroupSpecB\x03\xe0A\x01R\x04spec\"\xe5\x01\n" +
-	"\x15GrafanaQueryGroupSpec\x12A\n" +
-	"\aqueries\x18\x01 \x03(\v2\".granfana.v1.GrafanaPanelQueryItemB\x03\xe0A\x01R\aqueries\x12A\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12:\n" +
+	"\x04spec\x18\x02 \x01(\v2!.grafana.v1.GrafanaQueryGroupSpecB\x03\xe0A\x01R\x04spec\"\xe4\x01\n" +
+	"\x15GrafanaQueryGroupSpec\x12@\n" +
+	"\aqueries\x18\x01 \x03(\v2!.grafana.v1.GrafanaPanelQueryItemB\x03\xe0A\x01R\aqueries\x12A\n" +
 	"\rquery_options\x18\x02 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\fqueryOptions\x12F\n" +
-	"\x0ftransformations\x18\x03 \x03(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x0ftransformations\"m\n" +
+	"\x0ftransformations\x18\x03 \x03(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x0ftransformations\"l\n" +
 	"\x15GrafanaPanelQueryItem\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12;\n" +
-	"\x04spec\x18\x02 \x01(\v2\".granfana.v1.GrafanaPanelQuerySpecB\x03\xe0A\x01R\x04spec\"\x8a\x01\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12:\n" +
+	"\x04spec\x18\x02 \x01(\v2!.grafana.v1.GrafanaPanelQuerySpecB\x03\xe0A\x01R\x04spec\"\x89\x01\n" +
 	"\x15GrafanaPanelQuerySpec\x12\x1b\n" +
-	"\x06hidden\x18\x01 \x01(\bB\x03\xe0A\x01R\x06hidden\x128\n" +
-	"\x05query\x18\x02 \x01(\v2\x1d.granfana.v1.GrafanaDataQueryB\x03\xe0A\x01R\x05query\x12\x1a\n" +
-	"\x06ref_id\x18\x03 \x01(\tB\x03\xe0A\x01R\x05refId\"\xdf\x01\n" +
-	"\x10GrafanaDataQuery\x12F\n" +
+	"\x06hidden\x18\x01 \x01(\bB\x03\xe0A\x01R\x06hidden\x127\n" +
+	"\x05query\x18\x02 \x01(\v2\x1c.grafana.v1.GrafanaDataQueryB\x03\xe0A\x01R\x05query\x12\x1a\n" +
+	"\x06ref_id\x18\x03 \x01(\tB\x03\xe0A\x01R\x05refId\"\xde\x01\n" +
+	"\x10GrafanaDataQuery\x12E\n" +
 	"\n" +
-	"datasource\x18\x01 \x01(\v2!.granfana.v1.GrafanaDatasourceRefB\x03\xe0A\x01R\n" +
+	"datasource\x18\x01 \x01(\v2 .grafana.v1.GrafanaDatasourceRefB\x03\xe0A\x01R\n" +
 	"datasource\x12\x19\n" +
 	"\x05group\x18\x02 \x01(\tB\x03\xe0A\x01R\x05group\x12\x17\n" +
 	"\x04kind\x18\x03 \x01(\tB\x03\xe0A\x01R\x04kind\x120\n" +
@@ -1833,25 +1834,25 @@ const file_grafana_v1_metadata_proto_rawDesc = "" +
 	"\x05group\x18\x01 \x01(\tB\x03\xe0A\x01R\x05group\x12\x17\n" +
 	"\x04kind\x18\x02 \x01(\tB\x03\xe0A\x01R\x04kind\x120\n" +
 	"\x04spec\x18\x03 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x04spec\x12\x1d\n" +
-	"\aversion\x18\x04 \x01(\tB\x03\xe0A\x01R\aversion\"a\n" +
+	"\aversion\x18\x04 \x01(\tB\x03\xe0A\x01R\aversion\"`\n" +
 	"\rGrafanaLayout\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x127\n" +
-	"\x04spec\x18\x02 \x01(\v2\x1e.granfana.v1.GrafanaLayoutSpecB\x03\xe0A\x01R\x04spec\"\x8e\x01\n" +
-	"\x11GrafanaLayoutSpec\x12:\n" +
-	"\x04rows\x18\x01 \x03(\v2!.granfana.v1.GrafanaRowsLayoutRowB\x03\xe0A\x01R\x04rows\x12=\n" +
-	"\x05items\x18\x02 \x03(\v2\".granfana.v1.GrafanaGridLayoutItemB\x03\xe0A\x01R\x05items\"o\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x126\n" +
+	"\x04spec\x18\x02 \x01(\v2\x1d.grafana.v1.GrafanaLayoutSpecB\x03\xe0A\x01R\x04spec\"\x8c\x01\n" +
+	"\x11GrafanaLayoutSpec\x129\n" +
+	"\x04rows\x18\x01 \x03(\v2 .grafana.v1.GrafanaRowsLayoutRowB\x03\xe0A\x01R\x04rows\x12<\n" +
+	"\x05items\x18\x02 \x03(\v2!.grafana.v1.GrafanaGridLayoutItemB\x03\xe0A\x01R\x05items\"n\n" +
 	"\x14GrafanaRowsLayoutRow\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12>\n" +
-	"\x04spec\x18\x02 \x01(\v2%.granfana.v1.GrafanaRowsLayoutRowSpecB\x03\xe0A\x01R\x04spec\"\x8f\x01\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12=\n" +
+	"\x04spec\x18\x02 \x01(\v2$.grafana.v1.GrafanaRowsLayoutRowSpecB\x03\xe0A\x01R\x04spec\"\x8e\x01\n" +
 	"\x18GrafanaRowsLayoutRowSpec\x12\x1f\n" +
-	"\bcollapse\x18\x01 \x01(\bB\x03\xe0A\x01R\bcollapse\x127\n" +
-	"\x06layout\x18\x02 \x01(\v2\x1a.granfana.v1.GrafanaLayoutB\x03\xe0A\x01R\x06layout\x12\x19\n" +
-	"\x05title\x18\x03 \x01(\tB\x03\xe0A\x01R\x05title\"q\n" +
+	"\bcollapse\x18\x01 \x01(\bB\x03\xe0A\x01R\bcollapse\x126\n" +
+	"\x06layout\x18\x02 \x01(\v2\x19.grafana.v1.GrafanaLayoutB\x03\xe0A\x01R\x06layout\x12\x19\n" +
+	"\x05title\x18\x03 \x01(\tB\x03\xe0A\x01R\x05title\"p\n" +
 	"\x15GrafanaGridLayoutItem\x12\x17\n" +
-	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12?\n" +
-	"\x04spec\x18\x02 \x01(\v2&.granfana.v1.GrafanaGridLayoutItemSpecB\x03\xe0A\x01R\x04spec\"\xbe\x01\n" +
-	"\x19GrafanaGridLayoutItemSpec\x12C\n" +
-	"\aelement\x18\x01 \x01(\v2$.granfana.v1.GrafanaElementReferenceB\x03\xe0A\x01R\aelement\x12\x1b\n" +
+	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x12>\n" +
+	"\x04spec\x18\x02 \x01(\v2%.grafana.v1.GrafanaGridLayoutItemSpecB\x03\xe0A\x01R\x04spec\"\xbd\x01\n" +
+	"\x19GrafanaGridLayoutItemSpec\x12B\n" +
+	"\aelement\x18\x01 \x01(\v2#.grafana.v1.GrafanaElementReferenceB\x03\xe0A\x01R\aelement\x12\x1b\n" +
 	"\x06height\x18\x02 \x01(\x05B\x03\xe0A\x01R\x06height\x12\x19\n" +
 	"\x05width\x18\x03 \x01(\x05B\x03\xe0A\x01R\x05width\x12\x11\n" +
 	"\x01x\x18\x04 \x01(\x05B\x03\xe0A\x01R\x01x\x12\x11\n" +
@@ -1886,70 +1887,70 @@ func file_grafana_v1_metadata_proto_rawDescGZIP() []byte {
 
 var file_grafana_v1_metadata_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_grafana_v1_metadata_proto_goTypes = []any{
-	(*GrafanaDashboardAccessMeta)(nil), // 0: granfana.v1.GrafanaDashboardAccessMeta
-	(*GrafanaObjectMeta)(nil),          // 1: granfana.v1.GrafanaObjectMeta
-	(*GrafanaDashboardSpec)(nil),       // 2: granfana.v1.GrafanaDashboardSpec
-	(*GrafanaAnnotationItem)(nil),      // 3: granfana.v1.GrafanaAnnotationItem
-	(*GrafanaAnnotationSpec)(nil),      // 4: granfana.v1.GrafanaAnnotationSpec
-	(*GrafanaPanelElement)(nil),        // 5: granfana.v1.GrafanaPanelElement
-	(*GrafanaPanelSpec)(nil),           // 6: granfana.v1.GrafanaPanelSpec
-	(*GrafanaQueryGroup)(nil),          // 7: granfana.v1.GrafanaQueryGroup
-	(*GrafanaQueryGroupSpec)(nil),      // 8: granfana.v1.GrafanaQueryGroupSpec
-	(*GrafanaPanelQueryItem)(nil),      // 9: granfana.v1.GrafanaPanelQueryItem
-	(*GrafanaPanelQuerySpec)(nil),      // 10: granfana.v1.GrafanaPanelQuerySpec
-	(*GrafanaDataQuery)(nil),           // 11: granfana.v1.GrafanaDataQuery
-	(*GrafanaDatasourceRef)(nil),       // 12: granfana.v1.GrafanaDatasourceRef
-	(*GrafanaVizConfig)(nil),           // 13: granfana.v1.GrafanaVizConfig
-	(*GrafanaLayout)(nil),              // 14: granfana.v1.GrafanaLayout
-	(*GrafanaLayoutSpec)(nil),          // 15: granfana.v1.GrafanaLayoutSpec
-	(*GrafanaRowsLayoutRow)(nil),       // 16: granfana.v1.GrafanaRowsLayoutRow
-	(*GrafanaRowsLayoutRowSpec)(nil),   // 17: granfana.v1.GrafanaRowsLayoutRowSpec
-	(*GrafanaGridLayoutItem)(nil),      // 18: granfana.v1.GrafanaGridLayoutItem
-	(*GrafanaGridLayoutItemSpec)(nil),  // 19: granfana.v1.GrafanaGridLayoutItemSpec
-	(*GrafanaElementReference)(nil),    // 20: granfana.v1.GrafanaElementReference
-	(*GrafanaTimeSettings)(nil),        // 21: granfana.v1.GrafanaTimeSettings
-	(*GrafanaVariableItem)(nil),        // 22: granfana.v1.GrafanaVariableItem
-	nil,                                // 23: granfana.v1.GrafanaObjectMeta.LabelsEntry
-	nil,                                // 24: granfana.v1.GrafanaObjectMeta.AnnotationsEntry
-	nil,                                // 25: granfana.v1.GrafanaDashboardSpec.ElementsEntry
+	(*GrafanaDashboardAccessMeta)(nil), // 0: grafana.v1.GrafanaDashboardAccessMeta
+	(*GrafanaObjectMeta)(nil),          // 1: grafana.v1.GrafanaObjectMeta
+	(*GrafanaDashboardSpec)(nil),       // 2: grafana.v1.GrafanaDashboardSpec
+	(*GrafanaAnnotationItem)(nil),      // 3: grafana.v1.GrafanaAnnotationItem
+	(*GrafanaAnnotationSpec)(nil),      // 4: grafana.v1.GrafanaAnnotationSpec
+	(*GrafanaPanelElement)(nil),        // 5: grafana.v1.GrafanaPanelElement
+	(*GrafanaPanelSpec)(nil),           // 6: grafana.v1.GrafanaPanelSpec
+	(*GrafanaQueryGroup)(nil),          // 7: grafana.v1.GrafanaQueryGroup
+	(*GrafanaQueryGroupSpec)(nil),      // 8: grafana.v1.GrafanaQueryGroupSpec
+	(*GrafanaPanelQueryItem)(nil),      // 9: grafana.v1.GrafanaPanelQueryItem
+	(*GrafanaPanelQuerySpec)(nil),      // 10: grafana.v1.GrafanaPanelQuerySpec
+	(*GrafanaDataQuery)(nil),           // 11: grafana.v1.GrafanaDataQuery
+	(*GrafanaDatasourceRef)(nil),       // 12: grafana.v1.GrafanaDatasourceRef
+	(*GrafanaVizConfig)(nil),           // 13: grafana.v1.GrafanaVizConfig
+	(*GrafanaLayout)(nil),              // 14: grafana.v1.GrafanaLayout
+	(*GrafanaLayoutSpec)(nil),          // 15: grafana.v1.GrafanaLayoutSpec
+	(*GrafanaRowsLayoutRow)(nil),       // 16: grafana.v1.GrafanaRowsLayoutRow
+	(*GrafanaRowsLayoutRowSpec)(nil),   // 17: grafana.v1.GrafanaRowsLayoutRowSpec
+	(*GrafanaGridLayoutItem)(nil),      // 18: grafana.v1.GrafanaGridLayoutItem
+	(*GrafanaGridLayoutItemSpec)(nil),  // 19: grafana.v1.GrafanaGridLayoutItemSpec
+	(*GrafanaElementReference)(nil),    // 20: grafana.v1.GrafanaElementReference
+	(*GrafanaTimeSettings)(nil),        // 21: grafana.v1.GrafanaTimeSettings
+	(*GrafanaVariableItem)(nil),        // 22: grafana.v1.GrafanaVariableItem
+	nil,                                // 23: grafana.v1.GrafanaObjectMeta.LabelsEntry
+	nil,                                // 24: grafana.v1.GrafanaObjectMeta.AnnotationsEntry
+	nil,                                // 25: grafana.v1.GrafanaDashboardSpec.ElementsEntry
 	(*structpb.Struct)(nil),            // 26: google.protobuf.Struct
 }
 var file_grafana_v1_metadata_proto_depIdxs = []int32{
-	1,  // 0: granfana.v1.GrafanaDashboardAccessMeta.metadata:type_name -> granfana.v1.GrafanaObjectMeta
-	2,  // 1: granfana.v1.GrafanaDashboardAccessMeta.spec:type_name -> granfana.v1.GrafanaDashboardSpec
-	26, // 2: granfana.v1.GrafanaDashboardAccessMeta.status:type_name -> google.protobuf.Struct
-	23, // 3: granfana.v1.GrafanaObjectMeta.labels:type_name -> granfana.v1.GrafanaObjectMeta.LabelsEntry
-	24, // 4: granfana.v1.GrafanaObjectMeta.annotations:type_name -> granfana.v1.GrafanaObjectMeta.AnnotationsEntry
-	3,  // 5: granfana.v1.GrafanaDashboardSpec.annotations:type_name -> granfana.v1.GrafanaAnnotationItem
-	25, // 6: granfana.v1.GrafanaDashboardSpec.elements:type_name -> granfana.v1.GrafanaDashboardSpec.ElementsEntry
-	14, // 7: granfana.v1.GrafanaDashboardSpec.layout:type_name -> granfana.v1.GrafanaLayout
-	26, // 8: granfana.v1.GrafanaDashboardSpec.links:type_name -> google.protobuf.Struct
-	21, // 9: granfana.v1.GrafanaDashboardSpec.time_settings:type_name -> granfana.v1.GrafanaTimeSettings
-	22, // 10: granfana.v1.GrafanaDashboardSpec.variables:type_name -> granfana.v1.GrafanaVariableItem
-	4,  // 11: granfana.v1.GrafanaAnnotationItem.spec:type_name -> granfana.v1.GrafanaAnnotationSpec
-	26, // 12: granfana.v1.GrafanaAnnotationSpec.query:type_name -> google.protobuf.Struct
-	6,  // 13: granfana.v1.GrafanaPanelElement.spec:type_name -> granfana.v1.GrafanaPanelSpec
-	7,  // 14: granfana.v1.GrafanaPanelSpec.data:type_name -> granfana.v1.GrafanaQueryGroup
-	26, // 15: granfana.v1.GrafanaPanelSpec.links:type_name -> google.protobuf.Struct
-	13, // 16: granfana.v1.GrafanaPanelSpec.viz_config:type_name -> granfana.v1.GrafanaVizConfig
-	8,  // 17: granfana.v1.GrafanaQueryGroup.spec:type_name -> granfana.v1.GrafanaQueryGroupSpec
-	9,  // 18: granfana.v1.GrafanaQueryGroupSpec.queries:type_name -> granfana.v1.GrafanaPanelQueryItem
-	26, // 19: granfana.v1.GrafanaQueryGroupSpec.query_options:type_name -> google.protobuf.Struct
-	26, // 20: granfana.v1.GrafanaQueryGroupSpec.transformations:type_name -> google.protobuf.Struct
-	10, // 21: granfana.v1.GrafanaPanelQueryItem.spec:type_name -> granfana.v1.GrafanaPanelQuerySpec
-	11, // 22: granfana.v1.GrafanaPanelQuerySpec.query:type_name -> granfana.v1.GrafanaDataQuery
-	12, // 23: granfana.v1.GrafanaDataQuery.datasource:type_name -> granfana.v1.GrafanaDatasourceRef
-	26, // 24: granfana.v1.GrafanaDataQuery.spec:type_name -> google.protobuf.Struct
-	26, // 25: granfana.v1.GrafanaVizConfig.spec:type_name -> google.protobuf.Struct
-	15, // 26: granfana.v1.GrafanaLayout.spec:type_name -> granfana.v1.GrafanaLayoutSpec
-	16, // 27: granfana.v1.GrafanaLayoutSpec.rows:type_name -> granfana.v1.GrafanaRowsLayoutRow
-	18, // 28: granfana.v1.GrafanaLayoutSpec.items:type_name -> granfana.v1.GrafanaGridLayoutItem
-	17, // 29: granfana.v1.GrafanaRowsLayoutRow.spec:type_name -> granfana.v1.GrafanaRowsLayoutRowSpec
-	14, // 30: granfana.v1.GrafanaRowsLayoutRowSpec.layout:type_name -> granfana.v1.GrafanaLayout
-	19, // 31: granfana.v1.GrafanaGridLayoutItem.spec:type_name -> granfana.v1.GrafanaGridLayoutItemSpec
-	20, // 32: granfana.v1.GrafanaGridLayoutItemSpec.element:type_name -> granfana.v1.GrafanaElementReference
-	26, // 33: granfana.v1.GrafanaVariableItem.spec:type_name -> google.protobuf.Struct
-	5,  // 34: granfana.v1.GrafanaDashboardSpec.ElementsEntry.value:type_name -> granfana.v1.GrafanaPanelElement
+	1,  // 0: grafana.v1.GrafanaDashboardAccessMeta.metadata:type_name -> grafana.v1.GrafanaObjectMeta
+	2,  // 1: grafana.v1.GrafanaDashboardAccessMeta.spec:type_name -> grafana.v1.GrafanaDashboardSpec
+	26, // 2: grafana.v1.GrafanaDashboardAccessMeta.status:type_name -> google.protobuf.Struct
+	23, // 3: grafana.v1.GrafanaObjectMeta.labels:type_name -> grafana.v1.GrafanaObjectMeta.LabelsEntry
+	24, // 4: grafana.v1.GrafanaObjectMeta.annotations:type_name -> grafana.v1.GrafanaObjectMeta.AnnotationsEntry
+	3,  // 5: grafana.v1.GrafanaDashboardSpec.annotations:type_name -> grafana.v1.GrafanaAnnotationItem
+	25, // 6: grafana.v1.GrafanaDashboardSpec.elements:type_name -> grafana.v1.GrafanaDashboardSpec.ElementsEntry
+	14, // 7: grafana.v1.GrafanaDashboardSpec.layout:type_name -> grafana.v1.GrafanaLayout
+	26, // 8: grafana.v1.GrafanaDashboardSpec.links:type_name -> google.protobuf.Struct
+	21, // 9: grafana.v1.GrafanaDashboardSpec.time_settings:type_name -> grafana.v1.GrafanaTimeSettings
+	22, // 10: grafana.v1.GrafanaDashboardSpec.variables:type_name -> grafana.v1.GrafanaVariableItem
+	4,  // 11: grafana.v1.GrafanaAnnotationItem.spec:type_name -> grafana.v1.GrafanaAnnotationSpec
+	26, // 12: grafana.v1.GrafanaAnnotationSpec.query:type_name -> google.protobuf.Struct
+	6,  // 13: grafana.v1.GrafanaPanelElement.spec:type_name -> grafana.v1.GrafanaPanelSpec
+	7,  // 14: grafana.v1.GrafanaPanelSpec.data:type_name -> grafana.v1.GrafanaQueryGroup
+	26, // 15: grafana.v1.GrafanaPanelSpec.links:type_name -> google.protobuf.Struct
+	13, // 16: grafana.v1.GrafanaPanelSpec.viz_config:type_name -> grafana.v1.GrafanaVizConfig
+	8,  // 17: grafana.v1.GrafanaQueryGroup.spec:type_name -> grafana.v1.GrafanaQueryGroupSpec
+	9,  // 18: grafana.v1.GrafanaQueryGroupSpec.queries:type_name -> grafana.v1.GrafanaPanelQueryItem
+	26, // 19: grafana.v1.GrafanaQueryGroupSpec.query_options:type_name -> google.protobuf.Struct
+	26, // 20: grafana.v1.GrafanaQueryGroupSpec.transformations:type_name -> google.protobuf.Struct
+	10, // 21: grafana.v1.GrafanaPanelQueryItem.spec:type_name -> grafana.v1.GrafanaPanelQuerySpec
+	11, // 22: grafana.v1.GrafanaPanelQuerySpec.query:type_name -> grafana.v1.GrafanaDataQuery
+	12, // 23: grafana.v1.GrafanaDataQuery.datasource:type_name -> grafana.v1.GrafanaDatasourceRef
+	26, // 24: grafana.v1.GrafanaDataQuery.spec:type_name -> google.protobuf.Struct
+	26, // 25: grafana.v1.GrafanaVizConfig.spec:type_name -> google.protobuf.Struct
+	15, // 26: grafana.v1.GrafanaLayout.spec:type_name -> grafana.v1.GrafanaLayoutSpec
+	16, // 27: grafana.v1.GrafanaLayoutSpec.rows:type_name -> grafana.v1.GrafanaRowsLayoutRow
+	18, // 28: grafana.v1.GrafanaLayoutSpec.items:type_name -> grafana.v1.GrafanaGridLayoutItem
+	17, // 29: grafana.v1.GrafanaRowsLayoutRow.spec:type_name -> grafana.v1.GrafanaRowsLayoutRowSpec
+	14, // 30: grafana.v1.GrafanaRowsLayoutRowSpec.layout:type_name -> grafana.v1.GrafanaLayout
+	19, // 31: grafana.v1.GrafanaGridLayoutItem.spec:type_name -> grafana.v1.GrafanaGridLayoutItemSpec
+	20, // 32: grafana.v1.GrafanaGridLayoutItemSpec.element:type_name -> grafana.v1.GrafanaElementReference
+	26, // 33: grafana.v1.GrafanaVariableItem.spec:type_name -> google.protobuf.Struct
+	5,  // 34: grafana.v1.GrafanaDashboardSpec.ElementsEntry.value:type_name -> grafana.v1.GrafanaPanelElement
 	35, // [35:35] is the sub-list for method output_type
 	35, // [35:35] is the sub-list for method input_type
 	35, // [35:35] is the sub-list for extension type_name

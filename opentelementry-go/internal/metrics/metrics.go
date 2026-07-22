@@ -243,6 +243,29 @@ func (m *Metrics) recordGauge(name string, value reflect.Value, attrs ...metric.
 	return nil
 }
 
+// WriteMcap writes a raw metric value to this instance's MCAP writer (a
+// no-op when MCAP wasn't enabled at Build() time), independent of the
+// struct-tag Record path — for a caller that already went through OTel's own
+// typed instruments (e.g. the root package's runtime-go/telemetry.Meter
+// adapter) and just needs the same MCAP side-channel Record's
+// recordCounter/recordHistogram/recordGauge dual-write into.
+// kind is one of "counter", "histogram", "gauge"; any other value is a no-op.
+func (m *Metrics) WriteMcap(kind, name string, value float64) error {
+	if m.mcapWriter == nil {
+		return nil
+	}
+	switch kind {
+	case "counter":
+		return m.mcapWriter.WriteCounter(name, value)
+	case "histogram":
+		return m.mcapWriter.WriteHistogram(name, value)
+	case "gauge":
+		return m.mcapWriter.WriteGauge(name, value)
+	default:
+		return nil
+	}
+}
+
 // Close closes the metrics system
 func (m *Metrics) Close() error {
 	if m.mcapWriter != nil {

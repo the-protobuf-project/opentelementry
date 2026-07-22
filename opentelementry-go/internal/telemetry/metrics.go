@@ -18,6 +18,12 @@ func NewMetrics(meter metric.Meter) *Metrics {
 	}
 }
 
+// Meter returns the underlying OTel SDK meter this instance wraps, for a
+// caller (the root package's runtime-go/telemetry.Meter adapter) that needs
+// to create instruments directly rather than through Metrics' own
+// error-returning constructors.
+func (m *Metrics) Meter() metric.Meter { return m.meter }
+
 // Counter creates a new counter metric
 func (m *Metrics) Counter(name string, opts ...metric.Int64CounterOption) (metric.Int64Counter, error) {
 	return m.meter.Int64Counter(name, opts...)

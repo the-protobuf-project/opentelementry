@@ -13,19 +13,36 @@ jobs:
     name: Lint Go Code
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
-      - name: Check out code
+      - name: Check out opentelementry
         uses: actions/checkout@v6
+        with:
+          path: opentelementry
+
+      # See ci.yaml's test-go job for why this sibling checkout exists
+      # (opentelementry-go/go.mod's local replace for runtime-go/telemetry).
+      - name: Check out runtime-go (for the runtime-go/telemetry replace)
+        uses: actions/checkout@v6
+        with:
+          repository: the-protobuf-project/runtime-go
+          path: runtime-go
 
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version: '1.26'
 
       - name: Lint Go SDK
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          working-directory: ./opentelementry-go
+          working-directory: opentelementry/opentelementry-go
+          args: --timeout=5m
+
+      - name: Lint examples/telemetry (isolated module)
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          working-directory: opentelementry/opentelementry-go/examples/telemetry
           args: --timeout=5m
 
   lint-markdown:

@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package jobs.v1;
+
+import "google/api/field_behavior.proto";
+import "google/api/resource.proto";
+import "telemetry/v1/annotations.proto";
+
+// jobs.v1 is a small, self-contained example schema — not a BSR-published
+// module — that exists solely to drive opentelementry-go/examples/telemetry:
+// a minimal, realistic proto → protoc-gen-telemetry → generated Go →
+// runtime-go/telemetry pipeline, checked in and runnable end to end.
+option go_package = "github.com/the-protobuf-project/opentelementry/opentelementry-go/examples/telemetry/gen/jobs/v1/jobsv1;jobsv1";
+option java_multiple_files = true;
+option java_outer_classname = "JobProto";
+option java_package = "com.jobs.v1";
+
+// Job demonstrates every telemetry.v1 inference/override path in one message:
+//   - state    (enum)   → auto-inferred metric label, no annotation needed
+//   - queue    (string) → forced in as a label via an explicit override + a
+//                         custom label_key
+//   - attempt  (int32)  → a value metric, kind auto-detected as GAUGE (its
+//                         name doesn't look duration/size-like)
+//   - duration (double) → a value metric, kind auto-detected as HISTOGRAM
+//                         (the name matches telemetry.v1's duration-like
+//                         heuristic), with explicit bucket overrides
+//   - retries  (int32)  → a value metric with an explicit COUNTER override
+//                         (never auto-detected — see MetricKind's doc)
+message Job {
+  option (google.api.resource) = {
+    type: "telemetry.the-protobuf-project.app/Job"
+    pattern: "jobs/{job}"
+    singular: "job"
+    plural: "jobs"
+  };
+  option (telemetry.v1.telemetry) = {span_prefix: "jobs.Job"};
+
+  // Lifecycle state of the job.
+  enum State {
+    // Unset; never produced intentionally.
+    STATE_UNSPECIFIED = 0;
+    // Queued and waiting to run.
+    STATE_QUEUED = 1;
+    // Currently running.
+    STATE_RUNNING = 2;
+    // Finished successfully.
+    STATE_SUCCEEDED = 3;
+    // Finished with an error.
+    STATE_FAILED = 4;
+  }
+
+  // Job identifier.
+  string name = 1 [(google.api.field_behavior) = IDENTIFIER];
+  // Current lifecycle state; auto-inferred as a metric label.
+  State state = 2 [(google.api.field_behavior) = OUTPUT_ONLY];
+
+  // Queue this job runs on; forced in as a metric label via label_key below.
+  string queue = 3 [(telemetry.v1.metric_field) = {
+    label: true
+    label_key: "queue_name"
+  }];
+
+  // Number of times this job has been attempted; recorded as a gauge.
+  int32 attempt = 4 [(telemetry.v1.metric_field) = {value: true}];
+
+  // Elapsed run time in milliseconds; recorded as a histogram. Named
+  // "duration" (not "duration_ms") because the unit lives in the
+  // MetricFieldOptions.unit override below, not the field name.
+  double duration = 5 [(telemetry.v1.metric_field) = {
+    value: true
+    kind: METRIC_KIND_HISTOGRAM
+    buckets: [
+      5,
+      10,
+      25,
+      50,
+      100,
+      250,
+      500,
+      1000
+    ]
+  }];
+
+  // Number of retry attempts so far; recorded via an explicit counter.
+  int32 retries = 6 [(telemetry.v1.metric_field) = {
+    value: true
+    kind: METRIC_KIND_COUNTER
+    metric: "job_retries_total"
+  }];
+}

@@ -1,16 +1,24 @@
 version: v2
 
-# Regenerates the pre-compiled Go stubs for the grafana.v1 protos under protobuf/.
+# Regenerates the pre-compiled Go stubs for the grafana.v1 and telemetry.v1
+# protos under protobuf/.
 #
 # Run:  buf generate --template buf.gen.yaml
-# Out:  opentelementry-go/protobuf/grafana/v1/grafanapbv1/*.pb.go
+# Out:  opentelementry-go/protobuf/{grafana,telemetry}/v1/*pbv1/*.pb.go
 #
 # The module= opt strips the opentelementry-go/protobuf module prefix from each go_package,
 # and out points at that same directory, so a go_package of
 #   .../opentelementry-go/protobuf/grafana/v1/grafanapbv1
 # is written to opentelementry-go/protobuf/grafana/v1/grafanapbv1.
+#
+# protobuf/examples/proto/ is excluded: it's a separate, unnamed local buf
+# module (see buf.yaml) driving opentelementry-go/examples/telemetry via its
+# own buf.gen.example.yaml — this template only regenerates the two
+# BSR-published packages' own stubs.
 inputs:
   - directory: protobuf
+    exclude_paths:
+      - protobuf/examples/proto/jobs
 
 plugins:
   - remote: buf.build/protocolbuffers/go:v1.36.11

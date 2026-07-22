@@ -23,11 +23,26 @@ jobs:
       fail-fast: false
       matrix:
         os: [blacksmith-4vcpu-ubuntu-2404, macos-latest]
-        go-version: ['1.25']
+        go-version: ['1.26']
 
     steps:
-      - name: Check out code
+      - name: Check out opentelementry
         uses: actions/checkout@v6
+        with:
+          path: opentelementry
+
+      # opentelementry-go/go.mod has a local `replace` for
+      # runtime-go/telemetry (the Meter contract protoc-gen-telemetry's
+      # generated code, and this SDK's Meter() adapter, bind to — not
+      # published yet), pointing at ../../runtime-go/telemetry relative to
+      # opentelementry-go. CI checks it out as a true sibling of the
+      # `opentelementry` repo to match local development. Drop this checkout
+      # (and the go.mod replace) once runtime-go/telemetry is published.
+      - name: Check out runtime-go (for the runtime-go/telemetry replace)
+        uses: actions/checkout@v6
+        with:
+          repository: the-protobuf-project/runtime-go
+          path: runtime-go
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -40,31 +55,77 @@ jobs:
           path: |
             ~/.cache/go-build
             ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('opentelementry/opentelementry-go/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
       - name: Download dependencies
-        working-directory: ./opentelementry-go
+        working-directory: opentelementry/opentelementry-go
         run: go mod download
 
       - name: Verify go.mod is tidy
-        working-directory: ./opentelementry-go
+        working-directory: opentelementry/opentelementry-go
         run: |
           go mod tidy
           git diff --exit-code go.mod go.sum
 
       - name: Build
-        working-directory: ./opentelementry-go
+        working-directory: opentelementry/opentelementry-go
         run: go build -v ./...
 
       - name: Vet
-        working-directory: ./opentelementry-go
+        working-directory: opentelementry/opentelementry-go
         run: go vet ./...
 
       - name: Run tests
-        working-directory: ./opentelementry-go
+        working-directory: opentelementry/opentelementry-go
         run: go test -v -race ./...
+
+      # examples/telemetry is its own isolated module (see its go.mod) so its
+      # dependency graph never touches the root module's — verified
+      # separately for the same reason it's isolated in the first place.
+      - name: Build examples/telemetry (isolated module)
+        working-directory: opentelementry/opentelementry-go/examples/telemetry
+        run: go build -v ./...
+
+      - name: Vet examples/telemetry
+        working-directory: opentelementry/opentelementry-go/examples/telemetry
+        run: go vet ./...
+
+  test-proto:
+    name: Lint & Build Proto
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v6
+
+      - uses: bufbuild/buf-setup-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: buf build
+        run: buf build
+
+      - name: buf lint
+        run: buf lint
+
+      - name: Generated stubs up to date
+        run: |
+          buf generate --template buf.gen.yaml
+          git diff --exit-code -- opentelementry-go/protobuf/ \
+            || (echo "::error::opentelementry-go/protobuf/ stubs are stale — run 'buf generate --template buf.gen.yaml' and commit" && exit 1)
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+
+      - name: Build protoc-gen-telemetry
+        working-directory: opentelementry-go
+        run: go build -o bin/protoc-gen-telemetry ./plugin/cmd/protoc-gen-telemetry
+
+      - name: Example schema generates cleanly
+        run: buf generate --template buf.gen.example.yaml
 
   test-rust:
     name: Test Rust SDK

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package telemetry.v1;
+
+import "google/protobuf/descriptor.proto";
+import "telemetry/v1/metrics.proto";
+import "telemetry/v1/tracing.proto";
+
+option go_package = "github.com/the-protobuf-project/opentelementry-go/protobuf/telemetry/v1/telemetrypbv1;telemetrypbv1";
+option java_multiple_files = true;
+option java_outer_classname = "AnnotationsProto";
+option java_package = "com.telemetry.v1";
+
+// annotations.proto is the single import a schema author needs to use
+// telemetry.v1 directly:
+//
+//	import "telemetry/v1/annotations.proto";
+//
+// telemetry.v1 is intentionally not scoped to any one codegen target — it's a
+// standalone contract that any generator can read (protoc-gen-telemetry and
+// the orm gorm target are today's consumers). Field numbers 50100-99999 are
+// this module's own reserved range for non-Google options; orm.v1 separately
+// reserves 50000-50099 for its own annotations (including the deprecated
+// aliases at 50004/50005 that forward to the messages defined here — see
+// orm/v1/annotations.proto).
+
+extend google.protobuf.MessageOptions {
+  // telemetry tunes the tracing (and generic op-metric on/off) a consumer
+  // folds into a resource's generated instrumentation: spans, op metrics, and
+  // trace-correlated logs.
+  TelemetryOptions telemetry = 50100;
+}
+
+extend google.protobuf.FieldOptions {
+  // telemetry_field projects the field into the emitted tracing as a span
+  // attribute.
+  TelemetryFieldOptions telemetry_field = 50101;
+
+  // metric_field overrides telemetry.v1's label inference for the generated
+  // lifecycle metrics (op counter + duration histogram) — see
+  // metrics.proto's MetricFieldOptions.
+  MetricFieldOptions metric_field = 50102;
+}

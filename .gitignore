@@ -3,11 +3,10 @@ bomb
 credentials
 .DS_Store
 *.config.json
-rust/**/target
+opentelementry-rs/target
 coverage
 __pycache__
 .env
-target
 *.mcap
 build
 .terraform*

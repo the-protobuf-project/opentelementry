@@ -1870,8 +1870,8 @@ const file_grafana_v1_metadata_proto_rawDesc = "" +
 	"\x02to\x18\a \x01(\tB\x03\xe0A\x01R\x02to\"`\n" +
 	"\x13GrafanaVariableItem\x12\x17\n" +
 	"\x04kind\x18\x01 \x01(\tB\x03\xe0A\x01R\x04kind\x120\n" +
-	"\x04spec\x18\x02 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x04specB\x85\x01\n" +
-	"\x0ecom.grafana.v1B\x12DashboardMetaProtoP\x01Z]github.com/the-protobuf-project/opentelementry-go/protobuf/grafana/v1/grafanapbv1;grafanapbv1b\x06proto3"
+	"\x04spec\x18\x02 \x01(\v2\x17.google.protobuf.StructB\x03\xe0A\x01R\x04specB\x80\x01\n" +
+	"\x0ecom.grafana.v1B\rMetadataProtoP\x01Z]github.com/the-protobuf-project/opentelementry-go/protobuf/grafana/v1/grafanapbv1;grafanapbv1b\x06proto3"
 
 var (
 	file_grafana_v1_metadata_proto_rawDescOnce sync.Once

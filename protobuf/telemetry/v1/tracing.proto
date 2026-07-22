@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package telemetry.v1;
+
+option go_package = "github.com/the-protobuf-project/opentelementry-go/protobuf/telemetry/v1/telemetrypbv1;telemetrypbv1";
+option java_multiple_files = true;
+option java_outer_classname = "TracingProto";
+option java_package = "com.telemetry.v1";
+
+// TelemetryOptions tunes the per-resource tracing (and generic op-metrics
+// on/off) a consumer folds into its generated instrumentation: a span per
+// operation, an ops counter + duration histogram, and trace-correlated error
+// logs. This module is deliberately not ORM-specific — any codegen target can
+// read these annotations — but today the gorm target is its only consumer,
+// applying it only when its own `telemetry` plugin opt (or orm.yaml
+// `telemetry.enabled`) is on; without that, these annotations are inert.
+//
+// Applied via:
+//
+//	option (telemetry.v1.telemetry) = { span_prefix: "bookstore.Book" };
+//	option (telemetry.v1.telemetry) = { enabled: false };  // opt this table out
+message TelemetryOptions {
+  // enabled overrides the tree-wide default (every resource is instrumented
+  // when the consumer's telemetry opt is on). Explicit presence matters:
+  // `enabled: false` strips this resource's instrumentation; unset inherits
+  // the default.
+  optional bool enabled = 1;
+
+  // span_prefix overrides the generated span-name prefix. Defaults to
+  // "<schema>.<Model>", e.g. "bookstore_v1.Book" → span
+  // "bookstore_v1.Book/Create".
+  string span_prefix = 2;
+
+  // metrics overrides per-resource metric recording (the ops counter +
+  // duration histogram). Defaults to the consumer's telemetry.metrics setting
+  // (true). Spans are unaffected. This is the same generic DB-scoped op-metric
+  // toggle as today — Phase B's custom domain-metric specs (metrics.proto)
+  // build on top of this gate rather than replacing it.
+  optional bool metrics = 3;
+}
+
+// TelemetryFieldOptions projects a field into the tracing emitted around its
+// resource's operations, as a span attribute. Metrics stay DB-scoped by
+// design — only table, op, and status label the generated op metrics;
+// domain-level metrics are a separate concern (see metrics.proto).
+//
+// Applied via:
+//
+//	string author_id = 4 [(telemetry.v1.telemetry_field) = { label: true }];
+//	string state = 5 [(telemetry.v1.telemetry_field) = { label: true, label_key: "book.state" }];
+message TelemetryFieldOptions {
+  // label includes this field as a span attribute on traced write operations.
+  // Safe for any cardinality — spans absorb per-row values.
+  bool label = 1;
+
+  // label_key overrides the attribute name for this field. Defaults to
+  // "<model_snake>.<column>", e.g. "book.genre".
+  string label_key = 2;
+}

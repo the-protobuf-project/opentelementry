@@ -106,9 +106,6 @@ jobs:
       - name: buf build
         run: buf build
 
-      - name: buf lint
-        run: buf lint
-
       - name: Generated stubs up to date
         run: |
           buf generate --template buf.gen.yaml

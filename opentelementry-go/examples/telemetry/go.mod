@@ -2,10 +2,19 @@ module github.com/the-protobuf-project/opentelementry/opentelementry-go/examples
 
 go 1.26.4
 
+// This example is isolated in its own module (like orm/examples) so its
+// dependency graph — the full SDK, its OTel/MCAP/Pyroscope stack — never
+// pollutes the plugin's or runtime-go/telemetry's own go.mod.
+//
+// Both replaces are local-only, pending a real publish of the changes each
+// points at (opentelementry-go's Meter() adapter, runtime-go/telemetry
+// itself — neither is on a registry yet).
+replace github.com/the-protobuf-project/opentelementry/opentelementry-go => ../..
+
 require (
 	github.com/the-protobuf-project/opentelementry/opentelementry-go v0.0.0-00010101000000-000000000000
-	github.com/the-protobuf-project/runtime-go/telemetry v0.0.0-00010101000000-000000000000
-	google.golang.org/genproto/googleapis/api v0.0.0-20260630182238-925bb5da69e7
+	github.com/the-protobuf-project/runtime-go/telemetry v0.0.0-20260722084318-b90e81eeadb7
+	google.golang.org/genproto/googleapis/api v0.0.0-20260720211330-0afa2a65878a
 	google.golang.org/protobuf v1.36.11
 )
 
@@ -70,21 +79,10 @@ require (
 	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/exp v0.0.0-20260212183809-81e46e3db34a // indirect
-	golang.org/x/net v0.52.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260622175928-b703f567277d // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260720155508-bb71a54f79dc // indirect
 	google.golang.org/grpc v1.81.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// This example is isolated in its own module (like orm/examples) so its
-// dependency graph — the full SDK, its OTel/MCAP/Pyroscope stack — never
-// pollutes the plugin's or runtime-go/telemetry's own go.mod.
-//
-// Both replaces are local-only, pending a real publish of the changes each
-// points at (opentelementry-go's Meter() adapter, runtime-go/telemetry
-// itself — neither is on a registry yet).
-replace github.com/the-protobuf-project/opentelementry/opentelementry-go => ../..
-
-replace github.com/the-protobuf-project/runtime-go/telemetry => ../../../../runtime-go/telemetry

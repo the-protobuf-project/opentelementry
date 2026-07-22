@@ -112,8 +112,10 @@ jobs:
       - name: Generated stubs up to date
         run: |
           buf generate --template buf.gen.yaml
-          git diff --exit-code -- opentelementry-go/protobuf/ \
-            || (echo "::error::opentelementry-go/protobuf/ stubs are stale — run 'buf generate --template buf.gen.yaml' and commit" && exit 1)
+          if ! git diff --exit-code -- opentelementry-go/protobuf/; then
+            echo "::error::stale protobuf stubs — rerun buf generate and commit"
+            exit 1
+          fi
 
       - name: Set up Go
         uses: actions/setup-go@v6
